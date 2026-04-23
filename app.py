@@ -1,3 +1,6 @@
+
+
+
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from werkzeug.utils import secure_filename
 import sqlite3
@@ -34,7 +37,7 @@ def init_db():
     conn.commit()
     conn.close()
 
-init_db()
+#init_db()
 
 # ---------------- Rotas ---------------- #
 @app.route("/")
@@ -141,4 +144,4 @@ def logout():
     return redirect(url_for("index"))
 
 if __name__ == "__main__":
-    app.run(debug=True) 
+    app.run(debug=True)
