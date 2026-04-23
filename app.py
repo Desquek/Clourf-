@@ -1,10 +1,9 @@
+from flask import Flask
+app = Flask(__name__)
 
-
-
-from flask import Flask, render_template, request, redirect, url_for, session, flash
-from werkzeug.utils import secure_filename
-import sqlite3
-import os
+@app.route("/")
+def index():
+    return "Clourf está online 🚀"
 
 app = Flask(__name__, template_folder="templates")
 app.secret_key = "clourf_secret_key"
