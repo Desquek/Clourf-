@@ -1,18 +1,1 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Sistema de Arquivos</title>
-    <style>
-        body { font-family: Arial; text-align: center; margin-top: 50px;} 
-        .container { max-width: 400px; margin: auto; }
-        .btn { display: inline-block; margin: 10px; padding: 10px 20px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Bem-vindo!</h1>
-        <a href="/login" class="btn">Login</a>
-        <a href="/register" class="btn">Registrar</a>
-   </div>
-</body>
-</html>
+<h1>Clourf está online com HTML 🚀</h1>
