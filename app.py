@@ -10,7 +10,7 @@ app.config["MAX_CONTENT_LENGTH"] = 50 *1024 * 1024  # 50MB por arquivo
 
 # Criação inicial do banco de dados
 def init_db():
-    conn = sqlite3.connect("database.db")
+   conn = sqlite3.connect ("database.db") 
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
