@@ -6,8 +6,7 @@ import os
 app = Flask(__name__, template_folder="templates")
 app.secret_key = "clourf_secret_key"
 app.config["UPLOAD_FOLDER"] = "uploads"
-app.config["MAX_CONTENT_LENGTH"] = 
-50 *1024 * 1024  # 50MB por arquivo
+app.config["MAX_CONTENT_LENGTH"] = 50 *1024 * 1024  # 50MB por arquivo 
 
 # Criação inicial do banco de dados
 def init_db():
