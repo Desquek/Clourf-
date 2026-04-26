@@ -6,33 +6,14 @@ import os
 app = Flask(__name__, template_folder="templates")
 app.secret_key = "clourf_secret_key"
 app.config["UPLOAD_FOLDER"] = "uploads"
-app.config["MAX_CONTENT_LENGTH"] = 50 *1024 * 1024  # 50MB por arquivo 
+app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024  # 50MB por arquivo
 
-# Criação inicial do banco de dados
 def init_db():
-    conn = sqlite3("database.db")
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE,
-        password TEXT,
-        is_admin INTEGER DEFAULT 0
-    )''')
-    c.execute('''CREATE TABLE IF NOT EXISTS files (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
-        filename TEXT,
-        folder TEXT,
-        FOREIGN KEY(user_id) REFERENCES users(id)
-    )''')
-    c.execute('''CREATE TABLE IF NOT EXISTS notes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
-        content TEXT,
-        FOREIGN KEY(user_id) REFERENCES users(id)
-    )''')
-    conn.commit()
-    conn.close()
+    conn = sqlite3.connect("database.db")
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT, password TEXT)''')
+    conn.commit()
+    conn.close()
 
 init_db()
 
