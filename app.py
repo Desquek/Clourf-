@@ -8,118 +8,107 @@ app.secret_key = "clourf_secret_key"
 app.config["UPLOAD_FOLDER"] = "uploads"
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024  # 50MB por arquivo
 
+# Criar pasta de uploads se não existir
+os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+
+# Inicializar banco de dados
 def init_db():
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT, password TEXT)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL
+    )''')
+    c.execute('''CREATE TABLE IF NOT EXISTS files (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        filename TEXT NOT NULL,
+        user_id INTEGER,
+        FOREIGN KEY (user_id) REFERENCES users (id)
+    )''')
     conn.commit()
     conn.close()
 
 init_db()
 
-# ---------------- Rotas ---------------- #
-@app.route("/")
+@app.route('/')
 def index():
-    import os
-    try:
-        files = os.listdir("templates")
-        return "PASTA OK: " + str(files)
-    except Exception as e:
-        return "ERRO: " + str(e)
+    return render_template('index.html')
 
-@app.route("/register", methods=["GET", "POST"])
+@app.route('/register', methods=['GET', 'POST'])
 def register():
-    if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
-        conn = sqlite3.connect("database.db")
-        c = conn.cursor()
-        is_admin = 0
-        c.execute("SELECT COUNT(*) FROM users")
-        if c.fetchone()[0] == 0:
-            is_admin = 1
-        try:
-            c.execute("INSERT INTO users (username, password, is_admin) VALUES (?, ?, ?)",
-                      (username, password, is_admin))
-            conn.commit()
-            flash("Conta criada com sucesso!", "success")
-            return redirect(url_for("login"))
-        except sqlite3.IntegrityError:
-            flash("Nome de usuário já existe.", "danger")
-        finally:
-            conn.close()
-    return render_template("register.html")
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        
+        try:
+            conn = sqlite3.connect("database.db")
+            c = conn.cursor()
+            c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
+            conn.commit()
+            conn.close()
+            return redirect(url_for('login'))
+        except:
+            flash("Usuário já existe")
+    return render_template('register.html')
 
-@app.route("/login", methods=["GET", "POST"])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
-        conn = sqlite3.connect("database.db")
-        c = conn.cursor()
-        c.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
-        user = c.fetchone()
-        conn.close()
-        if user:
-            session["user_id"] = user[0]
-            session["username"] = user[1]
-            session["is_admin"] = user[3]
-            return redirect(url_for("dashboard"))
-        else:
-            flash("Usuário ou senha incorretos", "danger")
-    return render_template("login.html")
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        
+        conn = sqlite3.connect("database.db")
+        c = conn.cursor()
+        c.execute("SELECT id FROM users WHERE username = ? AND password = ?", (username, password))
+        user = c.fetchone()
+        conn.close()
+        
+        if user:
+            session['user_id'] = user[0]
+            return redirect(url_for('dashboard'))
+        else:
+            flash("Login inválido")
+    return render_template('login.html')
 
-@app.route("/dashboard")
+@app.route('/dashboard')
 def dashboard():
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-    user_id = session["user_id"]
-    conn = sqlite3.connect("database.db")
-    c = conn.cursor()
-    c.execute("SELECT * FROM files WHERE user_id=?", (user_id,))
-    files = c.fetchall()
-    c.execute("SELECT * FROM notes WHERE user_id=?", (user_id,))
-    notes = c.fetchall()
-    conn.close()
-    return render_template("dashboard.html", files=files, notes=notes)
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('dashboard.html')
 
-@app.route("/upload", methods=["POST"])
+@app.route('/upload', methods=['POST'])
 def upload():
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-    file = request.files["file"]
-    folder = request.form.get("folder", "default")
-    filename = secure_filename(file.filename)
-    save_path = os.path.join(app.config["UPLOAD_FOLDER"], str(session["user_id"]), folder)
-    os.makedirs(save_path, exist_ok=True)
-    file.save(os.path.join(save_path, filename))
-    conn = sqlite3.connect("database.db")
-    c = conn.cursor()
-    c.execute("INSERT INTO files (user_id, filename, folder) VALUES (?, ?, ?)",
-              (session["user_id"], filename, folder))
-    conn.commit()
-    conn.close()
-    flash("Arquivo enviado com sucesso!", "success")
-    return redirect(url_for("dashboard"))
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    if 'file' not in request.files:
+        flash("Nenhum arquivo selecionado")
+        return redirect(url_for('dashboard'))
+    
+    file = request.files['file']
+    if file.filename == '':
+        flash("Nenhum arquivo selecionado")
+        return redirect(url_for('dashboard'))
+    
+    if file:
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+        
+        conn = sqlite3.connect("database.db")
+        c = conn.cursor()
+        c.execute("INSERT INTO files (filename, user_id) VALUES (?, ?)", (filename, session['user_id']))
+        conn.commit()
+        conn.close()
+        
+        flash("Arquivo enviado com sucesso")
+    return redirect(url_for('dashboard'))
 
-@app.route("/add_note", methods=["POST"])
-def add_note():
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-    content = request.form["content"]
-    conn = sqlite3.connect("database.db")
-    c = conn.cursor()
-    c.execute("INSERT INTO notes (user_id, content) VALUES (?, ?)",
-              (session["user_id"], content))
-    conn.commit()
-    conn.close()
-    flash("Nota criada!", "success")
-    return redirect(url_for("dashboard"))
-
-@app.route("/logout")
+@app.route('/logout')
 def logout():
-    session.clear()
-    return redirect(url_for("index"))
+    session.clear()
+    return redirect(url_for('index'))
 
-if __name__ == "__main__":
-    app.run(debug=True)
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
