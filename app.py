@@ -1,9 +1,11 @@
+import os  # ← linha 1 (adicione)
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from werkzeug.utils import secure_filename
 import sqlite3
-import os
 
-app = Flask(__name__, template_folder="templates")
+# linha 5
+
+app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), "templates"))  # ← linha 6 (substitua a linha do Flask)
 app.secret_key = "clourf_secret_key"
 app.config["UPLOAD_FOLDER"] = "uploads"
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024  # 50MB por arquivo
