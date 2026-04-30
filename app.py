@@ -1,41 +1,16 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, session, flash
-from werkzeug.utils import secure_filename
-import sqlite3
+from flask import Flask, render_template
 
-# linha 5
+base_dir = os.path.abspath(os.path.dirname(__file__))
 
-app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), "templates"))  # ← linha 6 (substitua a linha do Flask)
-app.secret_key = "clourf_secret_key"
-app.config["UPLOAD_FOLDER"] = "uploads"
-app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024  # 50MB por arquivo
+app = Flask(
+    __name__,
+    template_folder=os.path.join(base_dir, "templates")
+)
 
-# Criar pasta de uploads se não existir
-os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-
-# Inicializar banco de dados
-def init_db():
-    conn = sqlite3.connect("database.db")
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL
-    )''')
-    c.execute('''CREATE TABLE IF NOT EXISTS files (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        filename TEXT NOT NULL,
-        user_id INTEGER,
-        FOREIGN KEY (user_id) REFERENCES users (id)
-    )''')
-    conn.commit()
-    conn.close()
-
-init_db()
-
-@app.route('/')
+@app.route("/")
 def index():
-    return render_template('index.html')
+    return render_template("index.html")
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
