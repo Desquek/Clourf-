@@ -1,4 +1,4 @@
-import os  # ← linha 1 (adicione)
+import os
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from werkzeug.utils import secure_filename
 import sqlite3
