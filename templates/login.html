@@ -8,15 +8,18 @@
 </head>
 <body>
     <div class="auth-container">
+        <img src="/static/images/logo.png" alt="Clourf Logo" style="width: 80px; margin-bottom: 20px;">
         <h1>Bem-vindo ao Clourf</h1>
         <p>Entre na sua conta e acesse seus arquivos e grupos!</p>
-        {% with messages = get_flashed_messages(with_categories=true) %}
+        
+        {% with messages = get_flashed_messages() %}
             {% if messages %}
-                {% for category, message in messages %}
-                    <div class="flash {{ category }}">{{ message }}</div>
+                {% for message in messages %}
+                    <div class="message message-error">{{ message }}</div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
+        
         <form method="POST">
             <input type="text" name="username" placeholder="Nome de usuário" required>
             <input type="password" name="password" placeholder="Senha" required>
