@@ -10,9 +10,10 @@ app.secret_key = "clourf_secret_key"
 app.config["UPLOAD_FOLDER"] = os.path.join(base_dir, "uploads")
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
 
-# DEFINIR A FUNÇÃO AQUI
+os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+
 def init_db():
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect(os.path.join(base_dir, "database.db"))
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -22,6 +23,12 @@ def init_db():
     c.execute('''CREATE TABLE IF NOT EXISTS files (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         filename TEXT NOT NULL,
+        user_id INTEGER,
+        FOREIGN KEY (user_id) REFERENCES users (id)
+    )''')
+    c.execute('''CREATE TABLE IF NOT EXISTS notes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        content TEXT NOT NULL,
         user_id INTEGER,
         FOREIGN KEY (user_id) REFERENCES users (id)
     )''')
@@ -39,7 +46,7 @@ def register():
         password = request.form['password']
 
         try:
-            conn = sqlite3.connect("database.db")
+            conn = sqlite3.connect(os.path.join(base_dir, "database.db"))
             c = conn.cursor()
             c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
             conn.commit()
@@ -55,7 +62,7 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        conn = sqlite3.connect("database.db")
+        conn = sqlite3.connect(os.path.join(base_dir, "database.db"))
         c = conn.cursor()
         c.execute("SELECT id FROM users WHERE username = ? AND password = ?", (username, password))
         user = c.fetchone()
@@ -72,7 +79,32 @@ def login():
 def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    return render_template('dashboard.html')
+    
+    conn = sqlite3.connect(os.path.join(base_dir, "database.db"))
+    c = conn.cursor()
+    c.execute("SELECT content FROM notes WHERE user_id = ? ORDER BY id DESC", (session['user_id'],))
+    notes = c.fetchall()
+    conn.close()
+    
+    return render_template('dashboard.html', notes=notes)
+
+@app.route('/add_note', methods=['POST'])
+def add_note():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    note_content = request.form.get('note')
+    if note_content:
+        conn = sqlite3.connect(os.path.join(base_dir, "database.db"))
+        c = conn.cursor()
+        c.execute("INSERT INTO notes (content, user_id) VALUES (?, ?)", (note_content, session['user_id']))
+        conn.commit()
+        conn.close()
+        flash("Nota adicionada")
+    else:
+        flash("Conteúdo vazio")
+    
+    return redirect(url_for('dashboard'))
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -92,7 +124,7 @@ def upload():
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
 
-        conn = sqlite3.connect("database.db")
+        conn = sqlite3.connect(os.path.join(base_dir, "database.db"))
         c = conn.cursor()
         c.execute("INSERT INTO files (filename, user_id) VALUES (?, ?)", (filename, session['user_id']))
         conn.commit()
@@ -106,14 +138,8 @@ def logout():
     session.clear()
     return redirect(url_for('index'))
 
-# CHAMAR A FUNÇÃO AQUI (depois de definida)
 with app.app_context():
     init_db()
-
-# Lista todas as rotas para debug
-print("Rotas disponíveis:")
-for rule in app.url_map.iter_rules():
-    print(rule.endpoint)
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
