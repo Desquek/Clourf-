@@ -3,10 +3,12 @@ from werkzeug.utils import secure_filename
 import sqlite3
 import os
 
-app = Flask(
-    __name__,
-    template_folder=os.path.join(base_dir, "templates")
-)
+base_dir = os.path.dirname(os.path.abspath(__file__))
+
+app = Flask(__name__, template_folder=os.path.join(base_dir, "templates"))
+app.secret_key = "clourf_secret_key"
+app.config["UPLOAD_FOLDER"] = os.path.join(base_dir, "uploads")
+app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
 
 @app.route("/")
 def index():
