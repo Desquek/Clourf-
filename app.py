@@ -51,9 +51,13 @@ def register():
             c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
             conn.commit()
             conn.close()
+            flash("Conta criada com sucesso! Faça login.")
             return redirect(url_for('login'))
-        except:
-            flash("Usuário já existe")
+        except Exception as e:
+            print(f"Erro: {e}")
+            flash("Usuário já existe ou erro no banco")
+            return redirect(url_for('register'))
+    
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -70,9 +74,11 @@ def login():
 
         if user:
             session['user_id'] = user[0]
+            flash("Login realizado com sucesso!")
             return redirect(url_for('dashboard'))
         else:
             flash("Login inválido")
+    
     return render_template('login.html')
 
 @app.route('/dashboard')
@@ -84,9 +90,12 @@ def dashboard():
     c = conn.cursor()
     c.execute("SELECT content FROM notes WHERE user_id = ? ORDER BY id DESC", (session['user_id'],))
     notes = c.fetchall()
+    
+    c.execute("SELECT filename FROM files WHERE user_id = ? ORDER BY id DESC", (session['user_id'],))
+    files = c.fetchall()
     conn.close()
     
-    return render_template('dashboard.html', notes=notes)
+    return render_template('dashboard.html', notes=notes, files=files)
 
 @app.route('/add_note', methods=['POST'])
 def add_note():
@@ -136,7 +145,19 @@ def upload():
 @app.route('/logout')
 def logout():
     session.clear()
+    flash("Logout realizado")
     return redirect(url_for('index'))
+
+@app.route('/reset_db')
+def reset_db():
+    try:
+        db_path = os.path.join(base_dir, "database.db")
+        if os.path.exists(db_path):
+            os.remove(db_path)
+        init_db()
+        return "Banco de dados resetado com sucesso! <a href='/'>Voltar ao início</a>"
+    except Exception as e:
+        return f"Erro ao resetar: {e}"
 
 with app.app_context():
     init_db()
