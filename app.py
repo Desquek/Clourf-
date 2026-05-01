@@ -10,6 +10,24 @@ app.secret_key = "clourf_secret_key"
 app.config["UPLOAD_FOLDER"] = os.path.join(base_dir, "uploads")
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
 
+# DEFINIR A FUNÇÃO AQUI
+def init_db():
+    conn = sqlite3.connect("database.db")
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL
+    )''')
+    c.execute('''CREATE TABLE IF NOT EXISTS files (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        filename TEXT NOT NULL,
+        user_id INTEGER,
+        FOREIGN KEY (user_id) REFERENCES users (id)
+    )''')
+    conn.commit()
+    conn.close()
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -19,7 +37,7 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        
+
         try:
             conn = sqlite3.connect("database.db")
             c = conn.cursor()
@@ -36,13 +54,13 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        
+
         conn = sqlite3.connect("database.db")
         c = conn.cursor()
         c.execute("SELECT id FROM users WHERE username = ? AND password = ?", (username, password))
         user = c.fetchone()
         conn.close()
-        
+
         if user:
             session['user_id'] = user[0]
             return redirect(url_for('dashboard'))
@@ -60,26 +78,26 @@ def dashboard():
 def upload():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    
+
     if 'file' not in request.files:
         flash("Nenhum arquivo selecionado")
         return redirect(url_for('dashboard'))
-    
+
     file = request.files['file']
     if file.filename == '':
         flash("Nenhum arquivo selecionado")
         return redirect(url_for('dashboard'))
-    
+
     if file:
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
-        
+
         conn = sqlite3.connect("database.db")
         c = conn.cursor()
         c.execute("INSERT INTO files (filename, user_id) VALUES (?, ?)", (filename, session['user_id']))
         conn.commit()
         conn.close()
-        
+
         flash("Arquivo enviado com sucesso")
     return redirect(url_for('dashboard'))
 
@@ -88,9 +106,10 @@ def logout():
     session.clear()
     return redirect(url_for('index'))
 
+# CHAMAR A FUNÇÃO AQUI (depois de definida)
+with app.app_context():
+    init_db()
+
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-
-with app.app_context():
-    init_db()
