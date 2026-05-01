@@ -110,6 +110,11 @@ def logout():
 with app.app_context():
     init_db()
 
+# Lista todas as rotas para debug
+print("Rotas disponíveis:")
+for rule in app.url_map.iter_rules():
+    print(rule.endpoint)
+
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
