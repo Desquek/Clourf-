@@ -1,31 +1,43 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Clourf</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
-    <div class="auth-container">
-        <img src="/static/images/logo.png" alt="Clourf Logo" style="width: 80px; margin-bottom: 20px;">
-        <h1>Bem-vindo ao Clourf</h1>
-        <p>Entre na sua conta e acesse seus arquivos e grupos!</p>
-        
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="message message-error">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-        
-        <form method="POST">
-            <input type="text" name="username" placeholder="Nome de usuário" required>
-            <input type="password" name="password" placeholder="Senha" required>
-            <button type="submit" class="btn btn-primary">Entrar</button>
-        </form>
-        <p>Não tem conta? <a href="/register">Crie uma agora</a></p>
+<body class="auth-page">
+    <div class="auth-wrapper">
+        <div class="auth-box">
+            <div class="auth-header">
+                <i class="fas fa-cloud"></i>
+                <h1>Clourf</h1>
+                <p>Bem-vindo de volta!</p>
+            </div>
+            
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-error">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form method="POST" class="auth-form">
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" name="username" placeholder="Usuário" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" name="password" placeholder="Senha" required>
+                </div>
+                <button type="submit" class="auth-btn">Entrar <i class="fas fa-arrow-right"></i></button>
+            </form>
+            
+            <p class="auth-footer">Não tem conta? <a href="/register">Registrar-se</a></p>
+        </div>
     </div>
 </body>
 </html>
