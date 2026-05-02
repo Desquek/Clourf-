@@ -1,52 +1,124 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clourf - Armazene, Crie e Compartilhe</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <title>Clourf - Armazenamento em Nuvem Seguro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <header class="hero">
-        <nav class="navbar">
-            <div class="logo">
-                <img src="/static/images/logo.png" alt="Clourf Logo">
-                <span>Clourf</span>
-            </div>
+    <header>
+        <nav>
+            <div class="logo"><i class="fas fa-cloud"></i> Clourf</div>
             <div class="nav-links">
-                <a href="/login" class="btn">Login</a>
-                <a href="/register" class="btn btn-secondary">Registrar</a>
+                <a href="/">Início</a>
+                <a href="#recursos">Recursos</a>
+                <a href="#como-funciona">Como Funciona</a>
+                <a href="/login" class="btn-login">Login</a>
+                <a href="/register" class="btn-register">Registrar</a>
             </div>
         </nav>
-        <div class="hero-content">
-            <h1>Armazene seus arquivos, crie grupos e organize seu mundo digital</h1>
-            <p>O Clourf permite criar grupos, organizar arquivos, adicionar lembretes e interagir com membros de forma única e segura.</p>
-            <a href="/register" class="btn btn-primary">Começar Agora</a>
-        </div>
-        <div class="hero-image">
-            <img src="/static/images/cloud_hero.png" alt="Cloud Image">
-        </div>
     </header>
 
-    <section class="features">
-        <h2>Funcionalidades do Clourf</h2>
-        <div class="feature-cards">
+    <section class="hero">
+        <div class="hero-text">
+            <h1>Armazenamento em <span class="destaque">nuvem seguro</span></h1>
+            <p>Crie grupos, organize seus arquivos, compartilhe com facilidade e acesse de qualquer lugar do mundo.</p>
+            <div class="hero-buttons">
+                <a href="/register" class="btn-primary">Começar Agora <i class="fas fa-arrow-right"></i></a>
+                <a href="#recursos" class="btn-secondary">Saiba Mais</a>
+            </div>
+            <div class="hero-stats">
+                <div><span>100%</span> Seguro</div>
+                <div><span>24/7</span> Acesso</div>
+                <div><span>Fácil</span> de usar</div>
+            </div>
+        </div>
+        <div class="hero-image">
+            <i class="fas fa-cloud-upload-alt"></i>
+        </div>
+    </section>
+
+    <section id="recursos" class="recursos">
+        <h2>Tudo que você precisa em um só lugar</h2>
+        <p class="section-subtitle">A Clourf oferece as melhores ferramentas para você gerenciar seus arquivos</p>
+        <div class="recursos-grid">
             <div class="card">
-                <img src="/static/images/upload_icon.png" alt="Upload">
-                <h3>Upload de Arquivos</h3>
-                <p>Envie fotos, vídeos e documentos facilmente.</p>
+                <i class="fas fa-shield-alt"></i>
+                <h3>Armazenamento Seguro</h3>
+                <p>Seus arquivos protegidos com criptografia de ponta a ponta</p>
             </div>
             <div class="card">
-                <img src="/static/images/group_icon.png" alt="Grupo">
-                <h3>Criação de Grupos</h3>
-                <p>Crie grupos privados ou públicos e compartilhe conteúdo com segurança.</p>
+                <i class="fas fa-users"></i>
+                <h3>Grupos e Colaboração</h3>
+                <p>Crie grupos, compartilhe e colabore em projetos com sua equipe</p>
             </div>
             <div class="card">
-                <img src="/static/images/notes_icon.png" alt="Notas">
-                <h3>Lembretes e Notas</h3>
-                <p>Adicione notas que aparecem assim que você faz login.</p>
+                <i class="fas fa-globe"></i>
+                <h3>Acesse de Qualquer Lugar</h3>
+                <p>Acesse seus arquivos de qualquer dispositivo, a qualquer momento</p>
+            </div>
+            <div class="card">
+                <i class="fas fa-lock"></i>
+                <h3>Privacidade Garantida</h3>
+                <p>Nós respeitamos sua privacidade e mantemos seus dados seguros</p>
             </div>
         </div>
     </section>
+
+    <section id="como-funciona" class="como-funciona">
+        <h2>Como funciona</h2>
+        <p class="section-subtitle">Simples, rápido e eficiente. Comece em apenas 3 passos.</p>
+        <div class="passos">
+            <div class="passo">
+                <div class="numero">1</div>
+                <i class="fas fa-user-plus"></i>
+                <h3>Crie sua conta</h3>
+                <p>Registre-se gratuitamente e tenha acesso imediato</p>
+            </div>
+            <div class="passo">
+                <div class="numero">2</div>
+                <i class="fas fa-upload"></i>
+                <h3>Envie seus arquivos</h3>
+                <p>Faça upload dos seus arquivos de forma simples e rápida</p>
+            </div>
+            <div class="passo">
+                <div class="numero">3</div>
+                <i class="fas fa-share-alt"></i>
+                <h3>Compartilhe e colabore</h3>
+                <p>Crie grupos e compartilhe arquivos com segurança</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta">
+        <h2>Pronto para começar?</h2>
+        <p>Junte-se a milhares de usuários que já confiam na Clourf</p>
+        <a href="/register" class="btn-primary">Começar Agora <i class="fas fa-rocket"></i></a>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo">
+                <i class="fas fa-cloud"></i> Clourf
+                <p>Armazenamento em nuvem seguro e simples</p>
+            </div>
+            <div class="footer-links">
+                <h4>Links Rápidos</h4>
+                <a href="/">Início</a>
+                <a href="#recursos">Recursos</a>
+                <a href="#como-funciona">Como Funciona</a>
+            </div>
+            <div class="footer-links">
+                <h4>Conta</h4>
+                <a href="/login">Login</a>
+                <a href="/register">Registrar</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2026 Clourf. Todos os direitos reservados.</p>
+        </div>
+    </footer>
 </body>
 </html>
