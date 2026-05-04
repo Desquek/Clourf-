@@ -2,110 +2,418 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clourf - Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Clourf</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f5f7fb;
+            padding-bottom: 70px;
+        }
+        
+        .header {
+            background: white;
+            padding: 20px;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .container {
+            padding: 20px;
+        }
+        
+        .storage-card {
+            background: linear-gradient(135deg, #6C63FF, #8B44FF);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 25px;
+            color: white;
+        }
+        
+        .storage-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .progress-bar {
+            background: rgba(255,255,255,0.3);
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        
+        .progress-fill {
+            background: white;
+            width: 0%;
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s;
+        }
+        
+        .storage-link {
+            color: white;
+            text-decoration: none;
+            font-size: 13px;
+            opacity: 0.9;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .stat-info h4 {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 5px;
+        }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .stat-link {
+            color: #6C63FF;
+            text-decoration: none;
+            font-size: 12px;
+        }
+        
+        .stat-icon {
+            font-size: 32px;
+            color: #6C63FF;
+            opacity: 0.7;
+        }
+        
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0 15px;
+        }
+        
+        .section-title h3 {
+            font-size: 18px;
+            color: #333;
+        }
+        
+        .section-title a {
+            color: #6C63FF;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        
+        .pastas-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .pasta-item {
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .pasta-item:hover {
+            transform: scale(0.98);
+        }
+        
+        .pasta-icon {
+            font-size: 28px;
+            color: #FFB74D;
+        }
+        
+        .pasta-info h4 {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        
+        .pasta-info p {
+            font-size: 11px;
+            color: #888;
+        }
+        
+        .recentes-list {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        .arquivo-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .arquivo-icon {
+            font-size: 20px;
+            width: 35px;
+        }
+        
+        .arquivo-icon.fa-file-pdf { color: #e74c3c; }
+        .arquivo-icon.fa-file-image { color: #2ecc71; }
+        .arquivo-icon.fa-file-video { color: #e67e22; }
+        .arquivo-icon.fa-file-alt { color: #3498db; }
+        
+        .arquivo-info {
+            flex: 1;
+        }
+        
+        .arquivo-info h4 {
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+        
+        .arquivo-info p {
+            font-size: 11px;
+            color: #888;
+        }
+        
+        .bottom-menu {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 20px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+        }
+        
+        .menu-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            text-decoration: none;
+            color: #aaa;
+            font-size: 12px;
+            transition: color 0.2s;
+        }
+        
+        .menu-item i {
+            font-size: 22px;
+        }
+        
+        .menu-item.active {
+            color: #6C63FF;
+        }
+        
+        .menu-item:hover {
+            color: #6C63FF;
+        }
+        
+        .empty-state {
+            padding: 40px;
+            text-align: center;
+            color: #888;
+        }
+        
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        .upload-btn {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #6C63FF;
+            color: white;
+            border-radius: 25px;
+            text-decoration: none;
+        }
+    </style>
 </head>
-<body class="dashboard-page">
-    <div class="dashboard-layout">
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <i class="fas fa-cloud"></i>
-                <h2>Clourf</h2>
+<body>
+    <div class="header">
+        <h1>Olá, {{ session['username'] }}!</h1>
+        <p>Bem-vindo de volta ao Clourf</p>
+    </div>
+    
+    <div class="container">
+        <!-- Card de Armazenamento -->
+        <div class="storage-card">
+            <div class="storage-stats">
+                <span>Armazenamento</span>
+                <span>{{ espaco_usado }} GB de 10 GB usados</span>
             </div>
-            <nav class="sidebar-nav">
-                <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-                <a href="/upload-page"><i class="fas fa-upload"></i> Upload</a>
-                <a href="/meus-arquivos"><i class="fas fa-folder"></i> Meus Arquivos</a>
-                <a href="/grupos"><i class="fas fa-users"></i> Grupos</a>
-                <a href="/favoritos"><i class="fas fa-star"></i> Favoritos</a>
-                <a href="/perfil"><i class="fas fa-user"></i> Perfil</a>
-            </nav>
-            <a href="/logout" class="sidebar-logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
-        </aside>
-
-        <main class="dashboard-main">
-            <div class="dashboard-header">
-                <h1>Dashboard</h1>
-                <div class="user-info">
-                    <i class="fas fa-user-circle"></i>
-                    <span>{{ session['username'] }}</span>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ (espaco_usado / 10 * 100) if espaco_usado else 0 }}%"></div>
+            </div>
+            <a href="#" class="storage-link">Gerenciar armazenamento →</a>
+        </div>
+        
+        <!-- Cards de estatísticas -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h4>Meus Arquivos</h4>
+                    <div class="stat-number">{{ total_arquivos }}</div>
+                    <a href="/meus-arquivos" class="stat-link">Ver tudo →</a>
+                </div>
+                <i class="fas fa-folder stat-icon"></i>
+            </div>
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h4>Compartilhados</h4>
+                    <div class="stat-number">0</div>
+                    <a href="#" class="stat-link">Ver tudo →</a>
+                </div>
+                <i class="fas fa-share-alt stat-icon"></i>
+            </div>
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h4>Favoritos</h4>
+                    <div class="stat-number">0</div>
+                    <a href="/favoritos" class="stat-link">Ver tudo →</a>
+                </div>
+                <i class="fas fa-star stat-icon"></i>
+            </div>
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h4>Recentes</h4>
+                    <div class="stat-number">{{ arquivos|length }}</div>
+                    <a href="/meus-arquivos" class="stat-link">Ver tudo →</a>
+                </div>
+                <i class="fas fa-clock stat-icon"></i>
+            </div>
+        </div>
+        
+        <!-- Pastas -->
+        <div class="section-title">
+            <h3>Pastas</h3>
+            <a href="#">Ver tudo →</a>
+        </div>
+        <div class="pastas-grid">
+            <div class="pasta-item">
+                <i class="fas fa-folder pasta-icon"></i>
+                <div class="pasta-info">
+                    <h4>Documentos</h4>
+                    <p>{{ documentos_count }} arquivos</p>
                 </div>
             </div>
-
-            {% with messages = get_flashed_messages() %}
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="alert alert-success">{{ message }}</div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-
-            <!-- CARDS IGUAL AO PRINT -->
-            <div class="dashboard-stats">
-                <div class="stat-card">
-                    <i class="fas fa-file-alt"></i>
-                    <div>
-                        <h3>Total de Arquivos</h3>
-                        <p class="stat-number">{{ total_arquivos if total_arquivos else 0 }}</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <i class="fas fa-users"></i>
-                    <div>
-                        <h3>Grupos</h3>
-                        <p class="stat-number">{{ grupos|length if grupos else 0 }}</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <i class="fas fa-hdd"></i>
-                    <div>
-                        <h3>Espaço Usado</h3>
-                        <p class="stat-number">{{ espaco_usado }} GB</p>
-                    </div>
+            <div class="pasta-item">
+                <i class="fas fa-folder-open pasta-icon"></i>
+                <div class="pasta-info">
+                    <h4>Imagens</h4>
+                    <p>{{ imagens_count }} arquivos</p>
                 </div>
             </div>
-
-            <!-- MEUS ARQUIVOS (LISTA REAL) -->
-            <div class="dashboard-files">
-                <h2><i class="fas fa-folder"></i> Meus Arquivos</h2>
-                {% if arquivos and arquivos|length > 0 %}
-                    {% for arquivo in arquivos[:5] %}
-                    <div class="file-item">
-                        <i class="fas {% if arquivo[1] == 'foto' %}fa-image{% elif arquivo[1] == 'video' %}fa-video{% else %}fa-file-alt{% endif %}"></i>
-                        <span>{{ arquivo[0] }}</span>
-                        <small>{{ arquivo[2] }} MB</small>
-                    </div>
-                    {% endfor %}
-                    {% if arquivos|length > 5 %}
-                        <p style="text-align: center; margin-top: 10px;"><a href="/meus-arquivos" style="color: #6C63FF;">Ver todos os {{ total_arquivos }} arquivos →</a></p>
-                    {% endif %}
-                {% else %}
-                    <p style="text-align: center; padding: 20px;">Nenhum arquivo ainda. <a href="/upload-page" style="color: #6C63FF;">Enviar agora</a></p>
-                {% endif %}
+            <div class="pasta-item">
+                <i class="fas fa-folder pasta-icon"></i>
+                <div class="pasta-info">
+                    <h4>Vídeos</h4>
+                    <p>{{ videos_count }} arquivos</p>
+                </div>
             </div>
-
-            <!-- MINHAS NOTAS -->
-            <div class="dashboard-notes">
-                <h2><i class="fas fa-edit"></i> Minhas Notas</h2>
-                <form method="POST" action="/nota/add">
-                    <textarea name="conteudo" placeholder="Escreva sua nota aqui..." rows="2" style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #ddd;"></textarea>
-                    <button type="submit" style="margin-top: 10px; background: #6C63FF; color: white; padding: 8px 15px; border: none; border-radius: 5px;">+ Adicionar Nota</button>
-                </form>
-                
-                {% if notas and notas|length > 0 %}
-                    <div style="margin-top: 20px;">
-                        {% for nota in notas[:3] %}
-                        <div style="background: #f9f9f9; padding: 10px; border-radius: 10px; margin-bottom: 10px;">
-                            <p style="margin: 0;">{{ nota[1][:100] }}</p>
-                            <small style="color: #999;">{{ nota[2] }}</small>
-                        </div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
+            <div class="pasta-item">
+                <i class="fas fa-folder pasta-icon"></i>
+                <div class="pasta-info">
+                    <h4>Projetos</h4>
+                    <p>0 arquivos</p>
+                </div>
             </div>
-        </main>
+        </div>
+        
+        <!-- Arquivos Recentes -->
+        <div class="section-title">
+            <h3>Arquivos recentes</h3>
+            <a href="/meus-arquivos">Ver tudo →</a>
+        </div>
+        
+        <div class="recentes-list">
+            {% if arquivos and arquivos|length > 0 %}
+                {% for arquivo in arquivos[:5] %}
+                <div class="arquivo-item">
+                    <i class="fas {% if 'pdf' in arquivo[0].lower() %}fa-file-pdf
+                                {% elif arquivo[1] == 'foto' %}fa-file-image
+                                {% elif arquivo[1] == 'video' %}fa-file-video
+                                {% else %}fa-file-alt{% endif %} arquivo-icon"></i>
+                    <div class="arquivo-info">
+                        <h4>{{ arquivo[0] }}</h4>
+                        <p>{{ arquivo[2] }} MB • {{ arquivo[3][:10] if arquivo[3] else 'Hoje' }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Nenhum arquivo enviado ainda</p>
+                    <a href="/upload-page" class="upload-btn">Enviar primeiro arquivo →</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Menu inferior -->
+    <div class="bottom-menu">
+        <a href="/dashboard" class="menu-item active">
+            <i class="fas fa-home"></i>
+            <span>Início</span>
+        </a>
+        <a href="/meus-arquivos" class="menu-item">
+            <i class="fas fa-folder"></i>
+            <span>Arquivos</span>
+        </a>
+        <a href="#" class="menu-item">
+            <i class="fas fa-share-alt"></i>
+            <span>Compartilhados</span>
+        </a>
+        <a href="/favoritos" class="menu-item">
+            <i class="fas fa-star"></i>
+            <span>Favoritos</span>
+        </a>
+        <a href="/perfil" class="menu-item">
+            <i class="fas fa-user"></i>
+            <span>Perfil</span>
+        </a>
     </div>
 </body>
 </html>
