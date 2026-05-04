@@ -9,15 +9,20 @@ app.secret_key = "clourf_secret_key"
 app.config["UPLOAD_FOLDER"] = "uploads"
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
 
-# Criar pastas necessárias
+# Criar pastas
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
 # ============================================
-# BANCO DE DADOS COMPLETO
+# FUNÇÃO PARA CONEXÃO COM O BANCO
 # ============================================
 
+def get_db():
+    """Retorna uma conexão com o banco de dados"""
+    return sqlite3.connect("database.db", timeout=10)
+
 def init_db():
-    conn = sqlite3.connect("database.db")
+    """Cria as tabelas se não existirem"""
+    conn = get_db()
     c = conn.cursor()
     
     # Tabela de usuários
@@ -26,7 +31,6 @@ def init_db():
         username TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
         email TEXT,
-        foto TEXT,
         data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
     
@@ -40,12 +44,11 @@ def init_db():
         FOREIGN KEY (dono_id) REFERENCES users (id)
     )''')
     
-    # Tabela de membros dos grupos
+    # Tabela de membros
     c.execute('''CREATE TABLE IF NOT EXISTS grupo_membros (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         grupo_id INTEGER,
         usuario_id INTEGER,
-        data_entrada TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (grupo_id) REFERENCES grupos (id),
         FOREIGN KEY (usuario_id) REFERENCES users (id)
     )''')
@@ -58,16 +61,13 @@ def init_db():
         tipo TEXT,
         tamanho REAL,
         usuario_id INTEGER,
-        grupo_id INTEGER,
         data_upload TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (usuario_id) REFERENCES users (id),
-        FOREIGN KEY (grupo_id) REFERENCES grupos (id)
+        FOREIGN KEY (usuario_id) REFERENCES users (id)
     )''')
     
     # Tabela de notas
     c.execute('''CREATE TABLE IF NOT EXISTS notas (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        titulo TEXT,
         conteudo TEXT,
         usuario_id INTEGER,
         data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -77,10 +77,11 @@ def init_db():
     conn.commit()
     conn.close()
 
+# Inicializar banco
 init_db()
 
 # ============================================
-# ROTAS PRINCIPAIS
+# ROTAS
 # ============================================
 
 @app.route('/')
@@ -95,16 +96,19 @@ def register():
         email = request.form.get('email', '')
         
         try:
-            conn = sqlite3.connect("database.db")
+            conn = get_db()
             c = conn.cursor()
             c.execute("INSERT INTO users (username, password, email) VALUES (?, ?, ?)", 
                      (username, password, email))
             conn.commit()
             conn.close()
-            flash("Conta criada com sucesso! Faça login.")
+            flash("Conta criada com sucesso!")
             return redirect(url_for('login'))
         except sqlite3.IntegrityError:
             flash("Usuário já existe!")
+        except Exception as e:
+            flash(f"Erro: {e}")
+            conn.close()
     
     return render_template('register.html')
 
@@ -114,7 +118,7 @@ def login():
         username = request.form['username']
         password = request.form['password']
         
-        conn = sqlite3.connect("database.db")
+        conn = get_db()
         c = conn.cursor()
         c.execute("SELECT id, username FROM users WHERE username = ? AND password = ?", 
                  (username, password))
@@ -136,36 +140,29 @@ def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
-    conn = sqlite3.connect("database.db")
+    conn = get_db()
     c = conn.cursor()
     
-    # Buscar arquivos do usuário
-    c.execute("SELECT id, nome, tipo, tamanho, data_upload FROM arquivos WHERE usuario_id = ? ORDER BY id DESC LIMIT 10", 
-             (session['user_id'],))
-    arquivos = c.fetchall()
-    
-    # Contar total de arquivos
+    # Total de arquivos
     c.execute("SELECT COUNT(*) FROM arquivos WHERE usuario_id = ?", (session['user_id'],))
     total_arquivos = c.fetchone()[0]
     
-    # Buscar notas do usuário
-    c.execute("SELECT id, titulo, conteudo, data_criacao FROM notas WHERE usuario_id = ? ORDER BY id DESC", 
+    # Últimos arquivos
+    c.execute("SELECT nome, tipo, tamanho FROM arquivos WHERE usuario_id = ? ORDER BY id DESC LIMIT 5", 
+             (session['user_id'],))
+    arquivos = c.fetchall()
+    
+    # Notas
+    c.execute("SELECT id, conteudo FROM notas WHERE usuario_id = ? ORDER BY id DESC", 
              (session['user_id'],))
     notas = c.fetchall()
-    
-    # Buscar grupos do usuário
-    c.execute('''SELECT g.id, g.nome, g.descricao FROM grupos g
-                 JOIN grupo_membros gm ON g.id = gm.grupo_id
-                 WHERE gm.usuario_id = ?''', (session['user_id'],))
-    grupos = c.fetchall()
     
     conn.close()
     
     return render_template('dashboard.html', 
-                         arquivos=arquivos, 
                          total_arquivos=total_arquivos,
-                         notas=notas,
-                         grupos=grupos)
+                         arquivos=arquivos,
+                         notas=notas)
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -183,20 +180,24 @@ def upload():
     
     if file:
         filename = secure_filename(file.filename)
-        # Identificar tipo do arquivo
+        
+        # Identificar tipo
         tipo = 'documento'
         if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')):
             tipo = 'foto'
-        elif filename.lower().endswith(('.mp4', '.avi', '.mov', '.mkv')):
+        elif filename.lower().endswith(('.mp4', '.avi', '.mov')):
             tipo = 'video'
         elif filename.lower().endswith(('.pdf', '.doc', '.docx', '.txt')):
             tipo = 'documento'
         
-        tamanho = os.path.getsize(file.filename) / (1024 * 1024) if os.path.exists(file.filename) else 0
+        tamanho = 0
         caminho = os.path.join(app.config["UPLOAD_FOLDER"], filename)
         file.save(caminho)
         
-        conn = sqlite3.connect("database.db")
+        if os.path.exists(caminho):
+            tamanho = round(os.path.getsize(caminho) / (1024 * 1024), 2)
+        
+        conn = get_db()
         c = conn.cursor()
         c.execute("INSERT INTO arquivos (nome, caminho, tipo, tamanho, usuario_id) VALUES (?, ?, ?, ?, ?)",
                  (filename, caminho, tipo, tamanho, session['user_id']))
@@ -211,40 +212,17 @@ def add_nota():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
-    titulo = request.form.get('titulo', 'Sem título')
     conteudo = request.form.get('conteudo', '')
     
-    conn = sqlite3.connect("database.db")
-    c = conn.cursor()
-    c.execute("INSERT INTO notas (titulo, conteudo, usuario_id) VALUES (?, ?, ?)",
-             (titulo, conteudo, session['user_id']))
-    conn.commit()
-    conn.close()
+    if conteudo:
+        conn = get_db()
+        c = conn.cursor()
+        c.execute("INSERT INTO notas (conteudo, usuario_id) VALUES (?, ?)",
+                 (conteudo, session['user_id']))
+        conn.commit()
+        conn.close()
+        flash("Nota adicionada!")
     
-    flash("Nota adicionada!")
-    return redirect(url_for('dashboard'))
-
-@app.route('/grupo/criar', methods=['POST'])
-def criar_grupo():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    nome = request.form['nome']
-    descricao = request.form.get('descricao', '')
-    
-    conn = sqlite3.connect("database.db")
-    c = conn.cursor()
-    c.execute("INSERT INTO grupos (nome, descricao, dono_id) VALUES (?, ?, ?)",
-             (nome, descricao, session['user_id']))
-    grupo_id = c.lastrowid
-    
-    # Adicionar o criador como membro
-    c.execute("INSERT INTO grupo_membros (grupo_id, usuario_id) VALUES (?, ?)",
-             (grupo_id, session['user_id']))
-    conn.commit()
-    conn.close()
-    
-    flash(f"Grupo '{nome}' criado com sucesso!")
     return redirect(url_for('dashboard'))
 
 @app.route('/perfil')
@@ -252,7 +230,7 @@ def perfil():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
-    conn = sqlite3.connect("database.db")
+    conn = get_db()
     c = conn.cursor()
     c.execute("SELECT username, email, data_criacao FROM users WHERE id = ?", (session['user_id'],))
     user = c.fetchone()
@@ -263,7 +241,7 @@ def perfil():
 @app.route('/logout')
 def logout():
     session.clear()
-    flash("Você saiu do sistema!")
+    flash("Você saiu!")
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
