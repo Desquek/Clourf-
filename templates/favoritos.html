@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Favoritos - Clourf</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="dashboard-page">
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-cloud"></i>
+                <h2>Clourf</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="/upload-page"><i class="fas fa-upload"></i> Upload</a>
+                <a href="/meus-arquivos"><i class="fas fa-folder"></i> Meus Arquivos</a>
+                <a href="/grupos"><i class="fas fa-users"></i> Grupos</a>
+                <a href="/favoritos" class="active"><i class="fas fa-star"></i> Favoritos</a>
+                <a href="/perfil"><i class="fas fa-user"></i> Perfil</a>
+            </nav>
+            <a href="/logout" class="sidebar-logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
+        </aside>
+
+        <main class="dashboard-main">
+            <div class="dashboard-header">
+                <h1><i class="fas fa-star"></i> Meus Favoritos</h1>
+                <div class="user-info">
+                    <i class="fas fa-user-circle"></i>
+                    <span>{{ session['username'] }}</span>
+                </div>
+            </div>
+
+            <div style="text-align: center; padding: 60px; background: white; border-radius: 15px;">
+                <i class="fas fa-star" style="font-size: 60px; color: #ffc107;"></i>
+                <h3 style="margin-top: 20px;">Em breve!</h3>
+                <p style="color: #666;">Em breve você poderá marcar seus arquivos favoritos</p>
+                <p style="color: #999; font-size: 0.9rem;">Estamos trabalhando nessa funcionalidade</p>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
