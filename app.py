@@ -310,25 +310,41 @@ def grupos():
     
     conn = get_db()
     c = conn.cursor()
-    
-    # Grupos que o usuário participa
     c.execute('''SELECT g.id, g.nome, g.descricao, u.username as dono 
                  FROM grupos g
                  JOIN grupo_membros gm ON g.id = gm.grupo_id
                  JOIN users u ON g.dono_id = u.id
                  WHERE gm.usuario_id = ?''', (session['user_id'],))
     meus_grupos = c.fetchall()
-    
     conn.close()
     
     return render_template('grupos.html', grupos=meus_grupos)
+
+@app.route('/grupo/criar', methods=['POST'])
+def criar_grupo():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    nome = request.form['nome']
+    descricao = request.form.get('descricao', '')
+    
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("INSERT INTO grupos (nome, descricao, dono_id) VALUES (?, ?, ?)", 
+             (nome, descricao, session['user_id']))
+    grupo_id = c.lastrowid
+    c.execute("INSERT INTO grupo_membros (grupo_id, usuario_id) VALUES (?, ?)", 
+             (grupo_id, session['user_id']))
+    conn.commit()
+    conn.close()
+    
+    flash(f"Grupo '{nome}' criado com sucesso!")
+    return redirect(url_for('grupos'))
 
 @app.route('/favoritos')
 def favoritos():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    
-    # Por enquanto só uma página simples
     return render_template('favoritos.html')
 
 # ============================================
