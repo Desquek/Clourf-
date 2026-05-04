@@ -29,7 +29,19 @@ def init_db():
         username TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
         email TEXT,
+        limite_gb REAL DEFAULT 10,
         data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )''')
+    
+    # Tabela de pastas
+    c.execute('''CREATE TABLE IF NOT EXISTS pastas (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nome TEXT NOT NULL,
+        usuario_id INTEGER,
+        pasta_pai_id INTEGER DEFAULT NULL,
+        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (usuario_id) REFERENCES users (id),
+        FOREIGN KEY (pasta_pai_id) REFERENCES pastas (id)
     )''')
     
     # Tabela de arquivos
@@ -40,8 +52,10 @@ def init_db():
         tipo TEXT,
         tamanho REAL,
         usuario_id INTEGER,
+        pasta_id INTEGER,
         data_upload TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (usuario_id) REFERENCES users (id)
+        FOREIGN KEY (usuario_id) REFERENCES users (id),
+        FOREIGN KEY (pasta_id) REFERENCES pastas (id)
     )''')
     
     # Tabela de notas
@@ -72,11 +86,22 @@ def init_db():
         FOREIGN KEY (usuario_id) REFERENCES users (id)
     )''')
     
+    # Criar pastas padrão para cada usuário (será feito no registro)
     conn.commit()
     conn.close()
 
 # Inicializar banco
 init_db()
+
+# Função para criar pastas padrão
+def criar_pastas_padrao(usuario_id):
+    conn = get_db()
+    c = conn.cursor()
+    pastas = ['Documentos', 'Imagens', 'Videos', 'Projetos']
+    for pasta in pastas:
+        c.execute("INSERT INTO pastas (nome, usuario_id) VALUES (?, ?)", (pasta, usuario_id))
+    conn.commit()
+    conn.close()
 
 # ============================================
 # ROTAS PRINCIPAIS
@@ -98,8 +123,13 @@ def register():
             c = conn.cursor()
             c.execute("INSERT INTO users (username, password, email) VALUES (?, ?, ?)", 
                      (username, password, email))
+            usuario_id = c.lastrowid
             conn.commit()
             conn.close()
+            
+            # Criar pastas padrão
+            criar_pastas_padrao(usuario_id)
+            
             flash("Conta criada com sucesso! Faça login.")
             return redirect(url_for('login'))
         except sqlite3.IntegrityError:
@@ -147,33 +177,40 @@ def dashboard():
     c.execute("SELECT COUNT(*) FROM arquivos WHERE usuario_id = ?", (session['user_id'],))
     total_arquivos = c.fetchone()[0]
     
-    # Últimos arquivos
-    c.execute("SELECT nome, tipo, tamanho FROM arquivos WHERE usuario_id = ? ORDER BY id DESC LIMIT 5", 
-             (session['user_id'],))
-    arquivos = c.fetchall()
-    
-    # Notas
-    c.execute("SELECT id, conteudo, data_criacao FROM notas WHERE usuario_id = ? ORDER BY id DESC", 
-             (session['user_id'],))
-    notas = c.fetchall()
-    
-    # Grupos do usuário
-    c.execute('''SELECT COUNT(*) FROM grupo_membros WHERE usuario_id = ?''', (session['user_id'],))
-    total_grupos = c.fetchone()[0]
-    
     # Calcular espaço usado
     c.execute("SELECT SUM(tamanho) FROM arquivos WHERE usuario_id = ?", (session['user_id'],))
     soma = c.fetchone()[0]
     espaco_usado = round(soma, 2) if soma else 0
+    
+    # Últimos arquivos
+    c.execute("SELECT nome, tipo, tamanho, data_upload FROM arquivos WHERE usuario_id = ? ORDER BY id DESC LIMIT 5", 
+             (session['user_id'],))
+    arquivos = c.fetchall()
+    
+    # Contar arquivos por tipo
+    c.execute("SELECT COUNT(*) FROM arquivos WHERE usuario_id = ? AND tipo = 'documento'", (session['user_id'],))
+    documentos_count = c.fetchone()[0]
+    
+    c.execute("SELECT COUNT(*) FROM arquivos WHERE usuario_id = ? AND tipo = 'foto'", (session['user_id'],))
+    imagens_count = c.fetchone()[0]
+    
+    c.execute("SELECT COUNT(*) FROM arquivos WHERE usuario_id = ? AND tipo = 'video'", (session['user_id'],))
+    videos_count = c.fetchone()[0]
+    
+    # Buscar pastas do usuário
+    c.execute("SELECT id, nome FROM pastas WHERE usuario_id = ?", (session['user_id'],))
+    pastas = c.fetchall()
     
     conn.close()
     
     return render_template('dashboard.html', 
                          total_arquivos=total_arquivos,
                          arquivos=arquivos,
-                         notas=notas,
-                         total_grupos=total_grupos,
-                         espaco_usado=espaco_usado)
+                         espaco_usado=espaco_usado,
+                         documentos_count=documentos_count,
+                         imagens_count=imagens_count,
+                         videos_count=videos_count,
+                         pastas=pastas)
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -201,16 +238,29 @@ def upload():
         elif filename.lower().endswith(('.pdf', '.doc', '.docx', '.txt', '.xls', '.xlsx')):
             tipo = 'documento'
         
+        # Determinar pasta destino baseada no tipo
+        pasta_nome = 'Documentos'
+        if tipo == 'foto':
+            pasta_nome = 'Imagens'
+        elif tipo == 'video':
+            pasta_nome = 'Videos'
+        
+        conn = get_db()
+        c = conn.cursor()
+        
+        # Buscar ID da pasta
+        c.execute("SELECT id FROM pastas WHERE usuario_id = ? AND nome = ?", (session['user_id'], pasta_nome))
+        pasta = c.fetchone()
+        pasta_id = pasta[0] if pasta else None
+        
         caminho = os.path.join(app.config["UPLOAD_FOLDER"], filename)
         file.save(caminho)
         
         # Calcular tamanho
         tamanho = round(os.path.getsize(caminho) / (1024 * 1024), 2)
         
-        conn = get_db()
-        c = conn.cursor()
-        c.execute("INSERT INTO arquivos (nome, caminho, tipo, tamanho, usuario_id) VALUES (?, ?, ?, ?, ?)",
-                 (filename, caminho, tipo, tamanho, session['user_id']))
+        c.execute("INSERT INTO arquivos (nome, caminho, tipo, tamanho, usuario_id, pasta_id) VALUES (?, ?, ?, ?, ?, ?)",
+                 (filename, caminho, tipo, tamanho, session['user_id'], pasta_id))
         conn.commit()
         conn.close()
         
@@ -244,7 +294,7 @@ def perfil():
     
     conn = get_db()
     c = conn.cursor()
-    c.execute("SELECT username, email, data_criacao FROM users WHERE id = ?", (session['user_id'],))
+    c.execute("SELECT username, email, data_criacao, limite_gb FROM users WHERE id = ?", (session['user_id'],))
     user = c.fetchone()
     conn.close()
     
@@ -264,7 +314,14 @@ def logout():
 def upload_page():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    return render_template('upload.html')
+    
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT id, nome FROM pastas WHERE usuario_id = ?", (session['user_id'],))
+    pastas = c.fetchall()
+    conn.close()
+    
+    return render_template('upload.html', pastas=pastas)
 
 @app.route('/meus-arquivos')
 def meus_arquivos():
