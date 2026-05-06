@@ -9,8 +9,9 @@ app.secret_key = "clourf_secret_key_2025"
 app.config["UPLOAD_FOLDER"] = "uploads"
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
 
-# Criar pasta de uploads
+# Criar pastas necessárias
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+os.makedirs("static/perfil", exist_ok=True)
 
 # ============================================
 # FUNÇÃO DO BANCO DE DADOS
@@ -29,6 +30,7 @@ def init_db():
         username TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
         email TEXT,
+        foto TEXT,
         limite_gb REAL DEFAULT 10,
         data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
@@ -86,14 +88,12 @@ def init_db():
         FOREIGN KEY (usuario_id) REFERENCES users (id)
     )''')
     
-    # Criar pastas padrão para cada usuário (será feito no registro)
     conn.commit()
     conn.close()
 
 # Inicializar banco
 init_db()
 
-# Função para criar pastas padrão
 def criar_pastas_padrao(usuario_id):
     conn = get_db()
     c = conn.cursor()
@@ -102,6 +102,14 @@ def criar_pastas_padrao(usuario_id):
         c.execute("INSERT INTO pastas (nome, usuario_id) VALUES (?, ?)", (pasta, usuario_id))
     conn.commit()
     conn.close()
+
+def get_pasta_id(usuario_id, nome_pasta):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT id FROM pastas WHERE usuario_id = ? AND nome = ?", (usuario_id, nome_pasta))
+    pasta = c.fetchone()
+    conn.close()
+    return pasta[0] if pasta else None
 
 # ============================================
 # ROTAS PRINCIPAIS
@@ -127,7 +135,6 @@ def register():
             conn.commit()
             conn.close()
             
-            # Criar pastas padrão
             criar_pastas_padrao(usuario_id)
             
             flash("Conta criada com sucesso! Faça login.")
@@ -183,7 +190,7 @@ def dashboard():
     espaco_usado = round(soma, 2) if soma else 0
     
     # Últimos arquivos
-    c.execute("SELECT nome, tipo, tamanho, data_upload FROM arquivos WHERE usuario_id = ? ORDER BY id DESC LIMIT 5", 
+    c.execute("SELECT id, nome, tipo, tamanho, data_upload FROM arquivos WHERE usuario_id = ? ORDER BY id DESC LIMIT 5", 
              (session['user_id'],))
     arquivos = c.fetchall()
     
@@ -201,6 +208,10 @@ def dashboard():
     c.execute("SELECT id, nome FROM pastas WHERE usuario_id = ?", (session['user_id'],))
     pastas = c.fetchall()
     
+    # Dados do usuário para foto
+    c.execute("SELECT foto FROM users WHERE id = ?", (session['user_id'],))
+    user = c.fetchone()
+    
     conn.close()
     
     return render_template('dashboard.html', 
@@ -210,7 +221,8 @@ def dashboard():
                          documentos_count=documentos_count,
                          imagens_count=imagens_count,
                          videos_count=videos_count,
-                         pastas=pastas)
+                         pastas=pastas,
+                         user_foto=user[0] if user else None)
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -235,57 +247,133 @@ def upload():
             tipo = 'foto'
         elif filename.lower().endswith(('.mp4', '.avi', '.mov', '.mkv', '.webm')):
             tipo = 'video'
-        elif filename.lower().endswith(('.pdf', '.doc', '.docx', '.txt', '.xls', '.xlsx')):
-            tipo = 'documento'
         
-        # Determinar pasta destino baseada no tipo
+        # Determinar pasta destino
         pasta_nome = 'Documentos'
         if tipo == 'foto':
             pasta_nome = 'Imagens'
         elif tipo == 'video':
             pasta_nome = 'Videos'
         
-        conn = get_db()
-        c = conn.cursor()
-        
-        # Buscar ID da pasta
-        c.execute("SELECT id FROM pastas WHERE usuario_id = ? AND nome = ?", (session['user_id'], pasta_nome))
-        pasta = c.fetchone()
-        pasta_id = pasta[0] if pasta else None
+        pasta_id = get_pasta_id(session['user_id'], pasta_nome)
         
         caminho = os.path.join(app.config["UPLOAD_FOLDER"], filename)
         file.save(caminho)
-        
-        # Calcular tamanho
         tamanho = round(os.path.getsize(caminho) / (1024 * 1024), 2)
         
+        conn = get_db()
+        c = conn.cursor()
         c.execute("INSERT INTO arquivos (nome, caminho, tipo, tamanho, usuario_id, pasta_id) VALUES (?, ?, ?, ?, ?, ?)",
                  (filename, caminho, tipo, tamanho, session['user_id'], pasta_id))
         conn.commit()
         conn.close()
         
-        flash(f"Arquivo '{filename}' enviado com sucesso!")
+        flash(f"Arquivo '{filename}' enviado para {pasta_nome}!")
     return redirect(url_for('dashboard'))
 
-@app.route('/nota/add', methods=['POST'])
-def add_nota():
+@app.route('/pasta/<int:pasta_id>')
+def ver_pasta(pasta_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
-    conteudo = request.form.get('conteudo', '')
+    conn = get_db()
+    c = conn.cursor()
     
-    if conteudo.strip():
+    c.execute("SELECT id, nome FROM pastas WHERE id = ? AND usuario_id = ?", (pasta_id, session['user_id']))
+    pasta = c.fetchone()
+    
+    if not pasta:
+        flash("Pasta não encontrada")
+        return redirect(url_for('dashboard'))
+    
+    c.execute("SELECT id, nome, tipo, tamanho, data_upload FROM arquivos WHERE pasta_id = ? AND usuario_id = ? ORDER BY id DESC", 
+             (pasta_id, session['user_id']))
+    arquivos = c.fetchall()
+    
+    c.execute("SELECT foto FROM users WHERE id = ?", (session['user_id'],))
+    user = c.fetchone()
+    
+    conn.close()
+    
+    return render_template('pasta.html', 
+                         pasta_id=pasta[0],
+                         pasta_nome=pasta[1],
+                         arquivos=arquivos,
+                         user_foto=user[0] if user else None)
+
+@app.route('/visualizar/<int:arquivo_id>')
+def visualizar(arquivo_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT id, nome, caminho, tipo FROM arquivos WHERE id = ? AND usuario_id = ?", 
+             (arquivo_id, session['user_id']))
+    arquivo = c.fetchone()
+    conn.close()
+    
+    if not arquivo:
+        flash("Arquivo não encontrado")
+        return redirect(url_for('dashboard'))
+    
+    return render_template('visualizar.html', 
+                         arquivo_id=arquivo[0],
+                         arquivo_nome=arquivo[1],
+                         arquivo_caminho=arquivo[2],
+                         arquivo_tipo=arquivo[3])
+
+@app.route('/download/<int:arquivo_id>')
+def download(arquivo_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT caminho, nome FROM arquivos WHERE id = ? AND usuario_id = ?", 
+             (arquivo_id, session['user_id']))
+    arquivo = c.fetchone()
+    conn.close()
+    
+    if arquivo:
+        caminho = arquivo[0]
+        if os.path.exists(caminho):
+            return send_file(caminho, as_attachment=True, download_name=arquivo[1])
+        else:
+            flash("Arquivo não encontrado!")
+    else:
+        flash("Arquivo não encontrado!")
+    
+    return redirect(url_for('meus_arquivos'))
+
+@app.route('/upload-foto', methods=['POST'])
+def upload_foto():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    if 'foto' not in request.files:
+        flash("Nenhuma foto selecionada")
+        return redirect(url_for('perfil'))
+    
+    foto = request.files['foto']
+    if foto.filename == '':
+        flash("Nenhuma foto selecionada")
+        return redirect(url_for('perfil'))
+    
+    if foto:
+        extensao = foto.filename.split('.')[-1]
+        nome_foto = f"user_{session['user_id']}.{extensao}"
+        caminho = os.path.join('static/perfil', nome_foto)
+        foto.save(caminho)
+        
         conn = get_db()
         c = conn.cursor()
-        c.execute("INSERT INTO notas (conteudo, usuario_id) VALUES (?, ?)",
-                 (conteudo, session['user_id']))
+        c.execute("UPDATE users SET foto = ? WHERE id = ?", (f"/static/perfil/{nome_foto}", session['user_id']))
         conn.commit()
         conn.close()
-        flash("Nota adicionada com sucesso!")
-    else:
-        flash("Nota vazia, não foi salva!")
-    
-    return redirect(url_for('dashboard'))
+        
+        flash("Foto de perfil atualizada!")
+    return redirect(url_for('perfil'))
 
 @app.route('/perfil')
 def perfil():
@@ -294,7 +382,7 @@ def perfil():
     
     conn = get_db()
     c = conn.cursor()
-    c.execute("SELECT username, email, data_criacao, limite_gb FROM users WHERE id = ?", (session['user_id'],))
+    c.execute("SELECT username, email, data_criacao, foto FROM users WHERE id = ?", (session['user_id'],))
     user = c.fetchone()
     conn.close()
     
@@ -314,14 +402,7 @@ def logout():
 def upload_page():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("SELECT id, nome FROM pastas WHERE usuario_id = ?", (session['user_id'],))
-    pastas = c.fetchall()
-    conn.close()
-    
-    return render_template('upload.html', pastas=pastas)
+    return render_template('upload.html')
 
 @app.route('/meus-arquivos')
 def meus_arquivos():
@@ -336,29 +417,6 @@ def meus_arquivos():
     conn.close()
     
     return render_template('meus_arquivos.html', arquivos=arquivos)
-
-@app.route('/download/<int:arquivo_id>')
-def download(arquivo_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("SELECT caminho, nome FROM arquivos WHERE id = ? AND usuario_id = ?", 
-             (arquivo_id, session['user_id']))
-    arquivo = c.fetchone()
-    conn.close()
-    
-    if arquivo:
-        caminho = arquivo[0]
-        if os.path.exists(caminho):
-            return send_file(caminho, as_attachment=True, download_name=arquivo[1])
-        else:
-            flash("Arquivo não encontrado no servidor!")
-    else:
-        flash("Arquivo não encontrado!")
-    
-    return redirect(url_for('meus_arquivos'))
 
 @app.route('/grupos')
 def grupos():
