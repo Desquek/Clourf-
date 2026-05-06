@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ pasta_nome }} - Clourf</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, sans-serif; background: #f5f7fb; padding-bottom: 70px; }
+        
+        .header { background: white; padding: 20px; display: flex; align-items: center; gap: 15px; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; }
+        .back-btn { font-size: 24px; text-decoration: none; color: #6C63FF; }
+        .header h1 { font-size: 20px; }
+        
+        .container { padding: 20px; }
+        
+        .arquivo-item { background: white; padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 15px; text-decoration: none; color: inherit; }
+        .arquivo-icon { font-size: 24px; width: 40px; }
+        .arquivo-icon.fa-file-image { color: #2ecc71; }
+        .arquivo-icon.fa-file-video { color: #e67e22; }
+        .arquivo-icon.fa-file-alt { color: #3498db; }
+        .arquivo-icon.fa-file-pdf { color: #e74c3c; }
+        .arquivo-info { flex: 1; }
+        .arquivo-info h4 { font-size: 14px; margin-bottom: 4px; }
+        .arquivo-info p { font-size: 11px; color: #888; }
+        .visualizar-btn { background: #6C63FF; color: white; padding: 5px 12px; border-radius: 15px; text-decoration: none; font-size: 12px; }
+        
+        .empty-state { text-align: center; padding: 50px; color: #888; background: white; border-radius: 15px; }
+        .empty-state i { font-size: 60px; margin-bottom: 15px; }
+        
+        .bottom-menu { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 12px 20px; border-top-left-radius: 20px; border-top-right-radius: 20px; }
+        .menu-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #aaa; font-size: 12px; }
+        .menu-item i { font-size: 22px; }
+        .menu-item.active { color: #6C63FF; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="/dashboard" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+        <h1><i class="fas fa-folder"></i> {{ pasta_nome }}</h1>
+    </div>
+    
+    <div class="container">
+        {% if arquivos and arquivos|length > 0 %}
+            {% for arquivo in arquivos %}
+            <a href="/visualizar/{{ arquivo[0] }}" class="arquivo-item">
+                <i class="fas {% if arquivo[2] == 'foto' %}fa-file-image
+                            {% elif arquivo[2] == 'video' %}fa-file-video
+                            {% elif 'pdf' in arquivo[1].lower() %}fa-file-pdf
+                            {% else %}fa-file-alt{% endif %} arquivo-icon"></i>
+                <div class="arquivo-info">
+                    <h4>{{ arquivo[1] }}</h4>
+                    <p>{{ arquivo[3] }} MB • {{ arquivo[4][:10] }}</p>
+                </div>
+                <span class="visualizar-btn">Ver</span>
+            </a>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-folder-open"></i>
+                <p>Pasta vazia</p>
+                <a href="/upload-page" style="color: #6C63FF; text-decoration: none;">Enviar arquivo →</a>
+            </div>
+        {% endif %}
+    </div>
+    
+    <div class="bottom-menu">
+        <a href="/dashboard" class="menu-item"><i class="fas fa-home"></i><span>Início</span></a>
+        <a href="/meus-arquivos" class="menu-item"><i class="fas fa-folder"></i><span>Arquivos</span></a>
+        <a href="#" class="menu-item"><i class="fas fa-share-alt"></i><span>Compartilhados</span></a>
+        <a href="/favoritos" class="menu-item"><i class="fas fa-star"></i><span>Favoritos</span></a>
+        <a href="/perfil" class="menu-item"><i class="fas fa-user"></i><span>Perfil</span></a>
+    </div>
+</body>
+</html>
