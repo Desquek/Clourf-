@@ -241,14 +241,14 @@ def upload():
     if file:
         filename = secure_filename(file.filename)
         
-        # Identificar tipo
+        # IDENTIFICAR TIPO CORRETAMENTE
         tipo = 'documento'
-        if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')):
+        if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp')):
             tipo = 'foto'
-        elif filename.lower().endswith(('.mp4', '.avi', '.mov', '.mkv', '.webm')):
+        elif filename.lower().endswith(('.mp4', '.avi', '.mov', '.mkv', '.webm', '.flv')):
             tipo = 'video'
         
-        # Determinar pasta destino
+        # DETERMINAR PASTA DESTINO
         pasta_nome = 'Documentos'
         if tipo == 'foto':
             pasta_nome = 'Imagens'
@@ -461,6 +461,12 @@ def favoritos():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     return render_template('favoritos.html')
+
+@app.route('/configuracoes')
+def configuracoes():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('configuracoes.html')
 
 # ============================================
 # INICIAR SERVIDOR
