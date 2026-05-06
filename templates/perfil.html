@@ -5,38 +5,76 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meu Perfil - Clourf</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body class="dashboard-page">
-    <div class="dashboard-layout">
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <i class="fas fa-cloud"></i>
-                <h2>Clourf</h2>
-            </div>
-            <nav class="sidebar-nav">
-                <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-                <a href="#" class="active"><i class="fas fa-user"></i> Perfil</a>
-                <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
-            </nav>
-        </aside>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, sans-serif; background: #f5f7fb; padding-bottom: 70px; }
         
-        <main class="dashboard-main">
-            <div class="dashboard-header">
-                <h1><i class="fas fa-user"></i> Meu Perfil</h1>
-            </div>
-            
-            <div class="perfil-card">
-                <div class="perfil-avatar">
+        .header { background: white; padding: 20px; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; }
+        .header h1 { font-size: 24px; }
+        
+        .container { padding: 20px; }
+        
+        .perfil-card { background: white; border-radius: 20px; padding: 30px; text-align: center; margin-bottom: 20px; }
+        .perfil-foto { width: 120px; height: 120px; border-radius: 60px; object-fit: cover; margin-bottom: 15px; border: 3px solid #6C63FF; }
+        .perfil-foto-placeholder { width: 120px; height: 120px; border-radius: 60px; background: #6C63FF; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; }
+        .perfil-foto-placeholder i { font-size: 60px; color: white; }
+        .upload-foto-btn { background: #6C63FF; color: white; border: none; padding: 10px 20px; border-radius: 25px; margin-top: 10px; cursor: pointer; display: inline-block; }
+        
+        .info-item { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+        .info-label { font-weight: bold; color: #666; font-size: 12px; margin-bottom: 4px; }
+        .info-value { font-size: 16px; }
+        
+        .bottom-menu { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 12px 20px; border-top-left-radius: 20px; border-top-right-radius: 20px; }
+        .menu-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #aaa; font-size: 12px; }
+        .menu-item i { font-size: 22px; }
+        .menu-item.active { color: #6C63FF; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Meu Perfil</h1>
+    </div>
+    
+    <div class="container">
+        <div class="perfil-card">
+            {% if user[3] %}
+                <img src="{{ user[3] }}" class="perfil-foto" alt="Foto">
+            {% else %}
+                <div class="perfil-foto-placeholder">
                     <i class="fas fa-user-circle"></i>
                 </div>
-                <div class="perfil-info">
-                    <p><strong>Usuário:</strong> {{ user[0] }}</p>
-                    <p><strong>Email:</strong> {{ user[1] or 'Não informado' }}</p>
-                    <p><strong>Membro desde:</strong> {{ user[2] }}</p>
-                </div>
+            {% endif %}
+            
+            <form method="POST" action="/upload-foto" enctype="multipart/form-data">
+                <input type="file" name="foto" id="foto" accept="image/*" style="display: none;" onchange="this.form.submit()">
+                <label for="foto" class="upload-foto-btn">
+                    <i class="fas fa-camera"></i> Alterar foto
+                </label>
+            </form>
+        </div>
+        
+        <div class="perfil-card">
+            <div class="info-item">
+                <div class="info-label">Usuário</div>
+                <div class="info-value">{{ user[0] }}</div>
             </div>
-        </main>
+            <div class="info-item">
+                <div class="info-label">Email</div>
+                <div class="info-value">{{ user[1] if user[1] else 'Não informado' }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Membro desde</div>
+                <div class="info-value">{{ user[2][:16] }}</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bottom-menu">
+        <a href="/dashboard" class="menu-item"><i class="fas fa-home"></i><span>Início</span></a>
+        <a href="/meus-arquivos" class="menu-item"><i class="fas fa-folder"></i><span>Arquivos</span></a>
+        <a href="#" class="menu-item"><i class="fas fa-share-alt"></i><span>Compartilhados</span></a>
+        <a href="/favoritos" class="menu-item"><i class="fas fa-star"></i><span>Favoritos</span></a>
+        <a href="/perfil" class="menu-item active"><i class="fas fa-user"></i><span>Perfil</span></a>
     </div>
 </body>
 </html>
