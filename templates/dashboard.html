@@ -16,6 +16,15 @@
         .user-avatar-placeholder { width: 50px; height: 50px; border-radius: 25px; background: #6C63FF; display: flex; align-items: center; justify-content: center; }
         .user-avatar-placeholder i { font-size: 28px; color: white; }
         
+        .menu-button { background: none; border: none; font-size: 28px; cursor: pointer; padding: 5px 10px; border-radius: 10px; transition: background 0.3s; }
+        .menu-button:hover { background: #f0f0f0; }
+        .dropdown-menu { display: none; position: absolute; right: 0; top: 55px; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); min-width: 160px; z-index: 100; overflow: hidden; }
+        .dropdown-menu a { display: block; padding: 12px 20px; text-decoration: none; color: #333; border-bottom: 1px solid #eee; transition: background 0.2s; }
+        .dropdown-menu a:hover { background: #f5f5f5; }
+        .dropdown-menu a:last-child { border-bottom: none; }
+        .dropdown-menu a i { width: 22px; margin-right: 10px; }
+        .dropdown-menu .logout { color: #e74c3c; }
+        
         .container { padding: 20px; }
         
         .storage-card { background: linear-gradient(135deg, #6C63FF, #8B44FF); border-radius: 20px; padding: 20px; margin-bottom: 25px; color: white; }
@@ -44,11 +53,6 @@
         
         .recentes-list { background: white; border-radius: 15px; overflow: hidden; }
         .arquivo-item { display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-bottom: 1px solid #eee; text-decoration: none; color: inherit; }
-        .arquivo-icon { font-size: 20px; width: 35px; }
-        .arquivo-icon.fa-file-pdf { color: #e74c3c; }
-        .arquivo-icon.fa-file-image { color: #2ecc71; }
-        .arquivo-icon.fa-file-video { color: #e67e22; }
-        .arquivo-icon.fa-file-alt { color: #3498db; }
         .arquivo-info { flex: 1; }
         .arquivo-info h4 { font-size: 14px; margin-bottom: 3px; }
         .arquivo-info p { font-size: 11px; color: #888; }
@@ -62,6 +66,11 @@
         .menu-item i { font-size: 22px; }
         .menu-item.active { color: #6C63FF; }
         .menu-item:hover { color: #6C63FF; }
+        
+        .fa-file-image { color: #2ecc71; }
+        .fa-file-video { color: #e67e22; }
+        .fa-file-pdf { color: #e74c3c; }
+        .fa-file-alt { color: #3498db; }
     </style>
 </head>
 <body>
@@ -70,13 +79,20 @@
             <h1>Olá, {{ session['username'] }}!</h1>
             <p>Bem-vindo de volta ao Clourf</p>
         </div>
-        {% if user_foto %}
-            <img src="{{ user_foto }}" class="user-avatar" alt="Foto">
-        {% else %}
-            <div class="user-avatar-placeholder">
-                <i class="fas fa-user"></i>
+        <div style="position: relative;">
+            {% if user_foto %}
+                <img src="{{ user_foto }}" class="user-avatar" alt="Foto" style="cursor: pointer;" onclick="toggleMenu()">
+            {% else %}
+                <div class="user-avatar-placeholder" style="cursor: pointer;" onclick="toggleMenu()">
+                    <i class="fas fa-user"></i>
+                </div>
+            {% endif %}
+            <div id="dropdownMenu" class="dropdown-menu">
+                <a href="/perfil"><i class="fas fa-user"></i> Meu Perfil</a>
+                <a href="/configuracoes"><i class="fas fa-cog"></i> Configurações</a>
+                <a href="/logout" class="logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
             </div>
-        {% endif %}
+        </div>
     </div>
     
     <div class="container">
@@ -174,10 +190,15 @@
             {% if arquivos and arquivos|length > 0 %}
                 {% for arquivo in arquivos[:5] %}
                 <a href="/visualizar/{{ arquivo[0] }}" class="arquivo-item">
-                    <i class="fas {% if arquivo[2] == 'foto' %}fa-file-image
-                                {% elif arquivo[2] == 'video' %}fa-file-video
-                                {% elif 'pdf' in arquivo[1].lower() %}fa-file-pdf
-                                {% else %}fa-file-alt{% endif %} arquivo-icon"></i>
+                    {% if arquivo[2] == 'foto' %}
+                        <i class="fas fa-file-image" style="font-size: 22px;"></i>
+                    {% elif arquivo[2] == 'video' %}
+                        <i class="fas fa-file-video" style="font-size: 22px;"></i>
+                    {% elif 'pdf' in arquivo[1].lower() %}
+                        <i class="fas fa-file-pdf" style="font-size: 22px;"></i>
+                    {% else %}
+                        <i class="fas fa-file-alt" style="font-size: 22px;"></i>
+                    {% endif %}
                     <div class="arquivo-info">
                         <h4>{{ arquivo[1] }}</h4>
                         <p>{{ arquivo[3] }} MB • {{ arquivo[4][:10] }}</p>
@@ -217,5 +238,21 @@
             <span>Perfil</span>
         </a>
     </div>
+
+    <script>
+        function toggleMenu() {
+            var menu = document.getElementById('dropdownMenu');
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        // Fechar menu ao clicar fora
+        document.addEventListener('click', function(event) {
+            var menu = document.getElementById('dropdownMenu');
+            var avatar = document.querySelector('.header > div:last-child > div, .header > div:last-child > img');
+            if (avatar && !avatar.contains(event.target) && !menu.contains(event.target)) {
+                menu.style.display = 'none';
+            }
+        });
+    </script>
 </body>
 </html>
