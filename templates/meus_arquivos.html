@@ -9,64 +9,50 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fb; padding-bottom: 70px; }
         
-        /* Header com botão voltar */
-        .header { background: white; padding: 20px; display: flex; align-items: center; gap: 15px; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .header { background: white; padding: 20px; display: flex; align-items: center; gap: 15px; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; }
         .back-btn { font-size: 24px; text-decoration: none; color: #6C63FF; }
-        .header h1 { font-size: 20px; color: #333; }
+        .header h1 { font-size: 20px; }
         
         .container { padding: 20px; }
         
-        /* Filtros por tipo */
+        /* Filtros */
         .filtros { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .filtro-btn { padding: 8px 16px; border-radius: 25px; border: 1px solid #ddd; background: white; color: #666; font-size: 13px; cursor: pointer; transition: all 0.3s; }
-        .filtro-btn:hover { border-color: #6C63FF; color: #6C63FF; }
         .filtro-btn.ativo { background: #6C63FF; color: white; border-color: #6C63FF; }
         
         /* Lista de arquivos */
         .arquivos-list { background: white; border-radius: 15px; overflow: hidden; }
-        .arquivo-item { display: flex; align-items: center; gap: 15px; padding: 15px; border-bottom: 1px solid #eee; flex-wrap: wrap; }
+        .arquivo-item { display: flex; align-items: center; gap: 15px; padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; }
         .arquivo-item:last-child { border-bottom: none; }
         
-        .arquivo-icon { font-size: 28px; width: 45px; text-align: center; }
+        .arquivo-imagem { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; background: #f0f0f0; }
+        .arquivo-icon { font-size: 28px; width: 50px; text-align: center; }
         .fa-file-image { color: #2ecc71; }
         .fa-file-video { color: #e67e22; }
         .fa-file-pdf { color: #e74c3c; }
         .fa-file-alt { color: #3498db; }
-        .fa-file-archive { color: #f39c12; }
         
-        .arquivo-info { flex: 2; }
-        .arquivo-info h4 { font-size: 14px; margin-bottom: 5px; color: #333; word-break: break-all; }
+        .arquivo-info { flex: 1; }
+        .arquivo-info h4 { font-size: 14px; margin-bottom: 5px; color: #333; }
         .arquivo-info p { font-size: 11px; color: #888; }
         
-        .arquivo-acoes { display: flex; gap: 8px; }
-        .btn-visualizar { background: #6C63FF; color: white; padding: 6px 12px; border-radius: 20px; text-decoration: none; font-size: 11px; transition: background 0.2s; }
-        .btn-visualizar:hover { background: #5a52e0; }
-        .btn-baixar { background: #3498db; color: white; padding: 6px 12px; border-radius: 20px; text-decoration: none; font-size: 11px; transition: background 0.2s; }
-        .btn-baixar:hover { background: #2980b9; }
+        /* Menu dos 3 pontinhos */
+        .menu-container { position: relative; }
+        .menu-tres-pontos { background: none; border: none; font-size: 20px; cursor: pointer; padding: 5px 10px; color: #666; }
+        .menu-dropdown { display: none; position: absolute; right: 0; top: 30px; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); min-width: 120px; z-index: 100; overflow: hidden; }
+        .menu-dropdown a { display: block; padding: 10px 15px; text-decoration: none; color: #333; font-size: 13px; transition: background 0.2s; }
+        .menu-dropdown a:hover { background: #f5f5f5; }
+        .menu-dropdown a i { width: 20px; margin-right: 8px; }
         
-        /* Estado vazio */
-        .empty-state { text-align: center; padding: 50px; background: white; border-radius: 15px; }
-        .empty-state i { font-size: 60px; color: #ccc; margin-bottom: 15px; }
-        .empty-state p { color: #888; margin-bottom: 15px; }
-        .empty-state a { color: #6C63FF; text-decoration: none; }
+        .empty-state { text-align: center; padding: 50px; background: white; border-radius: 15px; color: #888; }
         
-        /* Menu inferior */
-        .bottom-menu { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 12px 20px; border-top-left-radius: 20px; border-top-right-radius: 20px; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
-        .menu-item { display: flex; flex-direction: column; align-items: center; gap: 5px; text-decoration: none; color: #aaa; font-size: 12px; transition: color 0.2s; }
+        .bottom-menu { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 12px 20px; border-top-left-radius: 20px; border-top-right-radius: 20px; }
+        .menu-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #aaa; font-size: 12px; }
         .menu-item i { font-size: 22px; }
         .menu-item.active { color: #6C63FF; }
-        .menu-item:hover { color: #6C63FF; }
-        
-        /* Responsivo */
-        @media (max-width: 500px) {
-            .arquivo-item { flex-direction: column; align-items: flex-start; }
-            .arquivo-acoes { align-self: flex-end; }
-            .filtros { justify-content: center; }
-        }
     </style>
 </head>
 <body>
-    <!-- Header com botão voltar -->
     <div class="header">
         <a href="/dashboard" class="back-btn"><i class="fas fa-arrow-left"></i></a>
         <h1><i class="fas fa-folder"></i> Meus Arquivos</h1>
@@ -85,78 +71,95 @@
         <div class="arquivos-list" id="arquivosList">
             {% if arquivos and arquivos|length > 0 %}
                 {% for arquivo in arquivos %}
-                <div class="arquivo-item" data-tipo="{{ arquivo[2] }}">
-                    <div class="arquivo-icon">
-                        {% if arquivo[2] == 'foto' %}
-                            <i class="fas fa-file-image"></i>
-                        {% elif arquivo[2] == 'video' %}
-                            <i class="fas fa-file-video"></i>
-                        {% elif 'pdf' in arquivo[1].lower() %}
-                            <i class="fas fa-file-pdf"></i>
-                        {% elif 'zip' in arquivo[1].lower() or 'rar' in arquivo[1].lower() %}
-                            <i class="fas fa-file-archive"></i>
-                        {% else %}
-                            <i class="fas fa-file-alt"></i>
-                        {% endif %}
-                    </div>
-                    <div class="arquivo-info">
+                <div class="arquivo-item" data-id="{{ arquivo[0] }}" data-tipo="{{ arquivo[2] }}">
+                    {% if arquivo[2] == 'foto' %}
+                        <i class="fas fa-file-image arquivo-icon"></i>
+                    {% elif arquivo[2] == 'video' %}
+                        <i class="fas fa-file-video arquivo-icon"></i>
+                    {% elif 'pdf' in arquivo[1].lower() %}
+                        <i class="fas fa-file-pdf arquivo-icon"></i>
+                    {% else %}
+                        <i class="fas fa-file-alt arquivo-icon"></i>
+                    {% endif %}
+                    
+                    <div class="arquivo-info" onclick="visualizar({{ arquivo[0] }})">
                         <h4>{{ arquivo[1] }}</h4>
                         <p>{{ arquivo[3] }} MB • {{ arquivo[4][:10] }}</p>
                     </div>
-                    <div class="arquivo-acoes">
-                        <a href="/visualizar/{{ arquivo[0] }}" class="btn-visualizar">
-                            <i class="fas fa-eye"></i> Ver
-                        </a>
-                        <a href="/download/{{ arquivo[0] }}" class="btn-baixar">
-                            <i class="fas fa-download"></i> Baixar
-                        </a>
+                    
+                    <div class="menu-container">
+                        <button class="menu-tres-pontos" onclick="toggleMenu(event, {{ arquivo[0] }}, '{{ arquivo[1] }}')">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <div class="menu-dropdown" id="menu-{{ arquivo[0] }}">
+                            <a href="#" onclick="baixarArquivo({{ arquivo[0] }}); return false;">
+                                <i class="fas fa-download"></i> Baixar
+                            </a>
+                            <a href="#" onclick="visualizar({{ arquivo[0] }}); return false;">
+                                <i class="fas fa-eye"></i> Visualizar
+                            </a>
+                        </div>
                     </div>
                 </div>
                 {% endfor %}
             {% else %}
                 <div class="empty-state">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    <p>Nenhum arquivo encontrado</p>
-                    <a href="/upload-page">Enviar meu primeiro arquivo →</a>
+                    <i class="fas fa-cloud-upload-alt" style="font-size: 60px; color: #ccc;"></i>
+                    <p style="margin-top: 15px;">Nenhum arquivo encontrado</p>
+                    <a href="/upload-page" style="color: #6C63FF; text-decoration: none;">Enviar meu primeiro arquivo →</a>
                 </div>
             {% endif %}
         </div>
     </div>
     
-    <!-- Menu inferior -->
     <div class="bottom-menu">
-        <a href="/dashboard" class="menu-item">
-            <i class="fas fa-home"></i>
-            <span>Início</span>
-        </a>
-        <a href="/meus-arquivos" class="menu-item active">
-            <i class="fas fa-folder"></i>
-            <span>Arquivos</span>
-        </a>
-        <a href="#" class="menu-item">
-            <i class="fas fa-share-alt"></i>
-            <span>Compartilhados</span>
-        </a>
-        <a href="/favoritos" class="menu-item">
-            <i class="fas fa-star"></i>
-            <span>Favoritos</span>
-        </a>
-        <a href="/perfil" class="menu-item">
-            <i class="fas fa-user"></i>
-            <span>Perfil</span>
-        </a>
+        <a href="/dashboard" class="menu-item"><i class="fas fa-home"></i><span>Início</span></a>
+        <a href="/meus-arquivos" class="menu-item active"><i class="fas fa-folder"></i><span>Arquivos</span></a>
+        <a href="/perfil" class="menu-item"><i class="fas fa-user"></i><span>Perfil</span></a>
     </div>
 
     <script>
+        // Visualizar arquivo
+        function visualizar(id) {
+            window.location.href = '/visualizar/' + id;
+        }
+        
+        // Baixar arquivo
+        function baixarArquivo(id) {
+            window.location.href = '/download/' + id;
+        }
+        
+        // Abrir/fechar menu dos 3 pontinhos
+        function toggleMenu(event, id, nome) {
+            event.stopPropagation();
+            
+            // Fechar todos os menus abertos
+            document.querySelectorAll('.menu-dropdown').forEach(menu => {
+                if (menu.id !== 'menu-' + id) {
+                    menu.style.display = 'none';
+                }
+            });
+            
+            const menu = document.getElementById('menu-' + id);
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        }
+        
+        // Fechar menus ao clicar fora
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.menu-container')) {
+                document.querySelectorAll('.menu-dropdown').forEach(menu => {
+                    menu.style.display = 'none';
+                });
+            }
+        });
+        
         // Filtro por tipo
         const filtros = document.querySelectorAll('.filtro-btn');
         const arquivos = document.querySelectorAll('.arquivo-item');
         
         filtros.forEach(filtro => {
             filtro.addEventListener('click', function() {
-                // Remove classe ativo de todos
                 filtros.forEach(f => f.classList.remove('ativo'));
-                // Adiciona classe ativo no clicado
                 this.classList.add('ativo');
                 
                 const tipo = this.getAttribute('data-tipo');
