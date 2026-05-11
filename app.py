@@ -190,7 +190,7 @@ def dashboard():
     espaco_usado = round(soma, 2) if soma else 0
     
     # Últimos arquivos
-    c.execute("SELECT id, nome, tipo, tamanho, data_upload FROM arquivos WHERE usuario_id = ? ORDER BY id DESC LIMIT 5", 
+    c.execute("SELECT id, nome, tipo, tamanho, data_upload FROM arquivos WHERE usuario_id = ? ORDER BY id DESC LIMIT 10", 
              (session['user_id'],))
     arquivos = c.fetchall()
     
@@ -270,36 +270,6 @@ def upload():
         
         flash(f"Arquivo '{filename}' enviado para {pasta_nome}!")
     return redirect(url_for('dashboard'))
-
-@app.route('/pasta/<int:pasta_id>')
-def ver_pasta(pasta_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    conn = get_db()
-    c = conn.cursor()
-    
-    c.execute("SELECT id, nome FROM pastas WHERE id = ? AND usuario_id = ?", (pasta_id, session['user_id']))
-    pasta = c.fetchone()
-    
-    if not pasta:
-        flash("Pasta não encontrada")
-        return redirect(url_for('dashboard'))
-    
-    c.execute("SELECT id, nome, tipo, tamanho, data_upload FROM arquivos WHERE pasta_id = ? AND usuario_id = ? ORDER BY id DESC", 
-             (pasta_id, session['user_id']))
-    arquivos = c.fetchall()
-    
-    c.execute("SELECT foto FROM users WHERE id = ?", (session['user_id'],))
-    user = c.fetchone()
-    
-    conn.close()
-    
-    return render_template('pasta.html', 
-                         pasta_id=pasta[0],
-                         pasta_nome=pasta[1],
-                         arquivos=arquivos,
-                         user_foto=user[0] if user else None)
 
 @app.route('/visualizar/<int:arquivo_id>')
 def visualizar(arquivo_id):
