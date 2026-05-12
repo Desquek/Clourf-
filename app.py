@@ -85,7 +85,7 @@ def get_pasta_id(usuario_id, nome_pasta):
     return pasta[0] if pasta else None
 
 # ============================================
-# ROTAS
+# ROTAS DE AUTENTICAÇÃO
 # ============================================
 
 @app.route('/')
@@ -136,6 +136,16 @@ def login():
             flash("Usuário ou senha inválidos!")
     return render_template('login.html')
 
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash("Você saiu do sistema!")
+    return redirect(url_for('index'))
+
+# ============================================
+# ROTAS PRINCIPAIS
+# ============================================
+
 @app.route('/dashboard')
 def dashboard():
     if 'user_id' not in session:
@@ -178,6 +188,10 @@ def dashboard():
                          videos_count=videos_count,
                          user_foto=user[0] if user else None)
 
+# ============================================
+# ROTA DE UPLOAD (CORRIGIDA)
+# ============================================
+
 @app.route('/upload', methods=['POST'])
 def upload():
     if 'user_id' not in session:
@@ -195,12 +209,14 @@ def upload():
     if file:
         filename = secure_filename(file.filename)
         
+        # Identificar tipo
         tipo = 'documento'
         if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp')):
             tipo = 'foto'
         elif filename.lower().endswith(('.mp4', '.avi', '.mov', '.mkv', '.webm')):
             tipo = 'video'
         
+        # Determinar pasta destino
         pasta_nome = 'Documentos'
         if tipo == 'foto':
             pasta_nome = 'Imagens'
@@ -221,6 +237,10 @@ def upload():
         
         flash(f"Arquivo '{filename}' enviado para {pasta_nome}!")
     return redirect(url_for('dashboard'))
+
+# ============================================
+# ROTAS DE VISUALIZAÇÃO E DOWNLOAD
+# ============================================
 
 @app.route('/visualizar/<int:arquivo_id>')
 def visualizar(arquivo_id):
@@ -267,6 +287,10 @@ def download(arquivo_id):
         flash("Arquivo não encontrado!")
         return redirect(url_for('dashboard'))
 
+# ============================================
+# ROTAS DE PERFIL
+# ============================================
+
 @app.route('/upload-foto', methods=['POST'])
 def upload_foto():
     if 'user_id' not in session:
@@ -309,6 +333,10 @@ def perfil():
     
     return render_template('perfil.html', user=user)
 
+# ============================================
+# ROTAS DE LISTAGEM
+# ============================================
+
 @app.route('/meus-arquivos')
 def meus_arquivos():
     if 'user_id' not in session:
@@ -323,11 +351,9 @@ def meus_arquivos():
     
     return render_template('meus_arquivos.html', arquivos=arquivos)
 
-@app.route('/logout')
-def logout():
-    session.clear()
-    flash("Você saiu do sistema!")
-    return redirect(url_for('index'))
+# ============================================
+# INICIAR SERVIDOR
+# ============================================
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
