@@ -24,7 +24,6 @@ def init_db():
     conn = get_db()
     c = conn.cursor()
     
-    # Tabela de usuários
     c.execute('''CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
@@ -35,18 +34,13 @@ def init_db():
         data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
     
-    # Tabela de pastas
     c.execute('''CREATE TABLE IF NOT EXISTS pastas (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nome TEXT NOT NULL,
         usuario_id INTEGER,
-        pasta_pai_id INTEGER DEFAULT NULL,
-        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (usuario_id) REFERENCES users (id),
-        FOREIGN KEY (pasta_pai_id) REFERENCES pastas (id)
+        FOREIGN KEY (usuario_id) REFERENCES users (id)
     )''')
     
-    # Tabela de arquivos
     c.execute('''CREATE TABLE IF NOT EXISTS arquivos (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nome TEXT NOT NULL,
@@ -60,7 +54,6 @@ def init_db():
         FOREIGN KEY (pasta_id) REFERENCES pastas (id)
     )''')
     
-    # Tabela de notas
     c.execute('''CREATE TABLE IF NOT EXISTS notas (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         conteudo TEXT,
@@ -69,29 +62,9 @@ def init_db():
         FOREIGN KEY (usuario_id) REFERENCES users (id)
     )''')
     
-    # Tabela de grupos
-    c.execute('''CREATE TABLE IF NOT EXISTS grupos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nome TEXT NOT NULL,
-        descricao TEXT,
-        dono_id INTEGER,
-        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (dono_id) REFERENCES users (id)
-    )''')
-    
-    # Tabela de membros dos grupos
-    c.execute('''CREATE TABLE IF NOT EXISTS grupo_membros (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        grupo_id INTEGER,
-        usuario_id INTEGER,
-        FOREIGN KEY (grupo_id) REFERENCES grupos (id),
-        FOREIGN KEY (usuario_id) REFERENCES users (id)
-    )''')
-    
     conn.commit()
     conn.close()
 
-# Inicializar banco
 init_db()
 
 def criar_pastas_padrao(usuario_id):
@@ -112,7 +85,7 @@ def get_pasta_id(usuario_id, nome_pasta):
     return pasta[0] if pasta else None
 
 # ============================================
-# ROTAS PRINCIPAIS
+# ROTAS
 # ============================================
 
 @app.route('/')
@@ -134,18 +107,11 @@ def register():
             usuario_id = c.lastrowid
             conn.commit()
             conn.close()
-            
             criar_pastas_padrao(usuario_id)
-            
             flash("Conta criada com sucesso! Faça login.")
             return redirect(url_for('login'))
         except sqlite3.IntegrityError:
             flash("Usuário já existe!")
-            return redirect(url_for('register'))
-        except Exception as e:
-            flash(f"Erro: {e}")
-            return redirect(url_for('register'))
-    
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -168,8 +134,6 @@ def login():
             return redirect(url_for('dashboard'))
         else:
             flash("Usuário ou senha inválidos!")
-            return redirect(url_for('login'))
-    
     return render_template('login.html')
 
 @app.route('/dashboard')
@@ -180,21 +144,17 @@ def dashboard():
     conn = get_db()
     c = conn.cursor()
     
-    # Total de arquivos
     c.execute("SELECT COUNT(*) FROM arquivos WHERE usuario_id = ?", (session['user_id'],))
     total_arquivos = c.fetchone()[0]
     
-    # Calcular espaço usado
     c.execute("SELECT SUM(tamanho) FROM arquivos WHERE usuario_id = ?", (session['user_id'],))
     soma = c.fetchone()[0]
     espaco_usado = round(soma, 2) if soma else 0
     
-    # Últimos arquivos
     c.execute("SELECT id, nome, tipo, tamanho, data_upload FROM arquivos WHERE usuario_id = ? ORDER BY id DESC LIMIT 10", 
              (session['user_id'],))
     arquivos = c.fetchall()
     
-    # Contar arquivos por tipo
     c.execute("SELECT COUNT(*) FROM arquivos WHERE usuario_id = ? AND tipo = 'documento'", (session['user_id'],))
     documentos_count = c.fetchone()[0]
     
@@ -204,11 +164,6 @@ def dashboard():
     c.execute("SELECT COUNT(*) FROM arquivos WHERE usuario_id = ? AND tipo = 'video'", (session['user_id'],))
     videos_count = c.fetchone()[0]
     
-    # Buscar pastas do usuário
-    c.execute("SELECT id, nome FROM pastas WHERE usuario_id = ?", (session['user_id'],))
-    pastas = c.fetchall()
-    
-    # Dados do usuário para foto
     c.execute("SELECT foto FROM users WHERE id = ?", (session['user_id'],))
     user = c.fetchone()
     
@@ -221,7 +176,6 @@ def dashboard():
                          documentos_count=documentos_count,
                          imagens_count=imagens_count,
                          videos_count=videos_count,
-                         pastas=pastas,
                          user_foto=user[0] if user else None)
 
 @app.route('/upload', methods=['POST'])
@@ -241,14 +195,12 @@ def upload():
     if file:
         filename = secure_filename(file.filename)
         
-        # IDENTIFICAR TIPO CORRETAMENTE
         tipo = 'documento'
         if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp')):
             tipo = 'foto'
-        elif filename.lower().endswith(('.mp4', '.avi', '.mov', '.mkv', '.webm', '.flv')):
+        elif filename.lower().endswith(('.mp4', '.avi', '.mov', '.mkv', '.webm')):
             tipo = 'video'
         
-        # DETERMINAR PASTA DESTINO
         pasta_nome = 'Documentos'
         if tipo == 'foto':
             pasta_nome = 'Imagens'
@@ -256,7 +208,6 @@ def upload():
             pasta_nome = 'Videos'
         
         pasta_id = get_pasta_id(session['user_id'], pasta_nome)
-        
         caminho = os.path.join(app.config["UPLOAD_FOLDER"], filename)
         file.save(caminho)
         tamanho = round(os.path.getsize(caminho) / (1024 * 1024), 2)
@@ -284,14 +235,19 @@ def visualizar(arquivo_id):
     conn.close()
     
     if not arquivo:
-        flash("Arquivo não encontrado")
+        flash("Arquivo não encontrado!")
         return redirect(url_for('dashboard'))
     
-    return render_template('visualizar.html', 
-                         arquivo_id=arquivo[0],
-                         arquivo_nome=arquivo[1],
-                         arquivo_caminho=arquivo[2],
-                         arquivo_tipo=arquivo[3])
+    if not os.path.exists(arquivo[2]):
+        flash(f"Arquivo '{arquivo[1]}' não encontrado no servidor!")
+        return redirect(url_for('dashboard'))
+    
+    if arquivo[3] == 'foto':
+        return send_file(arquivo[2], mimetype='image/jpeg')
+    elif arquivo[3] == 'video':
+        return send_file(arquivo[2], mimetype='video/mp4')
+    else:
+        return send_file(arquivo[2], as_attachment=True, download_name=arquivo[1])
 
 @app.route('/download/<int:arquivo_id>')
 def download(arquivo_id):
@@ -305,16 +261,11 @@ def download(arquivo_id):
     arquivo = c.fetchone()
     conn.close()
     
-    if arquivo:
-        caminho = arquivo[0]
-        if os.path.exists(caminho):
-            return send_file(caminho, as_attachment=True, download_name=arquivo[1])
-        else:
-            flash("Arquivo não encontrado!")
+    if arquivo and os.path.exists(arquivo[0]):
+        return send_file(arquivo[0], as_attachment=True, download_name=arquivo[1])
     else:
         flash("Arquivo não encontrado!")
-    
-    return redirect(url_for('meus_arquivos'))
+        return redirect(url_for('dashboard'))
 
 @app.route('/upload-foto', methods=['POST'])
 def upload_foto():
@@ -358,22 +309,6 @@ def perfil():
     
     return render_template('perfil.html', user=user)
 
-@app.route('/logout')
-def logout():
-    session.clear()
-    flash("Você saiu do sistema!")
-    return redirect(url_for('index'))
-
-# ============================================
-# ROTAS ADICIONAIS
-# ============================================
-
-@app.route('/upload-page')
-def upload_page():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    return render_template('upload.html')
-
 @app.route('/meus-arquivos')
 def meus_arquivos():
     if 'user_id' not in session:
@@ -388,59 +323,11 @@ def meus_arquivos():
     
     return render_template('meus_arquivos.html', arquivos=arquivos)
 
-@app.route('/grupos')
-def grupos():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    conn = get_db()
-    c = conn.cursor()
-    c.execute('''SELECT g.id, g.nome, g.descricao, u.username as dono 
-                 FROM grupos g
-                 JOIN grupo_membros gm ON g.id = gm.grupo_id
-                 JOIN users u ON g.dono_id = u.id
-                 WHERE gm.usuario_id = ?''', (session['user_id'],))
-    meus_grupos = c.fetchall()
-    conn.close()
-    
-    return render_template('grupos.html', grupos=meus_grupos)
-
-@app.route('/grupo/criar', methods=['POST'])
-def criar_grupo():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    nome = request.form['nome']
-    descricao = request.form.get('descricao', '')
-    
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("INSERT INTO grupos (nome, descricao, dono_id) VALUES (?, ?, ?)", 
-             (nome, descricao, session['user_id']))
-    grupo_id = c.lastrowid
-    c.execute("INSERT INTO grupo_membros (grupo_id, usuario_id) VALUES (?, ?)", 
-             (grupo_id, session['user_id']))
-    conn.commit()
-    conn.close()
-    
-    flash(f"Grupo '{nome}' criado com sucesso!")
-    return redirect(url_for('grupos'))
-
-@app.route('/favoritos')
-def favoritos():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    return render_template('favoritos.html')
-
-@app.route('/configuracoes')
-def configuracoes():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    return render_template('configuracoes.html')
-
-# ============================================
-# INICIAR SERVIDOR
-# ============================================
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash("Você saiu do sistema!")
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
