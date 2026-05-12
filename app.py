@@ -7,7 +7,7 @@ from datetime import datetime
 app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), "templates"))
 app.secret_key = "clourf_secret_key_2025"
 app.config["UPLOAD_FOLDER"] = "uploads"
-app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
+app.config["MAX_CONTENT_LENGTH"] = 999 * 1024 * 1024  # 999MB
 
 # Criar pastas necessárias
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
@@ -189,7 +189,7 @@ def dashboard():
                          user_foto=user[0] if user else None)
 
 # ============================================
-# ROTA DE UPLOAD (CORRIGIDA)
+# ROTA DE UPLOAD (limite 999MB)
 # ============================================
 
 @app.route('/upload', methods=['POST'])
@@ -209,11 +209,21 @@ def upload():
     if file:
         filename = secure_filename(file.filename)
         
+        # Verificar tamanho
+        file.seek(0, 2)
+        tamanho_bytes = file.tell()
+        tamanho_mb = tamanho_bytes / (1024 * 1024)
+        file.seek(0)
+        
+        if tamanho_mb > 999:
+            flash(f"Arquivo muito grande! Limite é 999MB. Seu arquivo tem {round(tamanho_mb, 2)}MB")
+            return redirect(url_for('dashboard'))
+        
         # Identificar tipo
         tipo = 'documento'
         if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp')):
             tipo = 'foto'
-        elif filename.lower().endswith(('.mp4', '.avi', '.mov', '.mkv', '.webm')):
+        elif filename.lower().endswith(('.mp4', '.avi', '.mov', '.mkv', '.webm', '.flv')):
             tipo = 'video'
         
         # Determinar pasta destino
@@ -239,7 +249,7 @@ def upload():
     return redirect(url_for('dashboard'))
 
 # ============================================
-# ROTAS DE VISUALIZAÇÃO E DOWNLOAD
+# ROTAS DE VISUALIZAÇÃO
 # ============================================
 
 @app.route('/visualizar/<int:arquivo_id>')
@@ -259,15 +269,23 @@ def visualizar(arquivo_id):
         return redirect(url_for('dashboard'))
     
     if not os.path.exists(arquivo[2]):
-        flash(f"Arquivo '{arquivo[1]}' não encontrado no servidor!")
+        flash(f"Arquivo '{arquivo[1]}' não encontrado!")
         return redirect(url_for('dashboard'))
     
+    # Imagens
     if arquivo[3] == 'foto':
         return send_file(arquivo[2], mimetype='image/jpeg')
+    
+    # Vídeos
     elif arquivo[3] == 'video':
         return send_file(arquivo[2], mimetype='video/mp4')
+    
+    # Documentos (PDF, Word, Excel, PPT)
     else:
-        return send_file(arquivo[2], as_attachment=True, download_name=arquivo[1])
+        return render_template('visualizar_documento.html', 
+                             arquivo_id=arquivo[0],
+                             arquivo_nome=arquivo[1],
+                             arquivo_caminho=arquivo[2])
 
 @app.route('/download/<int:arquivo_id>')
 def download(arquivo_id):
@@ -283,6 +301,18 @@ def download(arquivo_id):
     
     if arquivo and os.path.exists(arquivo[0]):
         return send_file(arquivo[0], as_attachment=True, download_name=arquivo[1])
+    else:
+        flash("Arquivo não encontrado!")
+        return redirect(url_for('dashboard'))
+
+@app.route('/arquivo/<path:filename>')
+def servir_arquivo(filename):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    caminho = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+    if os.path.exists(caminho):
+        return send_file(caminho)
     else:
         flash("Arquivo não encontrado!")
         return redirect(url_for('dashboard'))
