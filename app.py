@@ -24,6 +24,7 @@ def init_db():
     conn = get_db()
     c = conn.cursor()
     
+    # Tabela de usuários
     c.execute('''CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
@@ -34,6 +35,7 @@ def init_db():
         data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
     
+    # Tabela de pastas
     c.execute('''CREATE TABLE IF NOT EXISTS pastas (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nome TEXT NOT NULL,
@@ -41,6 +43,7 @@ def init_db():
         FOREIGN KEY (usuario_id) REFERENCES users (id)
     )''')
     
+    # Tabela de arquivos
     c.execute('''CREATE TABLE IF NOT EXISTS arquivos (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nome TEXT NOT NULL,
@@ -54,11 +57,21 @@ def init_db():
         FOREIGN KEY (pasta_id) REFERENCES pastas (id)
     )''')
     
+    # Tabela de notas
     c.execute('''CREATE TABLE IF NOT EXISTS notas (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         conteudo TEXT,
         usuario_id INTEGER,
         data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (usuario_id) REFERENCES users (id)
+    )''')
+    
+    # Tabela de favoritos
+    c.execute('''CREATE TABLE IF NOT EXISTS favoritos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        arquivo_id INTEGER,
+        usuario_id INTEGER,
+        FOREIGN KEY (arquivo_id) REFERENCES arquivos (id),
         FOREIGN KEY (usuario_id) REFERENCES users (id)
     )''')
     
@@ -143,7 +156,7 @@ def logout():
     return redirect(url_for('index'))
 
 # ============================================
-# ROTAS PRINCIPAIS
+# DASHBOARD
 # ============================================
 
 @app.route('/dashboard')
@@ -189,7 +202,7 @@ def dashboard():
                          user_foto=user[0] if user else None)
 
 # ============================================
-# ROTA DE UPLOAD (limite 999MB)
+# UPLOAD
 # ============================================
 
 @app.route('/upload', methods=['POST'])
@@ -249,7 +262,7 @@ def upload():
     return redirect(url_for('dashboard'))
 
 # ============================================
-# ROTAS DE VISUALIZAÇÃO
+# VISUALIZAÇÃO (UM ÚNICO ARQUIVO)
 # ============================================
 
 @app.route('/visualizar/<int:arquivo_id>')
@@ -269,23 +282,14 @@ def visualizar(arquivo_id):
         return redirect(url_for('dashboard'))
     
     if not os.path.exists(arquivo[2]):
-        flash(f"Arquivo '{arquivo[1]}' não encontrado!")
+        flash(f"Arquivo '{arquivo[1]}' não encontrado no servidor!")
         return redirect(url_for('dashboard'))
     
-    # Imagens
-    if arquivo[3] == 'foto':
-        return send_file(arquivo[2], mimetype='image/jpeg')
-    
-    # Vídeos
-    elif arquivo[3] == 'video':
-        return send_file(arquivo[2], mimetype='video/mp4')
-    
-    # Documentos (PDF, Word, Excel, PPT)
-    else:
-        return render_template('visualizar_documento.html', 
-                             arquivo_id=arquivo[0],
-                             arquivo_nome=arquivo[1],
-                             arquivo_caminho=arquivo[2])
+    return render_template('visualizar.html', 
+                         arquivo_id=arquivo[0],
+                         arquivo_nome=arquivo[1],
+                         arquivo_caminho=arquivo[2],
+                         arquivo_tipo=arquivo[3])
 
 @app.route('/download/<int:arquivo_id>')
 def download(arquivo_id):
@@ -305,21 +309,57 @@ def download(arquivo_id):
         flash("Arquivo não encontrado!")
         return redirect(url_for('dashboard'))
 
-@app.route('/arquivo/<path:filename>')
-def servir_arquivo(filename):
+# ============================================
+# FAVORITOS
+# ============================================
+
+@app.route('/favoritos')
+def favoritos():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
-    caminho = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-    if os.path.exists(caminho):
-        return send_file(caminho)
-    else:
-        flash("Arquivo não encontrado!")
-        return redirect(url_for('dashboard'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''SELECT a.id, a.nome, a.tipo, a.tamanho 
+                 FROM favoritos f 
+                 JOIN arquivos a ON f.arquivo_id = a.id 
+                 WHERE f.usuario_id = ?''', (session['user_id'],))
+    favoritos = c.fetchall()
+    conn.close()
+    
+    return render_template('favoritos.html', favoritos=favoritos)
+
+@app.route('/favoritar/<int:arquivo_id>')
+def favoritar(arquivo_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("INSERT INTO favoritos (arquivo_id, usuario_id) VALUES (?, ?)", 
+             (arquivo_id, session['user_id']))
+    conn.commit()
+    conn.close()
+    
+    flash("Adicionado aos favoritos!")
+    return redirect(url_for('dashboard'))
 
 # ============================================
-# ROTAS DE PERFIL
+# PERFIL
 # ============================================
+
+@app.route('/perfil')
+def perfil():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT username, email, data_criacao, foto FROM users WHERE id = ?", (session['user_id'],))
+    user = c.fetchone()
+    conn.close()
+    
+    return render_template('perfil.html', user=user)
 
 @app.route('/upload-foto', methods=['POST'])
 def upload_foto():
@@ -350,21 +390,8 @@ def upload_foto():
         flash("Foto de perfil atualizada!")
     return redirect(url_for('perfil'))
 
-@app.route('/perfil')
-def perfil():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("SELECT username, email, data_criacao, foto FROM users WHERE id = ?", (session['user_id'],))
-    user = c.fetchone()
-    conn.close()
-    
-    return render_template('perfil.html', user=user)
-
 # ============================================
-# ROTAS DE LISTAGEM
+# OUTRAS ROTAS
 # ============================================
 
 @app.route('/meus-arquivos')
@@ -380,6 +407,39 @@ def meus_arquivos():
     conn.close()
     
     return render_template('meus_arquivos.html', arquivos=arquivos)
+
+@app.route('/upload-page')
+def upload_page():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('upload.html')
+
+@app.route('/pasta/<int:pasta_id>')
+def ver_pasta(pasta_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT id, nome FROM pastas WHERE id = ? AND usuario_id = ?", (pasta_id, session['user_id']))
+    pasta = c.fetchone()
+    
+    if not pasta:
+        flash("Pasta não encontrada")
+        return redirect(url_for('dashboard'))
+    
+    c.execute("SELECT id, nome, tipo, tamanho, data_upload FROM arquivos WHERE pasta_id = ? AND usuario_id = ? ORDER BY id DESC", 
+             (pasta_id, session['user_id']))
+    arquivos = c.fetchall()
+    conn.close()
+    
+    return render_template('pasta.html', pasta_nome=pasta[1], pasta_id=pasta[0], arquivos=arquivos)
+
+@app.route('/grupos')
+def grupos():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('grupos.html')
 
 # ============================================
 # INICIAR SERVIDOR
