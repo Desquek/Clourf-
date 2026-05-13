@@ -7,23 +7,111 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, sans-serif; background: #1a1a2e; min-height: 100vh; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: #1a1a2e; 
+            min-height: 100vh; 
+        }
         
-        .header { background: rgba(0,0,0,0.9); padding: 15px 20px; display: flex; align-items: center; gap: 15px; position: fixed; top: 0; left: 0; right: 0; z-index: 10; }
-        .back-btn { font-size: 24px; text-decoration: none; color: white; }
-        .file-name { color: white; flex: 1; font-size: 14px; word-break: break-all; }
-        .download-btn { background: #6C63FF; color: white; padding: 8px 16px; border-radius: 25px; text-decoration: none; font-size: 13px; }
+        .header { 
+            background: rgba(0,0,0,0.9); 
+            padding: 15px 20px; 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            right: 0; 
+            z-index: 10; 
+        }
+        .back-btn { 
+            font-size: 24px; 
+            text-decoration: none; 
+            color: white; 
+        }
+        .file-name { 
+            color: white; 
+            flex: 1; 
+            font-size: 14px; 
+            word-break: break-all; 
+        }
+        .download-btn { 
+            background: #6C63FF; 
+            color: white; 
+            padding: 8px 16px; 
+            border-radius: 25px; 
+            text-decoration: none; 
+            font-size: 13px; 
+        }
         
-        .content { padding: 80px 20px 20px; min-height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .content { 
+            padding: 80px 20px 20px; 
+            min-height: 100vh; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            flex-direction: column; 
+        }
         
-        .pdf-viewer { width: 100%; height: 85vh; border: none; border-radius: 10px; background: white; }
-        video { max-width: 100%; max-height: 80vh; border-radius: 10px; }
-        img { max-width: 100%; max-height: 80vh; border-radius: 10px; object-fit: contain; }
+        .pdf-viewer { 
+            width: 100%; 
+            height: 85vh; 
+            border: none; 
+            border-radius: 10px; 
+            background: white; 
+        }
+        video { 
+            max-width: 100%; 
+            max-height: 80vh; 
+            border-radius: 10px; 
+        }
+        img { 
+            max-width: 100%; 
+            max-height: 80vh; 
+            border-radius: 10px; 
+            object-fit: contain; 
+        }
         
-        .fallback { text-align: center; padding: 60px; background: white; border-radius: 15px; max-width: 500px; margin: 0 auto; }
-        .fallback i { font-size: 60px; color: #6C63FF; margin-bottom: 20px; }
-        .fallback p { color: #666; margin: 20px 0; }
-        .btn { display: inline-block; padding: 10px 20px; background: #6C63FF; color: white; border-radius: 25px; text-decoration: none; }
+        .fallback { 
+            text-align: center; 
+            padding: 60px; 
+            background: white; 
+            border-radius: 15px; 
+            max-width: 500px; 
+            margin: 0 auto; 
+        }
+        .fallback i { 
+            font-size: 60px; 
+            color: #6C63FF; 
+            margin-bottom: 20px; 
+        }
+        .fallback p { 
+            color: #666; 
+            margin: 20px 0; 
+        }
+        .btn { 
+            display: inline-block; 
+            padding: 10px 20px; 
+            background: #6C63FF; 
+            color: white; 
+            border-radius: 25px; 
+            text-decoration: none; 
+        }
+        
+        .error-msg {
+            text-align: center;
+            padding: 60px;
+            background: white;
+            border-radius: 15px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .error-msg i {
+            font-size: 60px;
+            color: #e74c3c;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
@@ -34,32 +122,41 @@
     </div>
     
     <div class="content">
-        {% set extensao = arquivo_nome.split('.')[-1].lower() %}
-        
-        {% if arquivo_tipo == 'foto' %}
-            <!-- Imagens -->
-            <img src="/{{ arquivo_caminho }}" alt="{{ arquivo_nome }}">
+        {% if arquivo_caminho and arquivo_tipo %}
+            {% set extensao = arquivo_nome.split('.')[-1].lower() %}
             
-        {% elif arquivo_tipo == 'video' %}
-            <!-- Vídeos -->
-            <video controls autoplay>
-                <source src="/{{ arquivo_caminho }}" type="video/mp4">
-                Seu navegador não suporta vídeo.
-            </video>
-            
-        {% elif extensao == 'pdf' %}
-            <!-- PDF -->
-            <embed src="/{{ arquivo_caminho }}" type="application/pdf" class="pdf-viewer">
-            
+            {% if arquivo_tipo == 'foto' %}
+                <!-- Imagens -->
+                <img src="/{{ arquivo_caminho }}" alt="{{ arquivo_nome }}">
+                
+            {% elif arquivo_tipo == 'video' %}
+                <!-- Vídeos -->
+                <video controls autoplay>
+                    <source src="/{{ arquivo_caminho }}" type="video/mp4">
+                    Seu navegador não suporta vídeo.
+                </video>
+                
+            {% elif extensao == 'pdf' %}
+                <!-- PDF -->
+                <embed src="/{{ arquivo_caminho }}" type="application/pdf" class="pdf-viewer">
+                
+            {% else %}
+                <!-- Outros documentos -->
+                <div class="fallback">
+                    <i class="fas fa-file-alt"></i>
+                    <h3>{{ arquivo_nome }}</h3>
+                    <p>Pré-visualização não disponível para arquivos {{ extensao|upper }}</p>
+                    <a href="/download/{{ arquivo_id }}" class="btn">
+                        <i class="fas fa-download"></i> Baixar arquivo
+                    </a>
+                </div>
+            {% endif %}
         {% else %}
-            <!-- Outros documentos -->
-            <div class="fallback">
-                <i class="fas fa-file-alt"></i>
-                <h3>{{ arquivo_nome }}</h3>
-                <p>Pré-visualização não disponível para arquivos {{ extensao|upper }}</p>
-                <a href="/download/{{ arquivo_id }}" class="btn">
-                    <i class="fas fa-download"></i> Baixar arquivo
-                </a>
+            <div class="error-msg">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>Erro ao carregar arquivo</h3>
+                <p>Arquivo não encontrado ou caminho inválido.</p>
+                <a href="/dashboard" class="btn" style="margin-top: 20px;">Voltar ao Dashboard</a>
             </div>
         {% endif %}
     </div>
