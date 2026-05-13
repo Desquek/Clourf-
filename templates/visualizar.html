@@ -98,20 +98,6 @@
             border-radius: 25px; 
             text-decoration: none; 
         }
-        
-        .error-msg {
-            text-align: center;
-            padding: 60px;
-            background: white;
-            border-radius: 15px;
-            max-width: 500px;
-            margin: 0 auto;
-        }
-        .error-msg i {
-            font-size: 60px;
-            color: #e74c3c;
-            margin-bottom: 20px;
-        }
     </style>
 </head>
 <body>
@@ -122,41 +108,32 @@
     </div>
     
     <div class="content">
-        {% if arquivo_caminho and arquivo_tipo %}
-            {% set extensao = arquivo_nome.split('.')[-1].lower() %}
+        {% set extensao = arquivo_nome.split('.')[-1].lower() %}
+        
+        {% if arquivo_tipo == 'foto' %}
+            <!-- Imagens -->
+            <img src="/uploads/{{ arquivo_nome }}" alt="{{ arquivo_nome }}">
             
-            {% if arquivo_tipo == 'foto' %}
-                <!-- Imagens -->
-                <img src="/{{ arquivo_caminho }}" alt="{{ arquivo_nome }}">
-                
-            {% elif arquivo_tipo == 'video' %}
-                <!-- Vídeos -->
-                <video controls autoplay>
-                    <source src="/{{ arquivo_caminho }}" type="video/mp4">
-                    Seu navegador não suporta vídeo.
-                </video>
-                
-            {% elif extensao == 'pdf' %}
-                <!-- PDF -->
-                <embed src="/{{ arquivo_caminho }}" type="application/pdf" class="pdf-viewer">
-                
-            {% else %}
-                <!-- Outros documentos -->
-                <div class="fallback">
-                    <i class="fas fa-file-alt"></i>
-                    <h3>{{ arquivo_nome }}</h3>
-                    <p>Pré-visualização não disponível para arquivos {{ extensao|upper }}</p>
-                    <a href="/download/{{ arquivo_id }}" class="btn">
-                        <i class="fas fa-download"></i> Baixar arquivo
-                    </a>
-                </div>
-            {% endif %}
+        {% elif arquivo_tipo == 'video' %}
+            <!-- Vídeos -->
+            <video controls autoplay>
+                <source src="/uploads/{{ arquivo_nome }}" type="video/mp4">
+                Seu navegador não suporta vídeo.
+            </video>
+            
+        {% elif extensao == 'pdf' %}
+            <!-- PDF -->
+            <embed src="/uploads/{{ arquivo_nome }}" type="application/pdf" class="pdf-viewer">
+            
         {% else %}
-            <div class="error-msg">
-                <i class="fas fa-exclamation-triangle"></i>
-                <h3>Erro ao carregar arquivo</h3>
-                <p>Arquivo não encontrado ou caminho inválido.</p>
-                <a href="/dashboard" class="btn" style="margin-top: 20px;">Voltar ao Dashboard</a>
+            <!-- Outros documentos -->
+            <div class="fallback">
+                <i class="fas fa-file-alt"></i>
+                <h3>{{ arquivo_nome }}</h3>
+                <p>Pré-visualização não disponível para arquivos {{ extensao|upper }}</p>
+                <a href="/download/{{ arquivo_id }}" class="btn">
+                    <i class="fas fa-download"></i> Baixar arquivo
+                </a>
             </div>
         {% endif %}
     </div>
