@@ -236,6 +236,22 @@ def upload():
     return redirect(url_for('dashboard'))
 
 # ============================================
+# ROTA PARA SERVIR ARQUIVOS (IMAGENS, VÍDEOS, PDF)
+# ============================================
+
+@app.route('/uploads/<path:filename>')
+def servir_arquivo(filename):
+    """Rota para servir arquivos estáticos (imagens, vídeos, PDFs)"""
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    caminho = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    if os.path.exists(caminho):
+        return send_file(caminho)
+    else:
+        return "Arquivo não encontrado", 404
+
+# ============================================
 # VISUALIZAR (IMAGEM, VIDEO, PDF, DOCUMENTOS)
 # ============================================
 
@@ -246,7 +262,7 @@ def visualizar(arquivo_id):
     
     conn = get_db()
     c = conn.cursor()
-    c.execute("SELECT id, nome, caminho, tipo FROM arquivos WHERE id = ? AND usuario_id = ?", 
+    c.execute("SELECT id, nome, tipo FROM arquivos WHERE id = ? AND usuario_id = ?", 
              (arquivo_id, session['user_id']))
     arquivo = c.fetchone()
     conn.close()
@@ -255,16 +271,10 @@ def visualizar(arquivo_id):
         flash("Arquivo não encontrado!")
         return redirect(url_for('dashboard'))
     
-    # Verificar se o arquivo existe fisicamente
-    if not os.path.exists(arquivo[2]):
-        flash(f"Arquivo '{arquivo[1]}' não encontrado no servidor! Faça upload novamente.")
-        return redirect(url_for('dashboard'))
-    
     return render_template('visualizar.html', 
                          arquivo_id=arquivo[0],
                          arquivo_nome=arquivo[1],
-                         arquivo_caminho=arquivo[2],
-                         arquivo_tipo=arquivo[3])
+                         arquivo_tipo=arquivo[2])
 
 @app.route('/download/<int:arquivo_id>')
 def download(arquivo_id):
