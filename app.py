@@ -206,12 +206,14 @@ def upload():
     
     filename = secure_filename(file.filename)
     
-    # Identificar tipo
+    # Identificar tipo (CORRIGIDO PARA PDF)
     tipo = 'documento'
     if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')):
         tipo = 'foto'
     elif filename.lower().endswith(('.mp4', '.avi', '.mov', '.mkv', '.webm')):
         tipo = 'video'
+    elif filename.lower().endswith('.pdf'):
+        tipo = 'pdf'
     
     # Pasta destino
     pasta_nome = 'Documentos'
@@ -236,12 +238,11 @@ def upload():
     return redirect(url_for('dashboard'))
 
 # ============================================
-# ROTA PARA SERVIR ARQUIVOS (IMAGENS, VÍDEOS, PDF)
+# ROTA PARA SERVIR ARQUIVOS
 # ============================================
 
 @app.route('/uploads/<path:filename>')
 def servir_arquivo(filename):
-    """Rota para servir arquivos estáticos (imagens, vídeos, PDFs)"""
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
@@ -252,7 +253,7 @@ def servir_arquivo(filename):
         return "Arquivo não encontrado", 404
 
 # ============================================
-# VISUALIZAR (IMAGEM, VIDEO, PDF, DOCUMENTOS)
+# VISUALIZAR (TUDO DENTRO DO SITE)
 # ============================================
 
 @app.route('/visualizar/<int:arquivo_id>')
