@@ -3,125 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clourf - Dashboard</title>
+    <title>{{ arquivo_nome }} - Clourf</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, sans-serif; background: #f5f7fb; padding-bottom: 70px; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: #1a1a2e; 
+            min-height: 100vh; 
+        }
         
-        .header { background: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
-        .user-avatar { width: 50px; height: 50px; border-radius: 25px; object-fit: cover; }
+        .header { 
+            background: rgba(0,0,0,0.9); 
+            padding: 15px 20px; 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            right: 0; 
+            z-index: 10; 
+        }
+        .back-btn { 
+            font-size: 24px; 
+            text-decoration: none; 
+            color: white; 
+        }
+        .file-name { 
+            color: white; 
+            flex: 1; 
+            font-size: 14px; 
+            word-break: break-all; 
+        }
+        .download-btn { 
+            background: #6C63FF; 
+            color: white; 
+            padding: 8px 16px; 
+            border-radius: 25px; 
+            text-decoration: none; 
+            font-size: 13px; 
+        }
         
-        .container { padding: 20px; }
+        .content { 
+            padding: 80px 20px 20px; 
+            min-height: 100vh; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            flex-direction: column; 
+        }
         
-        .upload-card { background: white; border-radius: 20px; padding: 30px; text-align: center; margin-bottom: 25px; }
-        .upload-card i { font-size: 60px; color: #6C63FF; }
-        .file-input { display: none; }
-        .upload-label { background: #6C63FF; color: white; padding: 12px 25px; border-radius: 30px; cursor: pointer; display: inline-block; margin: 15px 0; }
-        .upload-btn { background: #28a745; color: white; border: none; padding: 12px 25px; border-radius: 30px; cursor: pointer; }
+        .pdf-viewer { 
+            width: 100%; 
+            height: 85vh; 
+            border: none; 
+            border-radius: 10px; 
+            background: white; 
+        }
+        video { 
+            max-width: 100%; 
+            max-height: 80vh; 
+            border-radius: 10px; 
+        }
+        img { 
+            max-width: 100%; 
+            max-height: 80vh; 
+            border-radius: 10px; 
+            object-fit: contain; 
+        }
         
-        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
-        .stat-card { background: white; padding: 15px; border-radius: 15px; text-align: center; }
-        .stat-number { font-size: 28px; font-weight: bold; color: #6C63FF; }
+        .doc-viewer {
+            width: 100%;
+            height: 85vh;
+            border: none;
+            border-radius: 10px;
+        }
         
-        .arquivo-item { background: white; padding: 12px 15px; border-radius: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 15px; text-decoration: none; color: inherit; }
-        .arquivo-icon { font-size: 24px; width: 40px; }
-        .arquivo-info { flex: 1; }
-        .arquivo-nome { font-weight: 500; }
-        .arquivo-tamanho { font-size: 12px; color: #888; }
-        
-        .bottom-menu { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 12px 20px; border-top-left-radius: 20px; border-top-right-radius: 20px; }
-        .menu-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #aaa; font-size: 12px; }
-        .menu-item i { font-size: 22px; }
-        .menu-item.active { color: #6C63FF; }
-        
-        .alert { background: #d4edda; color: #155724; padding: 12px; border-radius: 10px; margin-bottom: 15px; }
+        .fallback { 
+            text-align: center; 
+            padding: 60px; 
+            background: white; 
+            border-radius: 15px; 
+            max-width: 500px; 
+            margin: 0 auto; 
+        }
+        .fallback i { 
+            font-size: 60px; 
+            color: #6C63FF; 
+            margin-bottom: 20px; 
+        }
+        .fallback p { 
+            color: #666; 
+            margin: 20px 0; 
+        }
+        .btn { 
+            display: inline-block; 
+            padding: 10px 20px; 
+            background: #6C63FF; 
+            color: white; 
+            border-radius: 25px; 
+            text-decoration: none; 
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <div>
-            <h2>Olá, {{ session['username'] }}</h2>
-            <p>Clourf</p>
-        </div>
-        {% if user_foto %}
-            <img src="{{ user_foto }}" class="user-avatar">
+        <a href="javascript:history.back()" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+        <div class="file-name">{{ arquivo_nome }}</div>
+        <a href="/download/{{ arquivo_id }}" class="download-btn"><i class="fas fa-download"></i> Baixar</a>
+    </div>
+    
+    <div class="content">
+        {% set extensao = arquivo_nome.split('.')[-1].lower() %}
+        
+        {% if arquivo_tipo == 'foto' %}
+            <!-- Imagens - mostra dentro do site -->
+            <img src="/uploads/{{ arquivo_nome }}" alt="{{ arquivo_nome }}">
+            
+        {% elif arquivo_tipo == 'video' %}
+            <!-- Vídeos - player dentro do site -->
+            <video controls autoplay>
+                <source src="/uploads/{{ arquivo_nome }}" type="video/mp4">
+                Seu navegador não suporta vídeo.
+            </video>
+            
+        {% elif arquivo_tipo == 'pdf' or extensao == 'pdf' %}
+            <!-- PDF - visualiza dentro do site -->
+            <embed src="/uploads/{{ arquivo_nome }}" type="application/pdf" class="pdf-viewer">
+            
+        {% elif extensao in ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt'] %}
+            <!-- Documentos Office - Google Docs dentro do site -->
+            <iframe class="doc-viewer" src="https://docs.google.com/gview?url={{ request.url_root }}uploads/{{ arquivo_nome }}&embedded=true"></iframe>
+            
         {% else %}
-            <div class="user-avatar" style="background: #6C63FF; display: flex; align-items: center; justify-content: center;"><i class="fas fa-user" style="color: white;"></i></div>
+            <!-- Outros formatos -->
+            <div class="fallback">
+                <i class="fas fa-file-alt"></i>
+                <h3>{{ arquivo_nome }}</h3>
+                <p>Pré-visualização não disponível para arquivos {{ extensao|upper }}</p>
+                <a href="/download/{{ arquivo_id }}" class="btn">
+                    <i class="fas fa-download"></i> Baixar arquivo
+                </a>
+            </div>
         {% endif %}
     </div>
-    
-    <div class="container">
-        {% with messages = get_flashed_messages() %}
-            {% for message in messages %}
-                <div class="alert">{{ message }}</div>
-            {% endfor %}
-        {% endwith %}
-        
-        <div class="upload-card">
-            <i class="fas fa-cloud-upload-alt"></i>
-            <h3>Enviar Arquivo</h3>
-            <form method="POST" action="/upload" enctype="multipart/form-data">
-                <input type="file" name="file" id="file" class="file-input" required>
-                <label for="file" class="upload-label"><i class="fas fa-folder-open"></i> Escolher</label>
-                <br>
-                <button type="submit" class="upload-btn"><i class="fas fa-upload"></i> Enviar</button>
-            </form>
-        </div>
-        
-        <div class="stats">
-            <div class="stat-card">
-                <div class="stat-number">{{ total_arquivos }}</div>
-                <div>Arquivos</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">{{ imagens_count }}</div>
-                <div>Imagens</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">{{ videos_count }}</div>
-                <div>Vídeos</div>
-            </div>
-        </div>
-        
-        <h3>Arquivos Recentes</h3>
-        {% for arquivo in arquivos[:5] %}
-        <a href="/visualizar/{{ arquivo[0] }}" class="arquivo-item">
-            <div class="arquivo-icon">
-                {% if arquivo[2] == 'foto' %}
-                    <i class="fas fa-image"></i>
-                {% elif arquivo[2] == 'video' %}
-                    <i class="fas fa-video"></i>
-                {% elif arquivo[2] == 'pdf' %}
-                    <i class="fas fa-file-pdf"></i>
-                {% else %}
-                    <i class="fas fa-file"></i>
-                {% endif %}
-            </div>
-            <div class="arquivo-info">
-                <div class="arquivo-nome">{{ arquivo[1] }}</div>
-                <div class="arquivo-tamanho">{{ arquivo[3] }} MB • {{ arquivo[4][:10] }}</div>
-            </div>
-            <i class="fas fa-chevron-right"></i>
-        </a>
-        {% else %}
-        <p style="text-align:center; padding:40px;">Nenhum arquivo ainda. Envie o primeiro!</p>
-        {% endfor %}
-    </div>
-    
-    <div class="bottom-menu">
-        <a href="/dashboard" class="menu-item active"><i class="fas fa-home"></i><span>Início</span></a>
-        <a href="/meus-arquivos" class="menu-item"><i class="fas fa-folder"></i><span>Arquivos</span></a>
-        <a href="/favoritos" class="menu-item"><i class="fas fa-star"></i><span>Favoritos</span></a>
-        <a href="/perfil" class="menu-item"><i class="fas fa-user"></i><span>Perfil</span></a>
-    </div>
-    
-    <script>
-        document.getElementById('file').addEventListener('change', function(e) {
-            if(e.target.files.length > 0) {
-                alert('Arquivo: ' + e.target.files[0].name);
-            }
-        });
-    </script>
 </body>
 </html>
