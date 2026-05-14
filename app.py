@@ -173,6 +173,10 @@ def dashboard():
     c.execute("SELECT COUNT(*) FROM arquivos WHERE usuario_id = ? AND tipo = 'documento'", (session['user_id'],))
     documentos_count = c.fetchone()[0]
     
+    # Contar PDFs separadamente
+    c.execute("SELECT COUNT(*) FROM arquivos WHERE usuario_id = ? AND tipo = 'pdf'", (session['user_id'],))
+    pdf_count = c.fetchone()[0]
+    
     c.execute("SELECT foto FROM users WHERE id = ?", (session['user_id'],))
     user = c.fetchone()
     
@@ -183,7 +187,7 @@ def dashboard():
                          arquivos=arquivos,
                          imagens_count=imagens_count,
                          videos_count=videos_count,
-                         documentos_count=documentos_count,
+                         documentos_count=documentos_count + pdf_count,
                          user_foto=user[0] if user else None)
 
 # ============================================
@@ -206,7 +210,7 @@ def upload():
     
     filename = secure_filename(file.filename)
     
-    # Identificar tipo (CORRIGIDO PARA PDF)
+    # Identificar tipo
     tipo = 'documento'
     if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')):
         tipo = 'foto'
