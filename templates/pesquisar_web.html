@@ -1,32 +1,88 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt">
 <head>
-    <title>Pesquisar - Clourf</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pesquisa Web - Clourf</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: sans-serif; padding: 20px; }
-        .search-box { margin: 20px 0; }
-        input { padding: 10px; width: 300px; }
-        button { padding: 10px 20px; background: #6C63FF; color: white; border: none; }
-        .resultado { margin: 20px 0; padding: 15px; background: white; border-radius: 10px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, sans-serif; background: #f5f7fb; padding-bottom: 70px; }
+        
+        .header { background: white; padding: 20px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #eee; }
+        .back-btn { font-size: 24px; text-decoration: none; color: #6C63FF; }
+        .header h1 { font-size: 20px; }
+        
+        .search-box { background: white; padding: 20px; margin: 20px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .search-input { display: flex; gap: 10px; }
+        .search-input input { flex: 1; padding: 14px; border: 1px solid #ddd; border-radius: 30px; font-size: 16px; }
+        .search-input button { background: #6C63FF; color: white; border: none; padding: 14px 25px; border-radius: 30px; cursor: pointer; font-size: 16px; }
+        
+        .resultados { margin: 20px; }
+        .resultado-item { background: white; padding: 20px; border-radius: 15px; margin-bottom: 15px; box-shadow: 0 1px 5px rgba(0,0,0,0.05); }
+        .resultado-titulo { margin-bottom: 8px; }
+        .resultado-titulo a { color: #1a0dab; text-decoration: none; font-size: 18px; font-weight: 500; }
+        .resultado-url { color: #006621; font-size: 12px; margin-bottom: 8px; word-break: break-all; }
+        .resultado-desc { color: #545454; font-size: 14px; line-height: 1.4; }
+        
+        .empty { text-align: center; padding: 60px; color: #888; background: white; border-radius: 15px; margin: 20px; }
+        .empty i { font-size: 48px; margin-bottom: 15px; color: #ccc; }
+        
+        .bottom-menu { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 12px 20px; border-top: 1px solid #eee; }
+        .menu-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #aaa; font-size: 12px; }
+        .menu-item i { font-size: 22px; }
+        .menu-item.active { color: #6C63FF; }
+        
+        .info { font-size: 12px; color: #666; margin-top: 10px; text-align: center; }
     </style>
 </head>
 <body>
-    <a href="/dashboard">← Voltar</a>
-    <h1>Pesquisar na Web</h1>
+    <div class="header">
+        <a href="/dashboard" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+        <h1><i class="fas fa-globe"></i> Pesquisa Web</h1>
+    </div>
     
-    <form method="GET" class="search-box">
-        <input type="text" name="q" placeholder="Digite sua busca..." value="{{ query }}">
-        <button type="submit">Buscar</button>
-    </form>
+    <div class="search-box">
+        <form method="GET" action="/pesquisar-web" class="search-input">
+            <input type="text" name="q" placeholder="Pesquisar na web..." value="{{ query }}">
+            <button type="submit"><i class="fas fa-search"></i> Buscar</button>
+        </form>
+    </div>
     
-    {% if resultados %}
-        {% for r in resultados %}
-        <div class="resultado">
-            <a href="{{ r.url }}" target="_blank"><strong>{{ r.title }}</strong></a><br>
-            <small>{{ r.url[:80] }}</small>
-            <p>{{ r.content }}...</p>
-        </div>
-        {% endfor %}
-    {% endif %}
+    <div class="resultados">
+        {% if query %}
+            {% if resultados %}
+                <p style="margin-bottom: 15px; color: #666; padding-left: 5px;">🔍 {{ resultados|length }} resultado(s) para "{{ query }}"</p>
+                {% for r in resultados %}
+                <div class="resultado-item">
+                    <div class="resultado-titulo">
+                        <a href="{{ r.url }}" target="_blank" rel="noopener noreferrer">{{ r.title }}</a>
+                    </div>
+                    <div class="resultado-url">{{ r.url[:80] }}{% if r.url|length > 80 %}...{% endif %}</div>
+                    <div class="resultado-desc">{{ r.content }}...</div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty">
+                    <i class="fas fa-search"></i>
+                    <p>Nenhum resultado encontrado para <strong>"{{ query }}"</strong></p>
+                    <p class="info">Tente usar palavras diferentes ou verifique a ligação à internet.</p>
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="empty">
+                <i class="fas fa-globe"></i>
+                <p>Digite algo na barra acima para pesquisar na web</p>
+                <p class="info">Ex: notícias, receitas, tecnologia...</p>
+            </div>
+        {% endif %}
+    </div>
+    
+    <div class="bottom-menu">
+        <a href="/dashboard" class="menu-item"><i class="fas fa-home"></i><span>Início</span></a>
+        <a href="/meus-arquivos" class="menu-item"><i class="fas fa-folder"></i><span>Arquivos</span></a>
+        <a href="/pesquisar-web" class="menu-item active"><i class="fas fa-search"></i><span>Web</span></a>
+        <a href="/perfil" class="menu-item"><i class="fas fa-user"></i><span>Perfil</span></a>
+    </div>
 </body>
 </html>
