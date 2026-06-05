@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pesquisar - Clourf</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .search-box { margin: 20px 0; }
+        input { padding: 10px; width: 300px; }
+        button { padding: 10px 20px; background: #6C63FF; color: white; border: none; }
+        .resultado { margin: 20px 0; padding: 15px; background: white; border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <a href="/dashboard">← Voltar</a>
+    <h1>Pesquisar na Web</h1>
+    
+    <form method="GET" class="search-box">
+        <input type="text" name="q" placeholder="Digite sua busca..." value="{{ query }}">
+        <button type="submit">Buscar</button>
+    </form>
+    
+    {% if resultados %}
+        {% for r in resultados %}
+        <div class="resultado">
+            <a href="{{ r.url }}" target="_blank"><strong>{{ r.title }}</strong></a><br>
+            <small>{{ r.url[:80] }}</small>
+            <p>{{ r.content }}...</p>
+        </div>
+        {% endfor %}
+    {% endif %}
+</body>
+</html>
