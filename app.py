@@ -402,7 +402,6 @@ def upload_page():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     return render_template('upload.html')
-
 @app.route('/pesquisar-web')
 def pesquisar_web():
     if 'user_id' not in session:
@@ -415,6 +414,10 @@ def pesquisar_web():
     ACCOUNT_ID = "aa6afd44dbad7c50b297ed6ddf481d9b"
     INSTANCE_ID = "a0078fecc7350053df010782b4da912f"
     TOKEN = os.environ.get("CLOUDFLARE_AI_TOKEN")
+    
+    # Verificar se o token existe
+    if not TOKEN:
+        return "Erro: Token da Cloudflare não encontrado no Render", 500
     
     url = f"https://api.cloudflare.com/client/v4/accounts/{ACCOUNT_ID}/ai-search/instances/{INSTANCE_ID}/search"
     
@@ -429,22 +432,28 @@ def pesquisar_web():
     
     try:
         response = requests.post(url, json=payload, headers=headers)
+        
+        # Verificar status da resposta
+        if response.status_code != 200:
+            return f"Erro API Cloudflare: Status {response.status_code} - {response.text}", 500
+        
         data = response.json()
         
+        if not data.get('success'):
+            return f"Erro na resposta: {data}", 500
+        
         resultados = []
-        if data.get('success'):
-            for chunk in data.get('result', {}).get('chunks', []):
-                resultados.append({
-                    'title': chunk.get('metadata', {}).get('title', 'Sem título'),
-                    'url': chunk.get('metadata', {}).get('url', '#'),
-                    'content': chunk.get('content', '')[:200]
-                })
+        for chunk in data.get('result', {}).get('chunks', []):
+            resultados.append({
+                'title': chunk.get('metadata', {}).get('title', 'Sem título'),
+                'url': chunk.get('metadata', {}).get('url', '#'),
+                'content': chunk.get('content', '')[:200]
+            })
         
         return render_template('pesquisar_web.html', query=query, resultados=resultados)
     
     except Exception as e:
-        flash(f"Erro: {str(e)}")
-        return render_template('pesquisar_web.html', query=query, resultados=[])
+        return f"Erro exceção: {str(e)}", 500
 # ============================================
 # INICIAR SERVIDOR
 # ============================================
