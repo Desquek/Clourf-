@@ -2,34 +2,37 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Clourf - Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, sans-serif; background: #f5f7fb; padding-bottom: 70px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fb; padding-bottom: 70px; }
         
         .header { background: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .user-avatar { width: 50px; height: 50px; border-radius: 25px; object-fit: cover; }
-        .user-avatar-placeholder { width: 50px; height: 50px; border-radius: 25px; background: #6C63FF; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; }
+        .header h2 { font-size: 22px; }
+        .header p { color: #888; font-size: 14px; margin-top: 5px; }
+        .user-avatar { width: 50px; height: 50px; border-radius: 25px; object-fit: cover; cursor: pointer; }
+        .user-avatar-placeholder { width: 50px; height: 50px; border-radius: 25px; background: #6C63FF; display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; font-size: 24px; }
         
         .container { padding: 20px; }
         
-        .upload-card { background: white; border-radius: 20px; padding: 30px; text-align: center; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .upload-card i { font-size: 60px; color: #6C63FF; margin-bottom: 15px; }
+        .upload-card { background: white; border-radius: 20px; padding: 25px; text-align: center; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .upload-card i { font-size: 50px; color: #6C63FF; margin-bottom: 15px; }
+        .upload-card h3 { margin-bottom: 10px; }
+        .upload-card p { color: #888; font-size: 14px; margin-bottom: 20px; }
         .file-input { display: none; }
-        .upload-label { background: #6C63FF; color: white; padding: 12px 25px; border-radius: 30px; cursor: pointer; display: inline-block; margin: 15px 0; }
-        .upload-btn { background: #28a745; color: white; border: none; padding: 12px 25px; border-radius: 30px; cursor: pointer; }
+        .upload-label { background: #6C63FF; color: white; padding: 12px 25px; border-radius: 30px; cursor: pointer; display: inline-block; margin-bottom: 15px; }
+        .upload-btn { background: #28a745; color: white; border: none; padding: 12px 25px; border-radius: 30px; cursor: pointer; font-size: 16px; }
         
         .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
         .stat-card { background: white; padding: 15px; border-radius: 15px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .stat-number { font-size: 28px; font-weight: bold; color: #6C63FF; }
         .stat-label { font-size: 12px; color: #888; margin-top: 5px; }
         
-        .section-title { margin: 20px 0 15px; font-size: 18px; }
+        .section-title { margin: 20px 0 15px; font-size: 18px; font-weight: 600; }
         
-        .arquivo-item { background: white; padding: 12px 15px; border-radius: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 15px; text-decoration: none; color: inherit; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: transform 0.2s; }
-        .arquivo-item:hover { transform: scale(0.98); background: #f9f9f9; }
+        .arquivo-item { background: white; padding: 12px 15px; border-radius: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 15px; text-decoration: none; color: inherit; box-shadow: 0 1px 5px rgba(0,0,0,0.05); }
         .arquivo-icon { font-size: 24px; width: 40px; text-align: center; }
         .fa-file-image { color: #2ecc71; }
         .fa-file-video { color: #e67e22; }
@@ -39,28 +42,42 @@
         .arquivo-nome { font-weight: 500; font-size: 14px; }
         .arquivo-tamanho { font-size: 12px; color: #888; margin-top: 4px; }
         
-        .bottom-menu { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 12px 20px; border-top-left-radius: 20px; border-top-right-radius: 20px; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
-        .menu-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #aaa; font-size: 12px; transition: color 0.2s; }
+        .empty-state { text-align: center; padding: 50px; background: white; border-radius: 15px; color: #888; }
+        .empty-state i { font-size: 48px; margin-bottom: 15px; color: #ccc; }
+        
+        .bottom-menu { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 12px 20px; border-top: 1px solid #eee; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
+        .menu-item { display: flex; flex-direction: column; align-items: center; gap: 5px; text-decoration: none; color: #aaa; font-size: 12px; transition: color 0.2s; }
         .menu-item i { font-size: 22px; }
         .menu-item.active { color: #6C63FF; }
         .menu-item:hover { color: #6C63FF; }
         
         .alert { background: #d4edda; color: #155724; padding: 12px; border-radius: 10px; margin-bottom: 15px; border-left: 4px solid #28a745; }
-        .empty-state { text-align: center; padding: 40px; background: white; border-radius: 15px; color: #888; }
-        .empty-state i { font-size: 48px; margin-bottom: 15px; color: #ccc; }
+        
+        .dropdown-menu { display: none; position: absolute; right: 0; top: 60px; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); min-width: 160px; z-index: 100; overflow: hidden; }
+        .dropdown-menu a { display: block; padding: 12px 20px; text-decoration: none; color: #333; border-bottom: 1px solid #eee; }
+        .dropdown-menu a:hover { background: #f5f5f5; }
+        .dropdown-menu a i { width: 22px; margin-right: 10px; }
+        
+        .avatar-container { position: relative; }
     </style>
 </head>
 <body>
     <div class="header">
         <div>
             <h2>Olá, {{ session['username'] }}!</h2>
-            <p style="color: #888; font-size: 14px;">Bem-vindo ao Clourf</p>
+            <p>Clourf</p>
         </div>
-        {% if user_foto %}
-            <img src="{{ user_foto }}" class="user-avatar">
-        {% else %}
-            <div class="user-avatar-placeholder"><i class="fas fa-user"></i></div>
-        {% endif %}
+        <div class="avatar-container">
+            {% if user_foto %}
+                <img src="{{ user_foto }}" class="user-avatar" onclick="toggleMenu()">
+            {% else %}
+                <div class="user-avatar-placeholder" onclick="toggleMenu()"><i class="fas fa-user"></i></div>
+            {% endif %}
+            <div id="dropdownMenu" class="dropdown-menu">
+                <a href="/perfil"><i class="fas fa-user"></i> Meu Perfil</a>
+                <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
+            </div>
+        </div>
     </div>
     
     <div class="container">
@@ -73,7 +90,7 @@
         <div class="upload-card">
             <i class="fas fa-cloud-upload-alt"></i>
             <h3>Enviar Arquivo</h3>
-            <p style="color: #888; margin-bottom: 15px;">Até 999MB por arquivo</p>
+            <p>Até 50MB por arquivo</p>
             <form method="POST" action="/upload" enctype="multipart/form-data">
                 <input type="file" name="file" id="file" class="file-input" required>
                 <label for="file" class="upload-label"><i class="fas fa-folder-open"></i> Escolher arquivo</label>
@@ -138,16 +155,28 @@
     <div class="bottom-menu">
         <a href="/dashboard" class="menu-item active"><i class="fas fa-home"></i><span>Início</span></a>
         <a href="/meus-arquivos" class="menu-item"><i class="fas fa-folder"></i><span>Arquivos</span></a>
-        <a href="/favoritos" class="menu-item"><i class="fas fa-star"></i><span>Favoritos</span></a>
+        <a href="/pesquisar-web" class="menu-item"><i class="fas fa-search"></i><span>Web</span></a>
         <a href="/perfil" class="menu-item"><i class="fas fa-user"></i><span>Perfil</span></a>
     </div>
-    
+
     <script>
+        function toggleMenu() {
+            var menu = document.getElementById('dropdownMenu');
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        document.addEventListener('click', function(event) {
+            var menu = document.getElementById('dropdownMenu');
+            var avatar = document.querySelector('.avatar-container');
+            if (avatar && !avatar.contains(event.target) && menu) {
+                menu.style.display = 'none';
+            }
+        });
+        
         document.getElementById('file').addEventListener('change', function(e) {
             if(e.target.files.length > 0) {
                 var nome = e.target.files[0].name;
-                var tamanho = (e.target.files[0].size / 1024 / 1024).toFixed(2);
-                alert('Arquivo selecionado: ' + nome + '\nTamanho: ' + tamanho + ' MB');
+                alert('Arquivo: ' + nome);
             }
         });
     </script>
