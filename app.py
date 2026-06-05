@@ -409,11 +409,42 @@ def pesquisar_web():
         return redirect(url_for('login'))
     
     query = request.args.get('q', '')
+    if not query:
+        return render_template('pesquisar_web.html', query='', resultados=[])
     
-    if query:
-        return redirect(f'https://www.google.com/search?q={query}')
+    ACCOUNT_ID = "aa6afd44dbad7c50b297ed6ddf481d9b"
+    INSTANCE_ID = "a0078fecc7350053df010782b4da912f"
+    TOKEN = os.environ.get("CLOUDFLARE_AI_TOKEN")
     
-    return render_template('pesquisar_web.html', query='')
+    url = f"https://api.cloudflare.com/client/v4/accounts/{ACCOUNT_ID}/ai-search/instances/{INSTANCE_ID}/search"
+    
+    headers = {
+        "Authorization": f"Bearer {TOKEN}",
+        "Content-Type": "application/json"
+    }
+    
+    payload = {
+        "messages": [{"role": "user", "content": query}]
+    }
+    
+    try:
+        response = requests.post(url, json=payload, headers=headers)
+        data = response.json()
+        
+        resultados = []
+        if data.get('success'):
+            for chunk in data.get('result', {}).get('chunks', []):
+                resultados.append({
+                    'title': chunk.get('metadata', {}).get('title', 'Sem título'),
+                    'url': chunk.get('metadata', {}).get('url', '#'),
+                    'content': chunk.get('content', '')[:200]
+                })
+        
+        return render_template('pesquisar_web.html', query=query, resultados=resultados)
+    
+    except Exception as e:
+        flash(f"Erro: {str(e)}")
+        return render_template('pesquisar_web.html', query=query, resultados=[])
 # ============================================
 # INICIAR SERVIDOR
 # ============================================
