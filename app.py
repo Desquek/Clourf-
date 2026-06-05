@@ -403,6 +403,17 @@ def upload_page():
         return redirect(url_for('login'))
     return render_template('upload.html')
 
+@app.route('/pesquisar-web')
+def pesquisar_web():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    query = request.args.get('q', '')
+    
+    if query:
+        return redirect(f'https://www.google.com/search?q={query}')
+    
+    return render_template('pesquisar_web.html', query='')
 # ============================================
 # INICIAR SERVIDOR
 # ============================================
