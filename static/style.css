@@ -6,8 +6,8 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #f5f7fb;
-    color: #333;
+    background: #F0F4FF;
+    color: #1a1a2e;
     line-height: 1.6;
 }
 
@@ -37,7 +37,7 @@ nav {
 .logo {
     font-size: 1.5rem;
     font-weight: bold;
-    color: #6C63FF;
+    color: #2563EB;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -56,12 +56,12 @@ nav {
 
 .nav-links a:hover,
 .nav-links a.active {
-    color: #6C63FF;
+    color: #2563EB;
 }
 
 /* Botões */
 .btn-primary {
-    background: #6C63FF;
+    background: #2563EB;
     color: white !important;
     padding: 0.6rem 1.2rem;
     border-radius: 25px;
@@ -74,15 +74,15 @@ nav {
 }
 
 .btn-primary:hover {
-    background: #5a52e0;
+    background: #1D4ED8;
 }
 
 .btn-secondary {
     background: transparent;
-    color: #6C63FF;
+    color: #2563EB;
     padding: 0.6rem 1.2rem;
     border-radius: 25px;
-    border: 2px solid #6C63FF;
+    border: 2px solid #2563EB;
     cursor: pointer;
     transition: all 0.3s;
     display: inline-flex;
@@ -91,7 +91,7 @@ nav {
 }
 
 .btn-secondary:hover {
-    background: #6C63FF;
+    background: #2563EB;
     color: white;
 }
 
@@ -109,7 +109,7 @@ nav {
 }
 
 .destaque {
-    color: #6C63FF;
+    color: #2563EB;
 }
 
 .hero p {
@@ -159,7 +159,7 @@ nav {
 
 .categoria-card i {
     font-size: 2rem;
-    color: #6C63FF;
+    color: #2563EB;
     margin-bottom: 0.5rem;
 }
 
@@ -232,7 +232,7 @@ nav {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #E8F0FE;
 }
 
 .auth-container {
@@ -245,14 +245,14 @@ nav {
     background: white;
     padding: 2rem;
     border-radius: 20px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    box-shadow: 0 20px 40px rgba(37, 99, 235, 0.1);
 }
 
 .auth-logo {
     text-align: center;
     font-size: 1.5rem;
     font-weight: bold;
-    color: #6C63FF;
+    color: #2563EB;
     margin-bottom: 1.5rem;
 }
 
@@ -293,7 +293,7 @@ nav {
 }
 
 .auth-link a {
-    color: #6C63FF;
+    color: #2563EB;
     font-weight: bold;
 }
 
@@ -338,7 +338,7 @@ nav {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    color: #6C63FF;
+    color: #2563EB;
     margin-bottom: 1.5rem;
 }
 
@@ -350,8 +350,8 @@ nav {
 }
 
 .categoria-badge {
-    background: #6C63FF20;
-    color: #6C63FF;
+    background: #2563EB20;
+    color: #2563EB;
     padding: 0.3rem 0.8rem;
     border-radius: 20px;
     font-size: 0.8rem;
@@ -385,7 +385,7 @@ nav {
 }
 
 .problema-contato {
-    background: #f8f9fa;
+    background: #F0F4FF;
     padding: 1rem;
     border-radius: 10px;
     margin-bottom: 1.5rem;
