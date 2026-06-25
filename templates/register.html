@@ -3,40 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registrar - Clourf</title>
+    <title>Criar conta - Clourf</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body class="auth-page">
-    <div class="auth-wrapper">
-        <div class="auth-box">
-            <div class="auth-header">
-                <i class="fas fa-cloud"></i>
-                <h1>Clourf</h1>
-                <p>Crie sua conta gratuitamente</p>
-            </div>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-logo"><i class="fas fa-handshake"></i> Clourf</div>
+            <h2>Criar conta</h2>
             
             {% with messages = get_flashed_messages() %}
                 {% if messages %}
-                    {% for message in messages %}
-                        <div class="alert alert-error">{{ message }}</div>
+                    {% for msg in messages %}
+                        <div class="alert">{{ msg }}</div>
                     {% endfor %}
                 {% endif %}
             {% endwith %}
             
-            <form method="POST" class="auth-form">
-                <div class="input-group">
-                    <i class="fas fa-user"></i>
-                    <input type="text" name="username" placeholder="Usuário" required>
+            <form method="POST">
+                <div class="form-group">
+                    <label>Nome completo</label>
+                    <input type="text" name="nome" placeholder="Seu nome" required>
                 </div>
-                <div class="input-group">
-                    <i class="fas fa-lock"></i>
-                    <input type="password" name="password" placeholder="Senha" required>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" placeholder="exemplo@email.com" required>
                 </div>
-                <button type="submit" class="auth-btn">Criar Conta <i class="fas fa-user-plus"></i></button>
+                <div class="form-group">
+                    <label>Telefone</label>
+                    <input type="text" name="telefone" placeholder="84 123 4567" required>
+                </div>
+                <div class="form-group">
+                    <label>Senha</label>
+                    <input type="password" name="senha" placeholder="Crie uma senha" required>
+                </div>
+                <button type="submit" class="btn-primary">Criar conta</button>
             </form>
-            
-            <p class="auth-footer">Já tem conta? <a href="/login">Fazer Login</a></p>
+            <p class="auth-link">Já tem conta? <a href="/login">Entrar</a></p>
         </div>
     </div>
 </body>
