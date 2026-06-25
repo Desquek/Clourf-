@@ -8,14 +8,14 @@
     --azul-escuro: #1E3A8A;
     --azul-hover: #172554;
     --azul-claro: #DBEAFE;
-    --fundo: #EFF6FF;
-    --cinza-texto: #4B5563;
+    --fundo-escuro: #0F1B3A;
+    --cinza-texto: #E5E7EB;
 }
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: var(--fundo);
-    color: #1a1a2e;
+    background: var(--fundo-escuro);
+    color: #FFFFFF;
     line-height: 1.6;
 }
 
@@ -26,9 +26,9 @@ a {
 
 /* Header */
 header {
-    background: white;
+    background: var(--azul-escuro);
     padding: 1rem 2rem;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
     position: sticky;
     top: 0;
     z-index: 100;
@@ -45,7 +45,7 @@ nav {
 .logo {
     font-size: 1.5rem;
     font-weight: bold;
-    color: var(--azul-escuro);
+    color: #FFFFFF;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -58,19 +58,19 @@ nav {
 }
 
 .nav-links a {
-    color: #555;
+    color: #CBD5E1;
     transition: color 0.3s;
 }
 
 .nav-links a:hover,
 .nav-links a.active {
-    color: var(--azul-escuro);
+    color: #FFFFFF;
 }
 
 /* Botões */
 .btn-primary {
-    background: var(--azul-escuro);
-    color: white !important;
+    background: #FFFFFF;
+    color: var(--azul-escuro) !important;
     padding: 0.6rem 1.2rem;
     border-radius: 25px;
     border: none;
@@ -79,18 +79,19 @@ nav {
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    font-weight: 600;
 }
 
 .btn-primary:hover {
-    background: var(--azul-hover);
+    background: #E5E7EB;
 }
 
 .btn-secondary {
     background: transparent;
-    color: var(--azul-escuro);
+    color: #FFFFFF;
     padding: 0.6rem 1.2rem;
     border-radius: 25px;
-    border: 2px solid var(--azul-escuro);
+    border: 2px solid #FFFFFF;
     cursor: pointer;
     transition: all 0.3s;
     display: inline-flex;
@@ -99,8 +100,8 @@ nav {
 }
 
 .btn-secondary:hover {
-    background: var(--azul-escuro);
-    color: white;
+    background: #FFFFFF;
+    color: var(--azul-escuro);
 }
 
 /* Hero */
@@ -114,15 +115,16 @@ nav {
 .hero h1 {
     font-size: 2.8rem;
     margin-bottom: 1rem;
+    color: #FFFFFF;
 }
 
 .destaque {
-    color: var(--azul-escuro);
+    color: #93C5FD;
 }
 
 .hero p {
     font-size: 1.2rem;
-    color: var(--cinza-texto);
+    color: #CBD5E1;
     max-width: 600px;
     margin: 0 auto 2rem;
 }
@@ -144,7 +146,7 @@ nav {
 .categorias h2 {
     text-align: center;
     margin-bottom: 2rem;
-    color: var(--azul-escuro);
+    color: #FFFFFF;
 }
 
 .categorias-grid {
@@ -154,22 +156,23 @@ nav {
 }
 
 .categoria-card {
-    background: white;
+    background: var(--azul-escuro);
     padding: 1.5rem;
     border-radius: 15px;
     text-align: center;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
     transition: transform 0.3s;
+    color: #FFFFFF;
 }
 
 .categoria-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(30, 58, 138, 0.1);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
 }
 
 .categoria-card i {
     font-size: 2rem;
-    color: var(--azul-escuro);
+    color: #93C5FD;
     margin-bottom: 0.5rem;
 }
 
@@ -180,7 +183,7 @@ nav {
 
 .categoria-card p {
     font-size: 0.85rem;
-    color: var(--cinza-texto);
+    color: #CBD5E1;
 }
 
 /* Solicitações */
@@ -193,7 +196,7 @@ nav {
 .solicitacoes h2 {
     text-align: center;
     margin-bottom: 2rem;
-    color: var(--azul-escuro);
+    color: #FFFFFF;
 }
 
 .solicitacoes-grid {
@@ -203,10 +206,10 @@ nav {
 }
 
 .solicitacao-card {
-    background: white;
+    background: var(--azul-escuro);
     padding: 1.5rem;
     border-radius: 15px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
     transition: transform 0.3s;
     text-decoration: none;
     color: inherit;
@@ -215,16 +218,16 @@ nav {
 
 .solicitacao-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(30, 58, 138, 0.1);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
 }
 
 .solicitacao-card h3 {
     margin-bottom: 0.5rem;
-    color: var(--azul-escuro);
+    color: #FFFFFF;
 }
 
 .solicitacao-card p {
-    color: var(--cinza-texto);
+    color: #CBD5E1;
     font-size: 0.9rem;
     margin-bottom: 1rem;
 }
@@ -233,8 +236,8 @@ nav {
     display: flex;
     justify-content: space-between;
     font-size: 0.8rem;
-    color: #888;
-    border-top: 1px solid #eee;
+    color: #94A3B8;
+    border-top: 1px solid #334155;
     padding-top: 0.8rem;
 }
 
@@ -250,7 +253,7 @@ nav {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background: var(--azul-claro);
+    background: var(--fundo-escuro);
 }
 
 .auth-container {
@@ -260,24 +263,25 @@ nav {
 }
 
 .auth-card {
-    background: white;
+    background: var(--azul-escuro);
     padding: 2rem;
     border-radius: 20px;
-    box-shadow: 0 20px 40px rgba(30, 58, 138, 0.1);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    color: #FFFFFF;
 }
 
 .auth-logo {
     text-align: center;
     font-size: 1.5rem;
     font-weight: bold;
-    color: var(--azul-escuro);
+    color: #FFFFFF;
     margin-bottom: 1.5rem;
 }
 
 .auth-card h2 {
     text-align: center;
     margin-bottom: 1.5rem;
-    color: var(--azul-escuro);
+    color: #FFFFFF;
 }
 
 .form-group {
@@ -289,6 +293,7 @@ nav {
     font-size: 0.9rem;
     font-weight: 500;
     margin-bottom: 0.3rem;
+    color: #CBD5E1;
 }
 
 .form-group input,
@@ -296,16 +301,18 @@ nav {
 .form-group select {
     width: 100%;
     padding: 0.8rem;
-    border: 1px solid #ddd;
+    border: 1px solid #334155;
     border-radius: 8px;
     font-size: 1rem;
+    background: var(--fundo-escuro);
+    color: #FFFFFF;
 }
 
 .form-group input:focus,
 .form-group textarea:focus,
 .form-group select:focus {
     outline: none;
-    border-color: var(--azul-escuro);
+    border-color: #93C5FD;
 }
 
 .form-group textarea {
@@ -316,16 +323,21 @@ nav {
     text-align: center;
     margin-top: 1rem;
     font-size: 0.9rem;
+    color: #CBD5E1;
 }
 
 .auth-link a {
-    color: var(--azul-escuro);
+    color: #93C5FD;
     font-weight: bold;
 }
 
+.auth-link a:hover {
+    color: #FFFFFF;
+}
+
 .alert {
-    background: #f8d7da;
-    color: #721c24;
+    background: #7F1D1D;
+    color: #FCA5A5;
     padding: 0.8rem;
     border-radius: 8px;
     margin-bottom: 1rem;
@@ -347,11 +359,11 @@ nav {
 }
 
 .dashboard-header h1 {
-    color: var(--azul-escuro);
+    color: #FFFFFF;
 }
 
 .dashboard h2 {
-    color: var(--azul-escuro);
+    color: #FFFFFF;
     margin-bottom: 1.5rem;
 }
 
@@ -363,22 +375,23 @@ nav {
 }
 
 .problema-container {
-    background: white;
+    background: var(--azul-escuro);
     border-radius: 20px;
     padding: 2rem;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    color: #FFFFFF;
 }
 
 .voltar {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    color: var(--azul-escuro);
+    color: #93C5FD;
     margin-bottom: 1.5rem;
 }
 
 .voltar:hover {
-    text-decoration: underline;
+    color: #FFFFFF;
 }
 
 .problema-header {
@@ -389,12 +402,12 @@ nav {
 }
 
 .problema-header h1 {
-    color: var(--azul-escuro);
+    color: #FFFFFF;
 }
 
 .categoria-badge {
-    background: var(--azul-claro);
-    color: var(--azul-escuro);
+    background: var(--fundo-escuro);
+    color: #93C5FD;
     padding: 0.3rem 0.8rem;
     border-radius: 20px;
     font-size: 0.8rem;
@@ -406,8 +419,8 @@ nav {
     flex-direction: column;
     gap: 0.5rem;
     padding: 1rem 0;
-    border-top: 1px solid #eee;
-    border-bottom: 1px solid #eee;
+    border-top: 1px solid #334155;
+    border-bottom: 1px solid #334155;
     margin-bottom: 1.5rem;
 }
 
@@ -415,7 +428,7 @@ nav {
     display: flex;
     align-items: center;
     gap: 8px;
-    color: var(--cinza-texto);
+    color: #CBD5E1;
     font-size: 0.9rem;
 }
 
@@ -424,19 +437,19 @@ nav {
 }
 
 .problema-descricao h3 {
-    color: var(--azul-escuro);
+    color: #FFFFFF;
     margin-bottom: 0.5rem;
 }
 
 .problema-contato {
-    background: var(--azul-claro);
+    background: var(--fundo-escuro);
     padding: 1rem;
     border-radius: 10px;
     margin-bottom: 1.5rem;
 }
 
 .problema-contato h3 {
-    color: var(--azul-escuro);
+    color: #FFFFFF;
     margin-bottom: 0.5rem;
 }
 
@@ -448,19 +461,20 @@ nav {
 }
 
 .form-container {
-    background: white;
+    background: var(--azul-escuro);
     padding: 2rem;
     border-radius: 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    color: #FFFFFF;
 }
 
 .form-container h1 {
-    color: var(--azul-escuro);
+    color: #FFFFFF;
     margin-bottom: 0.5rem;
 }
 
 .form-container p {
-    color: var(--cinza-texto);
+    color: #CBD5E1;
     margin-bottom: 1.5rem;
 }
 
@@ -468,8 +482,8 @@ nav {
 footer {
     text-align: center;
     padding: 2rem;
-    color: var(--cinza-texto);
-    border-top: 1px solid #eee;
+    color: #94A3B8;
+    border-top: 1px solid #334155;
     margin-top: 2rem;
 }
 
