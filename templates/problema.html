@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ problema[1] }} - Clourf</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo"><i class="fas fa-handshake"></i> Clourf</div>
+            <div class="nav-links">
+                <a href="/">Início</a>
+                <a href="/novo-problema">Publicar</a>
+                {% if session.user_id %}
+                    <a href="/dashboard">Dashboard</a>
+                    <a href="/logout">Sair</a>
+                {% else %}
+                    <a href="/login">Entrar</a>
+                    <a href="/register" class="btn-primary">Criar conta</a>
+                {% endif %}
+            </div>
+        </nav>
+    </header>
+
+    <section class="problema-detalhes">
+        <div class="problema-container">
+            <a href="/" class="voltar"><i class="fas fa-arrow-left"></i> Voltar</a>
+            
+            <div class="problema-card">
+                <div class="problema-header">
+                    <h1>{{ problema[1] }}</h1>
+                    <span class="categoria-badge">{{ problema[3] }}</span>
+                </div>
+                
+                <div class="problema-info">
+                    <p><i class="fas fa-user"></i> Publicado por <strong>{{ problema[8] }}</strong></p>
+                    <p><i class="fas fa-map-marker-alt"></i> {{ problema[4] or 'Local não definido' }}</p>
+                    <p><i class="fas fa-clock"></i> {{ problema[7] }}</p>
+                </div>
+                
+                <div class="problema-descricao">
+                    <h3>Descrição</h3>
+                    <p>{{ problema[2] }}</p>
+                </div>
+                
+                <div class="problema-contato">
+                    <h3>Contato</h3>
+                    <p><i class="fas fa-phone"></i> {{ problema[9] or 'Não informado' }}</p>
+                    <p><i class="fas fa-envelope"></i> {{ problema[8] }} (via Clourf)</p>
+                </div>
+                
+                {% if session.user_id %}
+                    <button class="btn-primary" onclick="alert('Função de contato em breve!')"><i class="fas fa-paper-plane"></i> Entrar em contato</button>
+                {% else %}
+                    <p><a href="/login">Faça login</a> para entrar em contato com o solicitante.</p>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>© 2026 Clourf. Conectamos problemas a soluções.</p>
+    </footer>
+</body>
+</html>
