@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Publicar problema - Clourf</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo"><i class="fas fa-handshake"></i> Clourf</div>
+            <div class="nav-links">
+                <a href="/">Início</a>
+                <a href="/novo-problema" class="active">Publicar</a>
+                <a href="/dashboard">Dashboard</a>
+                <a href="/logout">Sair</a>
+            </div>
+        </nav>
+    </header>
+
+    <section class="form-section">
+        <div class="form-container">
+            <h1><i class="fas fa-plus-circle"></i> Publicar problema</h1>
+            <p>Descreva o que precisa e encontre quem pode ajudar.</p>
+            
+            <form method="POST">
+                <div class="form-group">
+                    <label>Título do problema</label>
+                    <input type="text" name="titulo" placeholder="Ex: Preciso de um eletricista" required>
+                </div>
+                <div class="form-group">
+                    <label>Descrição detalhada</label>
+                    <textarea name="descricao" rows="5" placeholder="Descreva o que precisa com o máximo de detalhes..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Categoria</label>
+                    <select name="categoria" required>
+                        <option value="">Selecione uma categoria</option>
+                        <option value="Serviços">Serviços</option>
+                        <option value="Design">Design</option>
+                        <option value="Reparos">Reparos</option>
+                        <option value="Transporte">Transporte</option>
+                        <option value="Aulas">Aulas</option>
+                        <option value="Eventos">Eventos</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Localização</label>
+                    <input type="text" name="localizacao" placeholder="Cidade, bairro (ex: Maputo, Matola)" required>
+                </div>
+                <button type="submit" class="btn-primary"><i class="fas fa-share"></i> Publicar problema</button>
+            </form>
+        </div>
+    </section>
+
+    <footer>
+        <p>© 2026 Clourf. Conectamos problemas a soluções.</p>
+    </footer>
+</body>
+</html>
