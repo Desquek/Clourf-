@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minhas Publicações - Clourf</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo"><i class="fas fa-handshake"></i> Clourf</div>
+            <div class="nav-links">
+                <a href="/">Início</a>
+                <a href="/novo-problema">Publicar</a>
+                <a href="/categorias">Categorias</a>
+                <a href="/minhas-publicacoes" class="active">Minhas Publicações</a>
+                <a href="/perfil">Perfil</a>
+                <a href="/logout">Sair</a>
+            </div>
+        </nav>
+    </header>
+
+    <section class="dashboard">
+        <div class="dashboard-header">
+            <h1>Minhas Publicações</h1>
+            <a href="/novo-problema" class="btn-primary"><i class="fas fa-plus"></i> Nova publicação</a>
+        </div>
+
+        <div class="solicitacoes-grid">
+            {% if publicacoes %}
+                {% for p in publicacoes %}
+                <div class="solicitacao-card">
+                    <h3>{{ p[1] }}</h3>
+                    <p>{{ p[2][:150] }}{% if p[2]|length > 150 %}...{% endif %}</p>
+                    <div class="solicitacao-footer">
+                        <span><i class="fas fa-tag"></i> {{ p[3] }}</span>
+                        <span><i class="fas fa-map-marker-alt"></i> {{ p[4] or 'Local não definido' }}</span>
+                        <span><i class="fas fa-clock"></i> {{ p[7][:10] }}</span>
+                    </div>
+                    <a href="/problema/{{ p[0] }}" class="btn-secondary" style="margin-top: 0.8rem; display: inline-block; font-size: 0.9rem;">Ver detalhes</a>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="text-align: center; grid-column: 1/-1;">Nenhuma publicação ainda. <a href="/novo-problema">Crie a sua primeira!</a></p>
+            {% endif %}
+        </div>
+    </section>
+
+    <footer>
+        <p>© 2026 Clourf. Conectamos problemas a soluções.</p>
+    </footer>
+</body>
+</html>
