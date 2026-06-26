@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversa - Clourf</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .top-bar { background: transparent; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .menu-btn { background: none; border: none; color: #FFFFFF; font-size: 1.8rem; cursor: pointer; }
+        .top-avatar .avatar { width: 40px; height: 40px; border-radius: 50%; background: #334155; display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-size: 1.2rem; border: 2px solid #93C5FD; cursor: pointer; overflow: hidden; }
+        .chat-container { max-width: 800px; margin: 2rem auto; padding: 2rem; }
+        .chat-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+        .chat-header .avatar { width: 50px; height: 50px; border-radius: 50%; background: #334155; display: flex; align-items: center; justify-content: center; color: #93C5FD; font-size: 1.5rem; overflow: hidden; }
+        .chat-header .avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .chat-header .nome { color: #FFFFFF; font-size: 1.2rem; font-weight: bold; }
+        .mensagens { display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 2rem; max-height: 500px; overflow-y: auto; padding-right: 0.5rem; }
+        .mensagem { padding: 0.8rem 1rem; border-radius: 12px; max-width: 80%; }
+        .mensagem-enviada { background: #93C5FD; color: var(--azul-escuro); align-self: flex-end; }
+        .mensagem-recebida { background: var(--azul-escuro); color: #FFFFFF; align-self: flex-start; }
+        .mensagem .data { font-size: 0.7rem; color: #94A3B8; margin-top: 0.3rem; }
+        .form-mensagem { display: flex; gap: 0.5rem; }
+        .form-mensagem textarea { flex: 1; padding: 0.8rem; border-radius: 12px; border: 1px solid #334155; background: var(--fundo-escuro); color: #FFFFFF; resize: none; }
+        .form-mensagem button { background: #93C5FD; color: var(--azul-escuro); border: none; padding: 0.8rem 1.5rem; border-radius: 12px; font-weight: bold; cursor: pointer; }
+        .form-mensagem button:hover { background: #FFFFFF; }
+        .voltar { color: #93C5FD; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
+        footer { text-align: center; padding: 2rem; color: #94A3B8; border-top: 1px solid #334155; margin-top: 2rem; }
+        @media (max-width: 768px) { .mensagem { max-width: 90%; } }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <button class="menu-btn" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
+        <div class="top-avatar">
+            <a href="/perfil" class="avatar"><i class="fas fa-user"></i></a>
+        </div>
+    </div>
+
+    <div class="chat-container">
+        <a href="/mensagens" class="voltar"><i class="fas fa-arrow-left"></i> Voltar</a>
+
+        <div class="chat-header">
+            <div class="avatar">
+                {% if outro[3] and outro[3] != 'default.png' %}
+                    <img src="{{ url_for('static', filename='perfil/' + outro[3]) }}" alt="Foto">
+                {% else %}
+                    <i class="fas fa-user"></i>
+                {% endif %}
+            </div>
+            <div class="nome">{{ outro[1] }}</div>
+        </div>
+
+        <div class="mensagens" id="mensagens">
+            {% for m in mensagens %}
+            <div class="mensagem {% if m[1] == session.user_id %}mensagem-enviada{% else %}mensagem-recebida{% endif %}">
+                {{ m[4] }}
+                <div class="data">{{ m[6][:16] }}</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <form method="POST" action="/enviar-mensagem" class="form-mensagem">
+            <input type="hidden" name="destinatario_id" value="{{ outro[0] }}">
+            <textarea name="conteudo" rows="2" placeholder="Escreva sua mensagem..." required></textarea>
+            <button type="submit"><i class="fas fa-paper-plane"></i></button>
+        </form>
+    </div>
+
+    <footer>
+        <p>© 2026 Clourf. Conectamos problemas a soluções.</p>
+    </footer>
+
+    <script>
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('show');
+        }
+        // Scroll para o fim da conversa
+        var chat = document.getElementById('mensagens');
+        if (chat) chat.scrollTop = chat.scrollHeight;
+    </script>
+
+</body>
+</html>
