@@ -6,49 +6,285 @@
     <title>Dashboard - Clourf</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* TOP BAR MINIMALISTA */
+        .top-bar {
+            background: transparent;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .menu-btn {
+            background: none;
+            border: none;
+            color: #FFFFFF;
+            font-size: 1.8rem;
+            cursor: pointer;
+            padding: 0.3rem 0.6rem;
+        }
+
+        .top-avatar {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .top-avatar .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #334155;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #FFFFFF;
+            font-size: 1.2rem;
+            border: 2px solid #93C5FD;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .top-avatar .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .top-avatar .nome {
+            color: #FFFFFF;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        /* REMOVER TÍTULO DASHBOARD */
+        .dashboard-header {
+            display: none;
+        }
+
+        .dashboard {
+            padding-top: 0.5rem;
+        }
+
+        /* BOTÃO NOVO PROBLEMA */
+        .btn-novo {
+            background: #93C5FD;
+            color: var(--azul-escuro);
+            padding: 0.8rem 1.5rem;
+            border-radius: 30px;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-novo:hover {
+            background: #FFFFFF;
+        }
+
+        /* MENU LATERAL (mesmo padrão) */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -280px;
+            width: 280px;
+            height: 100%;
+            background: var(--azul-escuro);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+            transition: left 0.3s ease;
+            z-index: 1001;
+            padding: 2rem 1.5rem;
+            overflow-y: auto;
+        }
+
+        .sidebar.open {
+            left: 0;
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 1rem;
+        }
+
+        .sidebar-header .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #FFFFFF;
+        }
+
+        .sidebar-close {
+            background: none;
+            border: none;
+            color: #FFFFFF;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .sidebar-nav a {
+            padding: 0.8rem 1rem;
+            border-radius: 10px;
+            color: #CBD5E1;
+            transition: background 0.3s, color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .sidebar-nav a:hover {
+            background: rgba(255,255,255,0.1);
+            color: #FFFFFF;
+        }
+
+        .sidebar-nav a i {
+            width: 24px;
+            font-size: 1.2rem;
+        }
+
+        .sidebar-footer {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #334155;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .sidebar-footer a {
+            padding: 0.8rem 1rem;
+            border-radius: 10px;
+            color: #CBD5E1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+
+        .sidebar-footer a:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            display: none;
+        }
+
+        .overlay.show {
+            display: block;
+        }
+
+        /* RESPONSIVO */
+        @media (max-width: 768px) {
+            .top-avatar .nome {
+                display: none;
+            }
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <nav>
-            <div class="logo"><i class="fas fa-handshake"></i> Clourf</div>
-            <div class="nav-links">
-                <a href="/">Início</a>
-                <a href="/novo-problema">Publicar</a>
-                <a href="/dashboard" class="active">Dashboard</a>
-                <a href="/logout">Sair</a>
-            </div>
-        </nav>
-    </header>
 
-    <section class="dashboard">
-        <div class="dashboard-header">
-            <h1>Olá, {{ session.nome }}!</h1>
-            <a href="/novo-problema" class="btn-primary"><i class="fas fa-plus"></i> Novo problema</a>
+    <!-- TOP BAR MINIMALISTA -->
+    <div class="top-bar">
+        <button class="menu-btn" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
+        <div class="top-avatar">
+            <span class="nome">{{ session.nome }}</span>
+            <a href="/perfil" class="avatar">
+                <i class="fas fa-user"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- OVERLAY -->
+    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
+    <!-- MENU LATERAL -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo"><i class="fas fa-handshake"></i> Clourf</div>
+            <button class="sidebar-close" onclick="toggleMenu()"><i class="fas fa-times"></i></button>
         </div>
 
-        <h2>Meus problemas</h2>
-        
-        {% if meus_problemas %}
-            <div class="solicitacoes-grid">
+        <nav class="sidebar-nav">
+            <a href="/dashboard" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="/novo-problema"><i class="fas fa-plus-circle"></i> Publicar</a>
+            <a href="/categorias"><i class="fas fa-th-large"></i> Categorias</a>
+            <a href="/minhas-publicacoes"><i class="fas fa-list"></i> Minhas Publicações</a>
+            <a href="/notificacoes"><i class="fas fa-bell"></i> Notificações</a>
+            <a href="/mensagens"><i class="fas fa-comments"></i> Mensagens</a>
+            <a href="/ajuda"><i class="fas fa-life-ring"></i> Ajuda</a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="/perfil"><i class="fas fa-user-circle"></i> Meu Perfil</a>
+            <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
+        </div>
+    </div>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <div class="dashboard">
+        <!-- TÍTULO REMOVIDO -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+            <h1 style="color: #FFFFFF; font-size: 1.8rem;">Olá, {{ session.nome }}!</h1>
+            <a href="/novo-problema" class="btn-novo"><i class="fas fa-plus"></i> Novo problema</a>
+        </div>
+
+        <h2 style="color: #FFFFFF; margin-bottom: 1.5rem;">Meus problemas</h2>
+
+        <div class="solicitacoes-grid">
+            {% if meus_problemas %}
                 {% for p in meus_problemas %}
                 <div class="solicitacao-card">
                     <h3>{{ p[1] }}</h3>
-                    <p>{{ p[2][:150] }}...</p>
+                    <p>{{ p[2][:150] }}{% if p[2]|length > 150 %}...{% endif %}</p>
                     <div class="solicitacao-footer">
                         <span><i class="fas fa-tag"></i> {{ p[3] }}</span>
-                        <span><i class="fas fa-clock"></i> {{ p[7].split('T')[0] }}</span>
+                        <span><i class="fas fa-map-marker-alt"></i> {{ p[4] or 'Local não definido' }}</span>
+                        <span><i class="fas fa-clock"></i> {{ p[7][:10] }}</span>
                     </div>
-                    <a href="/problema/{{ p[0] }}" class="btn-secondary">Ver detalhes</a>
+                    <a href="/problema/{{ p[0] }}" class="btn-secondary" style="margin-top: 0.8rem; display: inline-block; font-size: 0.9rem;">Ver detalhes</a>
                 </div>
                 {% endfor %}
-            </div>
-        {% else %}
-            <p style="text-align: center;">Nenhum problema publicado ainda. <a href="/novo-problema">Publique agora!</a></p>
-        {% endif %}
-    </section>
+            {% else %}
+                <p style="text-align: center; grid-column: 1/-1; color: #94A3B8;">Nenhum problema publicado ainda. <a href="/novo-problema" style="color: #93C5FD;">Publique agora!</a></p>
+            {% endif %}
+        </div>
+    </div>
 
     <footer>
         <p>© 2026 Clourf. Conectamos problemas a soluções.</p>
     </footer>
+
+    <script>
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('show');
+        }
+    </script>
+
 </body>
 </html>
