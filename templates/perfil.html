@@ -7,6 +7,138 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
+        .top-bar {
+            background: transparent;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .menu-btn {
+            background: none;
+            border: none;
+            color: #FFFFFF;
+            font-size: 1.8rem;
+            cursor: pointer;
+            padding: 0.3rem 0.6rem;
+        }
+        .top-avatar {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        .top-avatar .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #334155;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #FFFFFF;
+            font-size: 1.2rem;
+            border: 2px solid #93C5FD;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        .top-avatar .nome {
+            color: #FFFFFF;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -280px;
+            width: 280px;
+            height: 100%;
+            background: var(--azul-escuro);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+            transition: left 0.3s ease;
+            z-index: 1001;
+            padding: 2rem 1.5rem;
+            overflow-y: auto;
+        }
+        .sidebar.open { left: 0; }
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 1rem;
+        }
+        .sidebar-header .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #FFFFFF;
+        }
+        .sidebar-close {
+            background: none;
+            border: none;
+            color: #FFFFFF;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .sidebar-nav a {
+            padding: 0.8rem 1rem;
+            border-radius: 10px;
+            color: #CBD5E1;
+            transition: background 0.3s, color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+        .sidebar-nav a:hover {
+            background: rgba(255,255,255,0.1);
+            color: #FFFFFF;
+        }
+        .sidebar-nav a i {
+            width: 24px;
+            font-size: 1.2rem;
+        }
+        .sidebar-footer {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #334155;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .sidebar-footer a {
+            padding: 0.8rem 1rem;
+            border-radius: 10px;
+            color: #CBD5E1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+        .sidebar-footer a:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            display: none;
+        }
+        .overlay.show { display: block; }
+
         .perfil-container {
             max-width: 800px;
             margin: 2rem auto;
@@ -61,6 +193,12 @@
             margin: 0;
             color: #FFFFFF;
         }
+        .campo-fixo {
+            opacity: 0.7;
+        }
+        .campo-fixo p {
+            color: #94A3B8 !important;
+        }
         .perfil-actions {
             display: flex;
             gap: 1rem;
@@ -94,27 +232,65 @@
             background: #7F1D1D;
             color: #FCA5A5;
         }
-        .campo-fixo {
-            opacity: 0.7;
+        .btn-secondary {
+            background: transparent;
+            color: #FFFFFF;
+            padding: 0.4rem 1rem;
+            border-radius: 25px;
+            border: 2px solid #FFFFFF;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-block;
+            text-decoration: none;
+            font-size: 0.85rem;
         }
-        .campo-fixo p {
-            color: #94A3B8 !important;
+        .btn-secondary:hover {
+            background: #FFFFFF;
+            color: var(--azul-escuro);
+        }
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: #94A3B8;
+            border-top: 1px solid #334155;
+            margin-top: 2rem;
+        }
+        @media (max-width: 768px) {
+            .top-avatar .nome { display: none; }
         }
     </style>
 </head>
 <body>
-    <header>
-        <nav>
+
+    <div class="top-bar">
+        <button class="menu-btn" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
+        <div class="top-avatar">
+            <span class="nome">{{ session.nome }}</span>
+            <a href="/perfil" class="avatar"><i class="fas fa-user"></i></a>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
             <div class="logo"><i class="fas fa-handshake"></i> Clourf</div>
-            <div class="nav-links">
-                <a href="/">Início</a>
-                <a href="/novo-problema">Publicar</a>
-                <a href="/categorias">Categorias</a>
-                <a href="/perfil" class="active">Perfil</a>
-                <a href="/logout">Sair</a>
-            </div>
+            <button class="sidebar-close" onclick="toggleMenu()"><i class="fas fa-times"></i></button>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="/novo-problema"><i class="fas fa-plus-circle"></i> Publicar</a>
+            <a href="/categorias"><i class="fas fa-th-large"></i> Categorias</a>
+            <a href="/minhas-publicacoes"><i class="fas fa-list"></i> Minhas Publicações</a>
+            <a href="/notificacoes"><i class="fas fa-bell"></i> Notificações</a>
+            <a href="/mensagens"><i class="fas fa-comments"></i> Mensagens</a>
+            <a href="/ajuda"><i class="fas fa-life-ring"></i> Ajuda</a>
         </nav>
-    </header>
+        <div class="sidebar-footer">
+            <a href="/perfil" class="active"><i class="fas fa-user-circle"></i> Meu Perfil</a>
+            <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
+        </div>
+    </div>
 
     <div class="perfil-container">
         <div class="perfil-card">
@@ -128,30 +304,27 @@
                 {% endif %}
                 <form method="POST" action="/upload-foto" enctype="multipart/form-data" style="margin-top: 1rem;">
                     <input type="file" name="foto" id="foto" accept="image/*" style="display: none;" onchange="this.form.submit()">
-                    <label for="foto" class="btn-secondary" style="cursor: pointer;">
+                    <label for="foto" class="btn-secondary" style="cursor: pointer; background: #93C5FD; color: var(--azul-escuro); border: none; padding: 0.4rem 1rem; border-radius: 20px; font-weight: bold;">
                         <i class="fas fa-camera"></i> Alterar foto
                     </label>
                 </form>
             </div>
 
             <div class="perfil-info">
-                <!-- Nome (fixo) -->
                 <div class="campo campo-fixo">
                     <label><i class="fas fa-user"></i> Nome</label>
                     <p>{{ user[0] }}</p>
                 </div>
 
-                <!-- Email (fixo) -->
                 <div class="campo campo-fixo">
                     <label><i class="fas fa-envelope"></i> Email</label>
                     <p>{{ user[1] }}</p>
                 </div>
 
-                <!-- Telefone (editável) -->
                 <div class="campo">
                     <label><i class="fas fa-phone"></i> Telefone</label>
                     <p id="telefone-texto">{{ user[2] or 'Não informado' }}</p>
-                    <button class="btn-secondary" style="font-size: 0.8rem; padding: 0.3rem 0.8rem;" onclick="editarCampo('telefone')"><i class="fas fa-pen"></i> Editar</button>
+                    <button class="btn-secondary" style="font-size: 0.8rem; padding: 0.2rem 0.8rem;" onclick="editarCampo('telefone')"><i class="fas fa-pen"></i> Editar</button>
                     <div class="edit-form" id="edit-telefone">
                         <form method="POST" action="/editar-perfil">
                             <input type="hidden" name="campo" value="telefone">
@@ -162,11 +335,10 @@
                     </div>
                 </div>
 
-                <!-- Localização (editável) -->
                 <div class="campo">
                     <label><i class="fas fa-map-marker-alt"></i> Localização</label>
                     <p id="localizacao-texto">{{ user[4] or 'Não informada' }}</p>
-                    <button class="btn-secondary" style="font-size: 0.8rem; padding: 0.3rem 0.8rem;" onclick="editarCampo('localizacao')"><i class="fas fa-pen"></i> Editar</button>
+                    <button class="btn-secondary" style="font-size: 0.8rem; padding: 0.2rem 0.8rem;" onclick="editarCampo('localizacao')"><i class="fas fa-pen"></i> Editar</button>
                     <div class="edit-form" id="edit-localizacao">
                         <form method="POST" action="/editar-perfil">
                             <input type="hidden" name="campo" value="localizacao">
@@ -177,11 +349,10 @@
                     </div>
                 </div>
 
-                <!-- Bio (editável) -->
                 <div class="campo">
                     <label><i class="fas fa-align-left"></i> Sobre mim</label>
                     <p id="bio-texto">{{ user[5] or 'Nenhuma biografia ainda.' }}</p>
-                    <button class="btn-secondary" style="font-size: 0.8rem; padding: 0.3rem 0.8rem;" onclick="editarCampo('bio')"><i class="fas fa-pen"></i> Editar</button>
+                    <button class="btn-secondary" style="font-size: 0.8rem; padding: 0.2rem 0.8rem;" onclick="editarCampo('bio')"><i class="fas fa-pen"></i> Editar</button>
                     <div class="edit-form" id="edit-bio">
                         <form method="POST" action="/editar-perfil">
                             <input type="hidden" name="campo" value="bio">
@@ -192,7 +363,6 @@
                     </div>
                 </div>
 
-                <!-- Membro desde -->
                 <div class="campo campo-fixo">
                     <label><i class="fas fa-clock"></i> Membro desde</label>
                     <p>{{ user[6][:10] if user[6] else '2026' }}</p>
@@ -201,15 +371,20 @@
 
             <div class="perfil-actions">
                 <a href="/dashboard" class="btn-secondary"><i class="fas fa-arrow-left"></i> Dashboard</a>
-                <a href="/minhas-publicacoes" class="btn-secondary"><i class="fas fa-list"></i> Minhas publicações</a>
-                <a href="/logout" class="btn-secondary" style="border-color: #7F1D1D; color: #FCA5A5;">
-                    <i class="fas fa-sign-out-alt"></i> Sair
-                </a>
+                <a href="/logout" class="btn-secondary" style="border-color: #7F1D1D; color: #FCA5A5;">Sair</a>
             </div>
         </div>
     </div>
 
+    <footer>
+        <p>© 2026 Clourf. Conectamos problemas a soluções.</p>
+    </footer>
+
     <script>
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('show');
+        }
         function editarCampo(campo) {
             document.querySelectorAll('.edit-form').forEach(function(el) {
                 el.style.display = 'none';
@@ -219,7 +394,6 @@
                 form.style.display = 'block';
             }
         }
-
         function fecharEdicao(campo) {
             var form = document.getElementById('edit-' + campo);
             if (form) {
@@ -227,5 +401,6 @@
             }
         }
     </script>
+
 </body>
 </html>
