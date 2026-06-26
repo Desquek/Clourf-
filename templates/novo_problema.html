@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Publicar - Clourf</title>
+    <title>{{ problema[1] }} - Clourf</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
+        /* ===== TOP BAR ===== */
         .top-bar {
             background: transparent;
             padding: 1rem 1.5rem;
@@ -44,11 +45,18 @@
             cursor: pointer;
             overflow: hidden;
         }
+        .top-avatar .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
         .top-avatar .nome {
             color: #FFFFFF;
             font-size: 0.9rem;
             font-weight: 500;
         }
+
+        /* ===== SIDEBAR ===== */
         .sidebar {
             position: fixed;
             top: 0;
@@ -139,57 +147,97 @@
         }
         .overlay.show { display: block; }
 
-        .form-section {
-            max-width: 600px;
+        /* ===== CONTEÚDO PRINCIPAL ===== */
+        .problema-container {
+            max-width: 800px;
             margin: 2rem auto;
             padding: 2rem;
         }
-        .form-container {
+        .problema-card {
             background: var(--azul-escuro);
-            padding: 2rem;
             border-radius: 20px;
+            padding: 2rem;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             color: #FFFFFF;
         }
-        .form-container h1 {
+        .voltar {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #93C5FD;
+            margin-bottom: 1.5rem;
+            text-decoration: none;
+        }
+        .voltar:hover { color: #FFFFFF; }
+
+        .problema-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .problema-header h1 {
+            color: #FFFFFF;
+            font-size: 1.6rem;
+            margin: 0;
+        }
+        .categoria-badge {
+            background: var(--fundo-escuro);
+            color: #93C5FD;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .problema-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding: 1rem 0;
+            border-top: 1px solid #334155;
+            border-bottom: 1px solid #334155;
+            margin-bottom: 1.5rem;
+        }
+        .problema-info p {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #CBD5E1;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        .problema-descricao h3 {
             color: #FFFFFF;
             margin-bottom: 0.5rem;
         }
-        .form-container p {
+        .problema-descricao p {
             color: #CBD5E1;
+            line-height: 1.6;
+        }
+
+        .problema-contato {
+            background: var(--fundo-escuro);
+            padding: 1rem;
+            border-radius: 10px;
             margin-bottom: 1.5rem;
         }
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        .form-group label {
-            display: block;
-            font-size: 0.9rem;
-            font-weight: 500;
-            margin-bottom: 0.3rem;
-            color: #CBD5E1;
-        }
-        .form-group input,
-        .form-group textarea,
-        .form-group select {
-            width: 100%;
-            padding: 0.8rem;
-            border: 1px solid #334155;
-            border-radius: 8px;
-            font-size: 1rem;
-            background: var(--fundo-escuro);
+        .problema-contato h3 {
             color: #FFFFFF;
+            margin-bottom: 0.5rem;
         }
-        .form-group input:focus,
-        .form-group textarea:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #93C5FD;
+        .problema-contato p {
+            color: #CBD5E1;
+            margin: 0.3rem 0;
         }
+
         .btn-primary {
             background: #FFFFFF;
             color: var(--azul-escuro) !important;
-            padding: 0.8rem 1.5rem;
+            padding: 0.6rem 1.2rem;
             border-radius: 25px;
             border: none;
             cursor: pointer;
@@ -197,11 +245,85 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            text-decoration: none;
             transition: background 0.3s;
         }
-        .btn-primary:hover {
-            background: #E5E7EB;
+        .btn-primary:hover { background: #E5E7EB; }
+
+        .btn-secondary {
+            background: transparent;
+            color: #FFFFFF;
+            padding: 0.6rem 1.2rem;
+            border-radius: 25px;
+            border: 2px solid #FFFFFF;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-block;
+            text-decoration: none;
+            font-size: 0.9rem;
         }
+        .btn-secondary:hover {
+            background: #FFFFFF;
+            color: var(--azul-escuro);
+        }
+
+        .btn-success {
+            background: #22C55E;
+            color: #FFFFFF;
+            padding: 0.6rem 1.2rem;
+            border-radius: 25px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+        .btn-success:hover { background: #16A34A; }
+
+        .btn-danger {
+            background: #EF4444;
+            color: #FFFFFF;
+            padding: 0.6rem 1.2rem;
+            border-radius: 25px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+        .btn-danger:hover { background: #DC2626; }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: #0F1B3A;
+            color: #FFFFFF;
+            resize: vertical;
+        }
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #93C5FD;
+        }
+
+        .ja-interessado {
+            background: #334155;
+            padding: 0.8rem;
+            border-radius: 10px;
+            color: #94A3B8;
+            text-align: center;
+        }
+
         footer {
             text-align: center;
             padding: 2rem;
@@ -209,90 +331,165 @@
             border-top: 1px solid #334155;
             margin-top: 2rem;
         }
+
         @media (max-width: 768px) {
             .top-avatar .nome { display: none; }
-            .form-section { padding: 1rem; }
+            .problema-header { flex-direction: column; }
+            .problema-container { padding: 1rem; }
         }
     </style>
 </head>
 <body>
 
-    <!-- TOP BAR -->
+    <!-- ===== TOP BAR ===== -->
     <div class="top-bar">
         <button class="menu-btn" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
         <div class="top-avatar">
-            <span class="nome">{{ session.nome }}</span>
-            <a href="/perfil" class="avatar"><i class="fas fa-user"></i></a>
+            {% if session.user_id %}
+                <span class="nome">{{ session.nome }}</span>
+                <a href="/perfil" class="avatar"><i class="fas fa-user"></i></a>
+            {% else %}
+                <a href="/login" style="color: #CBD5E1;">Entrar</a>
+                <a href="/register" class="btn-primary" style="background:#FFFFFF; color:var(--azul-escuro); padding:0.4rem 1rem; border-radius:25px; font-weight:600; text-decoration:none;">Criar conta</a>
+            {% endif %}
         </div>
     </div>
 
+    <!-- ===== OVERLAY + SIDEBAR ===== -->
     <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
-
-    <!-- MENU LATERAL -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="logo"><i class="fas fa-handshake"></i> Clourf</div>
             <button class="sidebar-close" onclick="toggleMenu()"><i class="fas fa-times"></i></button>
         </div>
         <nav class="sidebar-nav">
-            <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-            <a href="/novo-problema" class="active"><i class="fas fa-plus-circle"></i> Publicar</a>
+            <a href="/"><i class="fas fa-home"></i> Início</a>
+            <a href="/novo-problema"><i class="fas fa-plus-circle"></i> Publicar</a>
             <a href="/categorias"><i class="fas fa-th-large"></i> Categorias</a>
-            <a href="/minhas-publicacoes"><i class="fas fa-list"></i> Minhas Publicações</a>
-            <a href="/notificacoes"><i class="fas fa-bell"></i> Notificações</a>
-            <a href="/mensagens"><i class="fas fa-comments"></i> Mensagens</a>
             <a href="/ajuda"><i class="fas fa-life-ring"></i> Ajuda</a>
+            {% if session.user_id %}
+                <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="/minhas-publicacoes"><i class="fas fa-list"></i> Minhas Publicações</a>
+                <a href="/notificacoes"><i class="fas fa-bell"></i> Notificações</a>
+                <a href="/mensagens"><i class="fas fa-comments"></i> Mensagens</a>
+            {% endif %}
         </nav>
         <div class="sidebar-footer">
-            <a href="/perfil"><i class="fas fa-user-circle"></i> Meu Perfil</a>
-            <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
+            {% if session.user_id %}
+                <a href="/perfil"><i class="fas fa-user-circle"></i> Meu Perfil</a>
+                <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
+            {% else %}
+                <a href="/login"><i class="fas fa-sign-in-alt"></i> Entrar</a>
+                <a href="/register"><i class="fas fa-user-plus"></i> Criar conta</a>
+            {% endif %}
         </div>
     </div>
 
-    <!-- CONTEÚDO -->
-    <section class="form-section">
-        <div class="form-container">
-            <h1><i class="fas fa-plus-circle"></i> Publicar problema</h1>
-            <p>Descreva o que precisa e encontre quem pode ajudar.</p>
-            <form method="POST">
-                <div class="form-group">
-                    <label>Título do problema</label>
-                    <input type="text" name="titulo" placeholder="Ex: Preciso de um eletricista" required>
+    <!-- ===== CONTEÚDO PRINCIPAL ===== -->
+    <div class="problema-container">
+        <a href="javascript:history.back()" class="voltar"><i class="fas fa-arrow-left"></i> Voltar</a>
+
+        <div class="problema-card">
+
+            <!-- HEADER -->
+            <div class="problema-header">
+                <h1>{{ problema[1] }}</h1>
+                <span class="categoria-badge">{{ problema[3] }}</span>
+            </div>
+
+            <!-- INFORMAÇÕES DO PROBLEMA -->
+            <div class="problema-info">
+                <p><i class="fas fa-user"></i> Publicado por <strong>{{ problema[8] }}</strong></p>
+                <p><i class="fas fa-map-marker-alt"></i> {{ problema[4] or 'Local não definido' }}</p>
+                <p><i class="fas fa-clock"></i> {{ problema[7][:16] }}</p>
+                <p><i class="fas fa-tag"></i> <span class="categoria-badge" style="background: transparent; padding-left: 0;">{{ problema[3] }}</span></p>
+            </div>
+
+            <!-- DESCRIÇÃO -->
+            <div class="problema-descricao">
+                <h3>Descrição</h3>
+                <p>{{ problema[2] }}</p>
+            </div>
+
+            <!-- CONTACTO DO AUTOR -->
+            <div class="problema-contato">
+                <h3><i class="fas fa-address-card"></i> Contacto do autor</h3>
+                <p><i class="fas fa-phone"></i> {{ problema[9] or 'Não informado' }}</p>
+                <p><i class="fas fa-envelope"></i> {{ problema[8] }} (via Clourf)</p>
+                <p><i class="fas fa-map-marker-alt"></i> {{ problema[10] or 'Localização não informada' }}</p>
+                {% if problema[11] %}
+                    <p><i class="fas fa-align-left"></i> {{ problema[11] }}</p>
+                {% endif %}
+            </div>
+
+            <!-- ===== BOTÃO QUERO RESOLVER ===== -->
+            {% if session.user_id and session.user_id != problema[6] %}
+                <div style="margin: 1.5rem 0;">
+                    <h3 style="color: #FFFFFF; margin-bottom: 0.5rem;">Quer resolver este problema?</h3>
+                    
+                    {% if ja_interessado %}
+                        <div class="ja-interessado">
+                            <i class="fas fa-check-circle" style="color: #22C55E;"></i>
+                            Você já manifestou interesse neste problema. Aguarde resposta do autor.
+                        </div>
+                    {% else %}
+                        <form method="POST" action="/interessar/{{ problema[0] }}">
+                            <div class="form-group">
+                                <textarea name="mensagem" rows="2" placeholder="Diga por que pode ajudar a resolver este problema..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn-success">
+                                <i class="fas fa-handshake"></i> Quero resolver
+                            </button>
+                        </form>
+                    {% endif %}
                 </div>
-                <div class="form-group">
-                    <label>Descrição detalhada</label>
-                    <textarea name="descricao" rows="5" placeholder="Descreva o que precisa com o máximo de detalhes..." required></textarea>
+            {% endif %}
+
+            <!-- ===== VER INTERESSADOS (APENAS PARA O AUTOR) ===== -->
+            {% if session.user_id and session.user_id == problema[6] %}
+                <div style="margin: 1.5rem 0; display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <a href="/interessados/{{ problema[0] }}" class="btn-secondary">
+                        <i class="fas fa-users"></i> Ver interessados
+                    </a>
                 </div>
-                <div class="form-group">
-                    <label>Categoria</label>
-                    <select name="categoria" required>
-                        <option value="">Selecione uma categoria</option>
-                        <option value="Serviços">Serviços</option>
-                        <option value="Design">Design</option>
-                        <option value="Reparos">Reparos</option>
-                        <option value="Transporte">Transporte</option>
-                        <option value="Aulas">Aulas</option>
-                        <option value="Eventos">Eventos</option>
-                    </select>
+            {% endif %}
+
+            <!-- ===== MENSAGEM PARA QUEM NÃO ESTÁ LOGADO ===== -->
+            {% if not session.user_id %}
+                <div style="margin: 1.5rem 0; text-align: center; color: #94A3B8;">
+                    <p><i class="fas fa-lock"></i> Faça <a href="/login" style="color: #93C5FD;">login</a> para se interessar ou entrar em contacto.</p>
+                    <p style="font-size: 0.85rem;">Não tem conta? <a href="/register" style="color: #93C5FD;">Crie uma gratuitamente</a></p>
                 </div>
-                <div class="form-group">
-                    <label>Localização</label>
-                    <input type="text" name="localizacao" placeholder="Cidade, bairro (ex: Maputo, Matola)" required>
-                </div>
-                <button type="submit" class="btn-primary"><i class="fas fa-share"></i> Publicar problema</button>
-            </form>
+            {% endif %}
+
         </div>
-    </section>
+    </div>
 
     <footer>
         <p>© 2026 Clourf. Conectamos problemas a soluções.</p>
     </footer>
 
+    <!-- ===== SCRIPTS ===== -->
     <script>
         function toggleMenu() {
             document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('overlay').classList.toggle('show');
         }
+
+        // Fechar menu ao clicar fora
+        document.addEventListener('click', function(event) {
+            var sidebar = document.getElementById('sidebar');
+            var overlay = document.getElementById('overlay');
+            var menuBtn = document.querySelector('.menu-btn');
+            
+            if (sidebar && sidebar.classList.contains('open')) {
+                if (!sidebar.contains(event.target) && !menuBtn.contains(event.target)) {
+                    sidebar.classList.remove('open');
+                    overlay.classList.remove('show');
+                }
+            }
+        });
     </script>
+
 </body>
 </html>
