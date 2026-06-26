@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajuda e Segurança - Clourf</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .faq-item {
+            background: var(--azul-escuro);
+            padding: 1.2rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+        .faq-item h3 {
+            color: #93C5FD;
+            margin-bottom: 0.5rem;
+        }
+        .faq-item p {
+            color: #CBD5E1;
+        }
+        .ajuda-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        .ajuda-card {
+            background: var(--azul-escuro);
+            padding: 1.5rem;
+            border-radius: 15px;
+            text-align: center;
+            color: #FFFFFF;
+        }
+        .ajuda-card i {
+            font-size: 2.5rem;
+            color: #93C5FD;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo"><i class="fas fa-handshake"></i> Clourf</div>
+            <div class="nav-links">
+                <a href="/">Início</a>
+                <a href="/novo-problema">Publicar</a>
+                <a href="/categorias">Categorias</a>
+                <a href="/ajuda" class="active">Ajuda</a>
+                <a href="/perfil">Perfil</a>
+                <a href="/logout">Sair</a>
+            </div>
+        </nav>
+    </header>
+
+    <div class="dashboard">
+        <h1 style="color: #FFFFFF;"><i class="fas fa-life-ring"></i> Ajuda e Segurança</h1>
+        <p style="color: #94A3B8; margin-bottom: 2rem;">Tire dúvidas e saiba como usar o Clourf com segurança.</p>
+
+        <div class="ajuda-grid">
+            <div class="ajuda-card">
+                <i class="fas fa-question-circle"></i>
+                <h3>Como publicar</h3>
+                <p style="color: #94A3B8;">Clique em "Publicar", preencha o formulário e aguarde respostas.</p>
+            </div>
+            <div class="ajuda-card">
+                <i class="fas fa-shield-alt"></i>
+                <h3>Segurança</h3>
+                <p style="color: #94A3B8;">Nunca partilhe dados pessoais. Use o chat do site para comunicar.</p>
+            </div>
+            <div class="ajuda-card">
+                <i class="fas fa-handshake"></i>
+                <h3>Como contactar</h3>
+                <p style="color: #94A3B8;">Use a opção "Entrar em contacto" nos detalhes do problema.</p>
+            </div>
+            <div class="ajuda-card">
+                <i class="fas fa-flag"></i>
+                <h3>Reportar abuso</h3>
+                <p style="color: #94A3B8;">Veja um problema suspeito? Contacte-nos imediatamente.</p>
+            </div>
+        </div>
+
+        <h2 style="color: #FFFFFF; margin-top: 2rem;">Perguntas frequentes</h2>
+
+        <div class="faq-item">
+            <h3><i class="fas fa-question-circle"></i> Como publico um problema?</h3>
+            <p>Clica em "Publicar" no menu, preenche o título, descrição, categoria e localização. Depois clica em "Publicar problema".</p>
+        </div>
+
+        <div class="faq-item">
+            <h3><i class="fas fa-question-circle"></i> Como respondo a um problema?</h3>
+            <p>Abre o problema, clica em "Entrar em contacto" e envia a tua mensagem. O utilizador será notificado.</p>
+        </div>
+
+        <div class="faq-item">
+            <h3><i class="fas fa-question-circle"></i> Os meus dados estão seguros?</h3>
+            <p>Sim. Usamos criptografia e não partilhamos os teus dados com terceiros.</p>
+        </div>
+
+        <div class="faq-item">
+            <h3><i class="fas fa-question-circle"></i> Como edito o meu perfil?</h3>
+            <p>Vai ao teu perfil, clica em "Editar" ao lado do campo que queres alterar (telefone, localização, bio).</p>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2026 Clourf. Conectamos problemas a soluções.</p>
+    </footer>
+</body>
+</html>
