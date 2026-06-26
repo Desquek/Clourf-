@@ -108,4 +108,185 @@
         }
         .sidebar-footer {
             margin-top: 2rem;
-            padding-top:
+            padding-top: 1rem;
+            border-top: 1px solid #334155;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .sidebar-footer a {
+            padding: 0.8rem 1rem;
+            border-radius: 10px;
+            color: #CBD5E1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+        .sidebar-footer a:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            display: none;
+        }
+        .overlay.show { display: block; }
+
+        .dashboard {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+        .dashboard h1 {
+            color: #FFFFFF;
+            font-size: 2rem;
+            margin-bottom: 2rem;
+        }
+        .mensagem-item {
+            background: var(--azul-escuro);
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+        .mensagem-item:hover {
+            transform: translateX(5px);
+        }
+        .avatar-msg {
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            background: #334155;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #93C5FD;
+            font-size: 1.5rem;
+        }
+        .mensagem-item .info {
+            flex: 1;
+            color: #FFFFFF;
+        }
+        .mensagem-item .info .nome {
+            font-weight: bold;
+        }
+        .mensagem-item .info .ultima {
+            color: #94A3B8;
+            font-size: 0.9rem;
+        }
+        .mensagem-item .info .tempo {
+            color: #94A3B8;
+            font-size: 0.8rem;
+        }
+        .nao-lida {
+            background: #93C5FD;
+            color: #0F1B3A;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: #94A3B8;
+            border-top: 1px solid #334155;
+            margin-top: 2rem;
+        }
+        @media (max-width: 768px) {
+            .top-avatar .nome { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <button class="menu-btn" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
+        <div class="top-avatar">
+            <span class="nome">{{ session.nome }}</span>
+            <a href="/perfil" class="avatar"><i class="fas fa-user"></i></a>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo"><i class="fas fa-handshake"></i> Clourf</div>
+            <button class="sidebar-close" onclick="toggleMenu()"><i class="fas fa-times"></i></button>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="/novo-problema"><i class="fas fa-plus-circle"></i> Publicar</a>
+            <a href="/categorias"><i class="fas fa-th-large"></i> Categorias</a>
+            <a href="/minhas-publicacoes"><i class="fas fa-list"></i> Minhas Publicações</a>
+            <a href="/notificacoes"><i class="fas fa-bell"></i> Notificações</a>
+            <a href="/mensagens" class="active"><i class="fas fa-comments"></i> Mensagens</a>
+            <a href="/ajuda"><i class="fas fa-life-ring"></i> Ajuda</a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="/perfil"><i class="fas fa-user-circle"></i> Meu Perfil</a>
+            <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
+        </div>
+    </div>
+
+    <section class="dashboard">
+        <h1><i class="fas fa-comments"></i> Mensagens</h1>
+
+        <div class="mensagem-item">
+            <div class="avatar-msg"><i class="fas fa-user"></i></div>
+            <div class="info">
+                <div class="nome">João Silva</div>
+                <div class="ultima">👍 Vou verificar o orçamento e já te digo.</div>
+                <div class="tempo">Há 2 horas</div>
+            </div>
+            <span class="nao-lida">2</span>
+        </div>
+
+        <div class="mensagem-item">
+            <div class="avatar-msg"><i class="fas fa-user"></i></div>
+            <div class="info">
+                <div class="nome">Maria Santos</div>
+                <div class="ultima">Obrigado pela ajuda! Ficou excelente.</div>
+                <div class="tempo">Há 5 horas</div>
+            </div>
+        </div>
+
+        <div class="mensagem-item">
+            <div class="avatar-msg"><i class="fas fa-user"></i></div>
+            <div class="info">
+                <div class="nome">Carlos Mocumbi</div>
+                <div class="ultima">Podes enviar a localização exacta?</div>
+                <div class="tempo">Há 2 dias</div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 2rem; color: #94A3B8;">
+            <p><i class="fas fa-info-circle"></i> Clique numa conversa para abrir</p>
+        </div>
+    </section>
+
+    <footer>
+        <p>© 2026 Clourf. Conectamos problemas a soluções.</p>
+    </footer>
+
+    <script>
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('show');
+        }
+    </script>
+
+</body>
+</html>
