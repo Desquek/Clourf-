@@ -3,78 +3,229 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Perfil - Clourf</title>
+    <title>Perfil - Clourf</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, sans-serif; background: #f5f7fb; padding-bottom: 70px; }
-        
-        .header { background: white; padding: 20px; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; }
-        .header h1 { font-size: 24px; }
-        
-        .container { padding: 20px; }
-        
-        .perfil-card { background: white; border-radius: 20px; padding: 30px; text-align: center; margin-bottom: 20px; }
-        .perfil-foto { width: 120px; height: 120px; border-radius: 60px; object-fit: cover; margin-bottom: 15px; border: 3px solid #6C63FF; }
-        .perfil-foto-placeholder { width: 120px; height: 120px; border-radius: 60px; background: #6C63FF; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; }
-        .perfil-foto-placeholder i { font-size: 60px; color: white; }
-        .upload-foto-btn { background: #6C63FF; color: white; border: none; padding: 10px 20px; border-radius: 25px; margin-top: 10px; cursor: pointer; display: inline-block; }
-        
-        .info-item { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
-        .info-label { font-weight: bold; color: #666; font-size: 12px; margin-bottom: 4px; }
-        .info-value { font-size: 16px; }
-        
-        .bottom-menu { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 12px 20px; border-top-left-radius: 20px; border-top-right-radius: 20px; }
-        .menu-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #aaa; font-size: 12px; }
-        .menu-item i { font-size: 22px; }
-        .menu-item.active { color: #6C63FF; }
+        .perfil-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+        .perfil-card {
+            background: var(--azul-escuro);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .perfil-avatar {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .perfil-avatar img {
+            width: 120px;
+            height: 120px;
+            border-radius: 60px;
+            object-fit: cover;
+            border: 4px solid #93C5FD;
+        }
+        .avatar-placeholder {
+            width: 120px;
+            height: 120px;
+            border-radius: 60px;
+            background: #334155;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            border: 4px solid #93C5FD;
+        }
+        .avatar-placeholder i {
+            font-size: 60px;
+            color: #CBD5E1;
+        }
+        .perfil-info .campo {
+            margin-bottom: 1rem;
+            padding: 0.8rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+        }
+        .perfil-info .campo label {
+            font-size: 0.8rem;
+            color: #93C5FD;
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+        .perfil-info .campo p {
+            font-size: 1.1rem;
+            margin: 0;
+            color: #FFFFFF;
+        }
+        .perfil-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .edit-form {
+            display: none;
+            margin-top: 0.5rem;
+        }
+        .edit-form input, .edit-form textarea {
+            width: 100%;
+            padding: 0.6rem;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: #0F1B3A;
+            color: #FFFFFF;
+            margin-bottom: 0.5rem;
+        }
+        .edit-form button {
+            padding: 0.4rem 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #93C5FD;
+            color: #0F1B3A;
+            font-weight: bold;
+        }
+        .edit-form button.cancel {
+            background: #7F1D1D;
+            color: #FCA5A5;
+        }
+        .campo-fixo {
+            opacity: 0.7;
+        }
+        .campo-fixo p {
+            color: #94A3B8 !important;
+        }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Meu Perfil</h1>
-    </div>
-    
-    <div class="container">
+    <header>
+        <nav>
+            <div class="logo"><i class="fas fa-handshake"></i> Clourf</div>
+            <div class="nav-links">
+                <a href="/">Início</a>
+                <a href="/novo-problema">Publicar</a>
+                <a href="/categorias">Categorias</a>
+                <a href="/perfil" class="active">Perfil</a>
+                <a href="/logout">Sair</a>
+            </div>
+        </nav>
+    </header>
+
+    <div class="perfil-container">
         <div class="perfil-card">
-            {% if user[3] %}
-                <img src="{{ user[3] }}" class="perfil-foto" alt="Foto">
-            {% else %}
-                <div class="perfil-foto-placeholder">
-                    <i class="fas fa-user-circle"></i>
+            <div class="perfil-avatar">
+                {% if user[3] and user[3] != 'default.png' %}
+                    <img src="{{ url_for('static', filename='perfil/' + user[3]) }}" alt="Foto">
+                {% else %}
+                    <div class="avatar-placeholder">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                {% endif %}
+                <form method="POST" action="/upload-foto" enctype="multipart/form-data" style="margin-top: 1rem;">
+                    <input type="file" name="foto" id="foto" accept="image/*" style="display: none;" onchange="this.form.submit()">
+                    <label for="foto" class="btn-secondary" style="cursor: pointer;">
+                        <i class="fas fa-camera"></i> Alterar foto
+                    </label>
+                </form>
+            </div>
+
+            <div class="perfil-info">
+                <!-- Nome (fixo) -->
+                <div class="campo campo-fixo">
+                    <label><i class="fas fa-user"></i> Nome</label>
+                    <p>{{ user[0] }}</p>
                 </div>
-            {% endif %}
-            
-            <form method="POST" action="/upload-foto" enctype="multipart/form-data">
-                <input type="file" name="foto" id="foto" accept="image/*" style="display: none;" onchange="this.form.submit()">
-                <label for="foto" class="upload-foto-btn">
-                    <i class="fas fa-camera"></i> Alterar foto
-                </label>
-            </form>
-        </div>
-        
-        <div class="perfil-card">
-            <div class="info-item">
-                <div class="info-label">Usuário</div>
-                <div class="info-value">{{ user[0] }}</div>
+
+                <!-- Email (fixo) -->
+                <div class="campo campo-fixo">
+                    <label><i class="fas fa-envelope"></i> Email</label>
+                    <p>{{ user[1] }}</p>
+                </div>
+
+                <!-- Telefone (editável) -->
+                <div class="campo">
+                    <label><i class="fas fa-phone"></i> Telefone</label>
+                    <p id="telefone-texto">{{ user[2] or 'Não informado' }}</p>
+                    <button class="btn-secondary" style="font-size: 0.8rem; padding: 0.3rem 0.8rem;" onclick="editarCampo('telefone')"><i class="fas fa-pen"></i> Editar</button>
+                    <div class="edit-form" id="edit-telefone">
+                        <form method="POST" action="/editar-perfil">
+                            <input type="hidden" name="campo" value="telefone">
+                            <input type="text" name="valor" value="{{ user[2] or '' }}">
+                            <button type="submit">Salvar</button>
+                            <button type="button" class="cancel" onclick="fecharEdicao('telefone')">Cancelar</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Localização (editável) -->
+                <div class="campo">
+                    <label><i class="fas fa-map-marker-alt"></i> Localização</label>
+                    <p id="localizacao-texto">{{ user[4] or 'Não informada' }}</p>
+                    <button class="btn-secondary" style="font-size: 0.8rem; padding: 0.3rem 0.8rem;" onclick="editarCampo('localizacao')"><i class="fas fa-pen"></i> Editar</button>
+                    <div class="edit-form" id="edit-localizacao">
+                        <form method="POST" action="/editar-perfil">
+                            <input type="hidden" name="campo" value="localizacao">
+                            <input type="text" name="valor" value="{{ user[4] or '' }}">
+                            <button type="submit">Salvar</button>
+                            <button type="button" class="cancel" onclick="fecharEdicao('localizacao')">Cancelar</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Bio (editável) -->
+                <div class="campo">
+                    <label><i class="fas fa-align-left"></i> Sobre mim</label>
+                    <p id="bio-texto">{{ user[5] or 'Nenhuma biografia ainda.' }}</p>
+                    <button class="btn-secondary" style="font-size: 0.8rem; padding: 0.3rem 0.8rem;" onclick="editarCampo('bio')"><i class="fas fa-pen"></i> Editar</button>
+                    <div class="edit-form" id="edit-bio">
+                        <form method="POST" action="/editar-perfil">
+                            <input type="hidden" name="campo" value="bio">
+                            <textarea name="valor" rows="3">{{ user[5] or '' }}</textarea>
+                            <button type="submit">Salvar</button>
+                            <button type="button" class="cancel" onclick="fecharEdicao('bio')">Cancelar</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Membro desde -->
+                <div class="campo campo-fixo">
+                    <label><i class="fas fa-clock"></i> Membro desde</label>
+                    <p>{{ user[6][:10] if user[6] else '2026' }}</p>
+                </div>
             </div>
-            <div class="info-item">
-                <div class="info-label">Email</div>
-                <div class="info-value">{{ user[1] if user[1] else 'Não informado' }}</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Membro desde</div>
-                <div class="info-value">{{ user[2][:16] }}</div>
+
+            <div class="perfil-actions">
+                <a href="/dashboard" class="btn-secondary"><i class="fas fa-arrow-left"></i> Dashboard</a>
+                <a href="/minhas-publicacoes" class="btn-secondary"><i class="fas fa-list"></i> Minhas publicações</a>
+                <a href="/logout" class="btn-secondary" style="border-color: #7F1D1D; color: #FCA5A5;">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </a>
             </div>
         </div>
     </div>
-    
-    <div class="bottom-menu">
-        <a href="/dashboard" class="menu-item"><i class="fas fa-home"></i><span>Início</span></a>
-        <a href="/meus-arquivos" class="menu-item"><i class="fas fa-folder"></i><span>Arquivos</span></a>
-        <a href="#" class="menu-item"><i class="fas fa-share-alt"></i><span>Compartilhados</span></a>
-        <a href="/favoritos" class="menu-item"><i class="fas fa-star"></i><span>Favoritos</span></a>
-        <a href="/perfil" class="menu-item active"><i class="fas fa-user"></i><span>Perfil</span></a>
-    </div>
+
+    <script>
+        function editarCampo(campo) {
+            document.querySelectorAll('.edit-form').forEach(function(el) {
+                el.style.display = 'none';
+            });
+            var form = document.getElementById('edit-' + campo);
+            if (form) {
+                form.style.display = 'block';
+            }
+        }
+
+        function fecharEdicao(campo) {
+            var form = document.getElementById('edit-' + campo);
+            if (form) {
+                form.style.display = 'none';
+            }
+        }
+    </script>
 </body>
 </html>
