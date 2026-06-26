@@ -7,24 +7,157 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
-        .faq-item {
+        .top-bar {
+            background: transparent;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .menu-btn {
+            background: none;
+            border: none;
+            color: #FFFFFF;
+            font-size: 1.8rem;
+            cursor: pointer;
+            padding: 0.3rem 0.6rem;
+        }
+        .top-avatar {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        .top-avatar .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #334155;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #FFFFFF;
+            font-size: 1.2rem;
+            border: 2px solid #93C5FD;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        .top-avatar .nome {
+            color: #FFFFFF;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -280px;
+            width: 280px;
+            height: 100%;
             background: var(--azul-escuro);
-            padding: 1.2rem;
-            border-radius: 12px;
-            margin-bottom: 1rem;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+            transition: left 0.3s ease;
+            z-index: 1001;
+            padding: 2rem 1.5rem;
+            overflow-y: auto;
         }
-        .faq-item h3 {
-            color: #93C5FD;
-            margin-bottom: 0.5rem;
+        .sidebar.open { left: 0; }
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 1rem;
         }
-        .faq-item p {
+        .sidebar-header .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #FFFFFF;
+        }
+        .sidebar-close {
+            background: none;
+            border: none;
+            color: #FFFFFF;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .sidebar-nav a {
+            padding: 0.8rem 1rem;
+            border-radius: 10px;
             color: #CBD5E1;
+            transition: background 0.3s, color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+        .sidebar-nav a:hover {
+            background: rgba(255,255,255,0.1);
+            color: #FFFFFF;
+        }
+        .sidebar-nav a i {
+            width: 24px;
+            font-size: 1.2rem;
+        }
+        .sidebar-footer {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #334155;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .sidebar-footer a {
+            padding: 0.8rem 1rem;
+            border-radius: 10px;
+            color: #CBD5E1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+        .sidebar-footer a:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            display: none;
+        }
+        .overlay.show { display: block; }
+
+        .dashboard {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+        .dashboard h1 {
+            color: #FFFFFF;
+            font-size: 2rem;
+            margin-bottom: 2rem;
+        }
+        .dashboard p {
+            color: #94A3B8;
+            margin-bottom: 2rem;
         }
         .ajuda-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 1.5rem;
-            margin-top: 2rem;
+            margin-bottom: 2rem;
         }
         .ajuda-card {
             background: var(--azul-escuro);
@@ -38,47 +171,104 @@
             color: #93C5FD;
             margin-bottom: 1rem;
         }
+        .ajuda-card p {
+            color: #94A3B8;
+            font-size: 0.9rem;
+        }
+        .faq-item {
+            background: var(--azul-escuro);
+            padding: 1.2rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+        .faq-item h3 {
+            color: #93C5FD;
+            margin-bottom: 0.5rem;
+        }
+        .faq-item p {
+            color: #CBD5E1;
+        }
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: #94A3B8;
+            border-top: 1px solid #334155;
+            margin-top: 2rem;
+        }
+        @media (max-width: 768px) {
+            .top-avatar .nome { display: none; }
+        }
     </style>
 </head>
 <body>
-    <header>
-        <nav>
-            <div class="logo"><i class="fas fa-handshake"></i> Clourf</div>
-            <div class="nav-links">
-                <a href="/">Início</a>
-                <a href="/novo-problema">Publicar</a>
-                <a href="/categorias">Categorias</a>
-                <a href="/ajuda" class="active">Ajuda</a>
-                <a href="/perfil">Perfil</a>
-                <a href="/logout">Sair</a>
-            </div>
-        </nav>
-    </header>
 
-    <div class="dashboard">
-        <h1 style="color: #FFFFFF;"><i class="fas fa-life-ring"></i> Ajuda e Segurança</h1>
-        <p style="color: #94A3B8; margin-bottom: 2rem;">Tire dúvidas e saiba como usar o Clourf com segurança.</p>
+    <div class="top-bar">
+        <button class="menu-btn" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
+        <div class="top-avatar">
+            {% if session.user_id %}
+                <span class="nome">{{ session.nome }}</span>
+                <a href="/perfil" class="avatar"><i class="fas fa-user"></i></a>
+            {% else %}
+                <a href="/login" style="color: #CBD5E1;">Entrar</a>
+                <a href="/register" class="btn-primary" style="background:#FFFFFF; color:var(--azul-escuro); padding:0.4rem 1rem; border-radius:25px; font-weight:600; text-decoration:none;">Criar conta</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo"><i class="fas fa-handshake"></i> Clourf</div>
+            <button class="sidebar-close" onclick="toggleMenu()"><i class="fas fa-times"></i></button>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/"><i class="fas fa-home"></i> Início</a>
+            <a href="/novo-problema"><i class="fas fa-plus-circle"></i> Publicar</a>
+            <a href="/categorias"><i class="fas fa-th-large"></i> Categorias</a>
+            <a href="/ajuda" class="active"><i class="fas fa-life-ring"></i> Ajuda</a>
+            {% if session.user_id %}
+                <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="/minhas-publicacoes"><i class="fas fa-list"></i> Minhas Publicações</a>
+                <a href="/notificacoes"><i class="fas fa-bell"></i> Notificações</a>
+                <a href="/mensagens"><i class="fas fa-comments"></i> Mensagens</a>
+            {% endif %}
+        </nav>
+        <div class="sidebar-footer">
+            {% if session.user_id %}
+                <a href="/perfil"><i class="fas fa-user-circle"></i> Meu Perfil</a>
+                <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
+            {% else %}
+                <a href="/login"><i class="fas fa-sign-in-alt"></i> Entrar</a>
+                <a href="/register"><i class="fas fa-user-plus"></i> Criar conta</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <section class="dashboard">
+        <h1><i class="fas fa-life-ring"></i> Ajuda e Segurança</h1>
+        <p>Tire dúvidas e saiba como usar o Clourf com segurança.</p>
 
         <div class="ajuda-grid">
             <div class="ajuda-card">
                 <i class="fas fa-question-circle"></i>
                 <h3>Como publicar</h3>
-                <p style="color: #94A3B8;">Clique em "Publicar", preencha o formulário e aguarde respostas.</p>
+                <p>Clique em "Publicar", preencha o formulário e aguarde respostas.</p>
             </div>
             <div class="ajuda-card">
                 <i class="fas fa-shield-alt"></i>
                 <h3>Segurança</h3>
-                <p style="color: #94A3B8;">Nunca partilhe dados pessoais. Use o chat do site para comunicar.</p>
+                <p>Nunca partilhe dados pessoais. Use o chat do site para comunicar.</p>
             </div>
             <div class="ajuda-card">
                 <i class="fas fa-handshake"></i>
                 <h3>Como contactar</h3>
-                <p style="color: #94A3B8;">Use a opção "Entrar em contacto" nos detalhes do problema.</p>
+                <p>Use a opção "Entrar em contacto" nos detalhes do problema.</p>
             </div>
             <div class="ajuda-card">
                 <i class="fas fa-flag"></i>
                 <h3>Reportar abuso</h3>
-                <p style="color: #94A3B8;">Veja um problema suspeito? Contacte-nos imediatamente.</p>
+                <p>Veja um problema suspeito? Contacte-nos imediatamente.</p>
             </div>
         </div>
 
@@ -103,10 +293,18 @@
             <h3><i class="fas fa-question-circle"></i> Como edito o meu perfil?</h3>
             <p>Vai ao teu perfil, clica em "Editar" ao lado do campo que queres alterar (telefone, localização, bio).</p>
         </div>
-    </div>
+    </section>
 
     <footer>
         <p>© 2026 Clourf. Conectamos problemas a soluções.</p>
     </footer>
+
+    <script>
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('show');
+        }
+    </script>
+
 </body>
 </html>
