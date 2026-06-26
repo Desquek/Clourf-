@@ -12,7 +12,6 @@ UPLOAD_FOLDER = 'static/perfil'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Criar pasta se não existir
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def allowed_file(filename):
@@ -51,6 +50,32 @@ def init_db():
         FOREIGN KEY (usuario_id) REFERENCES users (id)
     )''')
     
+    # Tabela de interessados (quem quer resolver)
+    c.execute('''CREATE TABLE IF NOT EXISTS interessados (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        problema_id INTEGER,
+        usuario_id INTEGER,
+        mensagem TEXT,
+        status TEXT DEFAULT 'pendente',
+        data_interesse TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (problema_id) REFERENCES problemas (id),
+        FOREIGN KEY (usuario_id) REFERENCES users (id)
+    )''')
+    
+    # Tabela de mensagens
+    c.execute('''CREATE TABLE IF NOT EXISTS mensagens (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        remetente_id INTEGER,
+        destinatario_id INTEGER,
+        problema_id INTEGER,
+        conteudo TEXT NOT NULL,
+        lida INTEGER DEFAULT 0,
+        data_envio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (remetente_id) REFERENCES users (id),
+        FOREIGN KEY (destinatario_id) REFERENCES users (id),
+        FOREIGN KEY (problema_id) REFERENCES problemas (id)
+    )''')
+    
     conn.commit()
     conn.close()
 
@@ -60,17 +85,15 @@ def seed_db():
     
     c.execute("SELECT COUNT(*) FROM problemas")
     if c.fetchone()[0] == 0:
-        # Criar utilizador de teste
-        c.execute("INSERT OR IGNORE INTO users (nome, email, telefone, senha) VALUES (?, ?, ?, ?)",
-                 ("Didi", "didi@email.com", "84 123 4567", "1234"))
+        c.execute("INSERT OR IGNORE INTO users (nome, email, telefone, senha, localizacao, bio) VALUES (?, ?, ?, ?, ?, ?)",
+                 ("Didi", "didi@email.com", "84 123 4567", "1234", "Maputo", "Adoro conectar pessoas a soluções!"))
         
-        # Problemas de exemplo
         exemplos = [
-            ("Preciso de um eletricista", "Instalação de tomadas e fiação em casa", "Serviços", "Maputo"),
-            ("Preciso de um logo", "Logo para minha marca de roupas", "Design", "Nampula"),
-            ("Preciso de um entregador", "Entregue de encomenda urgente", "Transporte", "Beira"),
-            ("Preciso de aulas de inglês", "Aulas particulares de inglês para iniciantes", "Aulas", "Matola"),
-            ("Preciso de um DJ", "Evento de aniversário com 50 pessoas", "Eventos", "Maputo"),
+            ("Preciso de um eletricista", "Instalação de tomadas e fiação em casa. Zona urbana.", "Serviços", "Maputo"),
+            ("Preciso de um logo", "Logo para minha marca de roupas. Estilo minimalista.", "Design", "Nampula"),
+            ("Preciso de um entregador", "Entregue de encomenda urgente na baixa da cidade.", "Transporte", "Beira"),
+            ("Preciso de aulas de inglês", "Aulas particulares de inglês para iniciantes.", "Aulas", "Matola"),
+            ("Preciso de um DJ", "Evento de aniversário com 50 pessoas.", "Eventos", "Maputo"),
         ]
         
         for titulo, desc, cat, local in exemplos:
@@ -89,12 +112,14 @@ seed_db()
 
 @app.route('/')
 def index():
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("SELECT p.*, u.nome FROM problemas p JOIN users u ON p.usuario_id = u.id ORDER BY p.data_criacao DESC LIMIT 10")
-    problemas = c.fetchall()
-    conn.close()
-    return render_template('index.html', problemas=problemas)
+    if 'user_id' in session:
+        conn = get_db()
+        c = conn.cursor()
+        c.execute("SELECT p.*, u.nome, u.foto FROM problemas p JOIN users u ON p.usuario_id = u.id ORDER BY p.data_criacao DESC LIMIT 10")
+        problemas = c.fetchall()
+        conn.close()
+        return render_template('dashboard.html', problemas=problemas)
+    return render_template('landing.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -157,11 +182,14 @@ def dashboard():
     
     conn = get_db()
     c = conn.cursor()
+    c.execute("SELECT p.*, u.nome, u.foto FROM problemas p JOIN users u ON p.usuario_id = u.id ORDER BY p.data_criacao DESC LIMIT 10")
+    problemas = c.fetchall()
+    
     c.execute("SELECT * FROM problemas WHERE usuario_id = ? ORDER BY data_criacao DESC", (session['user_id'],))
     meus_problemas = c.fetchall()
     conn.close()
     
-    return render_template('dashboard.html', meus_problemas=meus_problemas)
+    return render_template('dashboard.html', problemas=problemas, meus_problemas=meus_problemas)
 
 @app.route('/novo-problema', methods=['GET', 'POST'])
 def novo_problema():
@@ -190,7 +218,7 @@ def novo_problema():
 def ver_problema(problema_id):
     conn = get_db()
     c = conn.cursor()
-    c.execute("SELECT p.*, u.nome, u.telefone FROM problemas p JOIN users u ON p.usuario_id = u.id WHERE p.id = ?", (problema_id,))
+    c.execute("SELECT p.*, u.nome, u.telefone, u.foto, u.localizacao, u.bio FROM problemas p JOIN users u ON p.usuario_id = u.id WHERE p.id = ?", (problema_id,))
     problema = c.fetchone()
     conn.close()
     
@@ -221,7 +249,6 @@ def categorias():
     contagem = c.fetchall()
     conn.close()
     
-    # Lista de todas as categorias com ícones
     categorias_lista = [
         {'nome': 'Serviços', 'icone': 'fa-wrench'},
         {'nome': 'Design', 'icone': 'fa-paint-brush'},
@@ -232,6 +259,150 @@ def categorias():
     ]
     
     return render_template('categorias.html', categorias=categorias_lista, contagem=contagem)
+
+# ============================================
+# INTERESSADOS (QUEM QUER RESOLVER)
+# ============================================
+
+@app.route('/interessar/<int:problema_id>', methods=['POST'])
+def interessar(problema_id):
+    if 'user_id' not in session:
+        flash("Faça login para se interessar!")
+        return redirect(url_for('login'))
+    
+    mensagem = request.form.get('mensagem', 'Gostaria de ajudar a resolver este problema.')
+    
+    conn = get_db()
+    c = conn.cursor()
+    
+    # Verificar se já está interessado
+    c.execute("SELECT * FROM interessados WHERE problema_id = ? AND usuario_id = ?", (problema_id, session['user_id']))
+    if c.fetchone():
+        flash("Você já se interessou por este problema!")
+        conn.close()
+        return redirect(url_for('ver_problema', problema_id=problema_id))
+    
+    c.execute("INSERT INTO interessados (problema_id, usuario_id, mensagem) VALUES (?, ?, ?)",
+             (problema_id, session['user_id'], mensagem))
+    conn.commit()
+    conn.close()
+    
+    flash("Você manifestou interesse! O autor será notificado.")
+    return redirect(url_for('ver_problema', problema_id=problema_id))
+
+@app.route('/interessados/<int:problema_id>')
+def ver_interessados(problema_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT i.*, u.nome, u.foto, u.telefone FROM interessados i JOIN users u ON i.usuario_id = u.id WHERE i.problema_id = ?", (problema_id,))
+    interessados = c.fetchall()
+    conn.close()
+    
+    return render_template('interessados.html', interessados=interessados, problema_id=problema_id)
+
+# ============================================
+# MENSAGENS
+# ============================================
+
+@app.route('/mensagens')
+def mensagens():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    c = conn.cursor()
+    # Buscar conversas do utilizador
+    c.execute('''SELECT DISTINCT 
+        CASE WHEN remetente_id = ? THEN destinatario_id ELSE remetente_id END as outro_id,
+        u.nome, u.foto,
+        (SELECT conteudo FROM mensagens 
+         WHERE (remetente_id = ? AND destinatario_id = outro_id) 
+            OR (remetente_id = outro_id AND destinatario_id = ?)
+         ORDER BY data_envio DESC LIMIT 1) as ultima,
+        (SELECT data_envio FROM mensagens 
+         WHERE (remetente_id = ? AND destinatario_id = outro_id) 
+            OR (remetente_id = outro_id AND destinatario_id = ?)
+         ORDER BY data_envio DESC LIMIT 1) as ultima_data
+        FROM mensagens m
+        JOIN users u ON u.id = (
+            CASE WHEN remetente_id = ? THEN destinatario_id ELSE remetente_id END
+        )
+        WHERE remetente_id = ? OR destinatario_id = ?
+    ''', (session['user_id'], session['user_id'], session['user_id'], session['user_id'], session['user_id'], session['user_id'], session['user_id'], session['user_id']))
+    conversas = c.fetchall()
+    conn.close()
+    
+    return render_template('mensagens.html', conversas=conversas)
+
+@app.route('/mensagens/<int:outro_id>')
+def conversa(outro_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM users WHERE id = ?", (outro_id,))
+    outro = c.fetchone()
+    
+    c.execute('''SELECT m.*, u.nome, u.foto FROM mensagens m
+                 JOIN users u ON u.id = m.remetente_id
+                 WHERE (remetente_id = ? AND destinatario_id = ?)
+                 OR (remetente_id = ? AND destinatario_id = ?)
+                 ORDER BY data_envio ASC''', 
+                 (session['user_id'], outro_id, outro_id, session['user_id']))
+    mensagens_lista = c.fetchall()
+    
+    # Marcar como lidas
+    c.execute("UPDATE mensagens SET lida = 1 WHERE remetente_id = ? AND destinatario_id = ?", (outro_id, session['user_id']))
+    conn.commit()
+    conn.close()
+    
+    return render_template('conversa.html', outro=outro, mensagens=mensagens_lista)
+
+@app.route('/enviar-mensagem', methods=['POST'])
+def enviar_mensagem():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    destinatario_id = request.form['destinatario_id']
+    conteudo = request.form['conteudo']
+    problema_id = request.form.get('problema_id', None)
+    
+    if not conteudo.strip():
+        flash("Mensagem vazia!")
+        return redirect(url_for('conversa', outro_id=destinatario_id))
+    
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("INSERT INTO mensagens (remetente_id, destinatario_id, problema_id, conteudo) VALUES (?, ?, ?, ?)",
+             (session['user_id'], destinatario_id, problema_id, conteudo))
+    conn.commit()
+    conn.close()
+    
+    return redirect(url_for('conversa', outro_id=destinatario_id))
+
+@app.route('/notificacoes')
+def notificacoes():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    c = conn.cursor()
+    
+    # Notificações: mensagens não lidas, interessados nos meus problemas
+    c.execute("SELECT COUNT(*) FROM mensagens WHERE destinatario_id = ? AND lida = 0", (session['user_id'],))
+    mensagens_nao_lidas = c.fetchone()[0]
+    
+    c.execute("SELECT COUNT(*) FROM interessados i JOIN problemas p ON i.problema_id = p.id WHERE p.usuario_id = ? AND i.status = 'pendente'", (session['user_id'],))
+    interesses_pendentes = c.fetchone()[0]
+    conn.close()
+    
+    return render_template('notificacoes.html', 
+                         mensagens_nao_lidas=mensagens_nao_lidas,
+                         interesses_pendentes=interesses_pendentes)
 
 # ============================================
 # PERFIL
@@ -306,23 +477,7 @@ def editar_perfil():
     return redirect(url_for('perfil'))
 
 # ============================================
-# ATIVIDADE
-# ============================================
-
-@app.route('/notificacoes')
-def notificacoes():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    return render_template('notificacoes.html')
-
-@app.route('/mensagens')
-def mensagens():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    return render_template('mensagens.html')
-
-# ============================================
-# AJUDA E SEGURANÇA
+# ROTAS ESTÁTICAS
 # ============================================
 
 @app.route('/ajuda')
