@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categorias - Clourf</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo"><i class="fas fa-handshake"></i> Clourf</div>
+            <div class="nav-links">
+                <a href="/">Início</a>
+                <a href="/novo-problema">Publicar</a>
+                <a href="/categorias" class="active">Categorias</a>
+                <a href="/perfil">Perfil</a>
+                <a href="/logout">Sair</a>
+            </div>
+        </nav>
+    </header>
+
+    <section class="categorias" style="margin-top: 2rem;">
+        <h2>Explore todas as categorias</h2>
+        <div class="categorias-grid" style="max-width: 1200px; margin: 0 auto;">
+            {% for cat in categorias %}
+            <a href="/categorias?cat={{ cat.nome }}" class="categoria-card" style="text-decoration: none; color: inherit; display: block;">
+                <i class="fas {{ cat.icone }}"></i>
+                <h3>{{ cat.nome }}</h3>
+                <p>
+                    {% for c in contagem %}
+                        {% if c[0] == cat.nome %}
+                            {{ c[1] }} disponíveis
+                        {% endif %}
+                    {% endfor %}
+                </p>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+
+    <footer>
+        <p>© 2026 Clourf. Conectamos problemas a soluções.</p>
+    </footer>
+</body>
+</html>
