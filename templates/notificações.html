@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notificações - Clourf</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .notificacao-item {
+            background: var(--azul-escuro);
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: transform 0.2s;
+        }
+        .notificacao-item:hover {
+            transform: translateX(5px);
+        }
+        .notificacao-item .icone {
+            font-size: 1.5rem;
+            color: #93C5FD;
+        }
+        .notificacao-item .texto {
+            flex: 1;
+            color: #FFFFFF;
+        }
+        .notificacao-item .texto small {
+            color: #94A3B8;
+            display: block;
+            margin-top: 0.3rem;
+        }
+        .notificacao-item .lida {
+            color: #94A3B8;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo"><i class="fas fa-handshake"></i> Clourf</div>
+            <div class="nav-links">
+                <a href="/">Início</a>
+                <a href="/novo-problema">Publicar</a>
+                <a href="/categorias">Categorias</a>
+                <a href="/notificacoes" class="active">Notificações</a>
+                <a href="/perfil">Perfil</a>
+                <a href="/logout">Sair</a>
+            </div>
+        </nav>
+    </header>
+
+    <div class="dashboard">
+        <h1 style="color: #FFFFFF; margin-bottom: 2rem;"><i class="fas fa-bell"></i> Notificações</h1>
+
+        <div class="notificacao-item">
+            <div class="icone"><i class="fas fa-user-plus"></i></div>
+            <div class="texto">
+                <strong>João</strong> respondeu ao teu problema "Preciso de um eletricista"
+                <small>Há 2 horas</small>
+            </div>
+            <span class="lida">● Nova</span>
+        </div>
+
+        <div class="notificacao-item">
+            <div class="icone"><i class="fas fa-check-circle"></i></div>
+            <div class="texto">
+                O teu problema "Preciso de um logo" foi marcado como resolvido
+                <small>Há 5 horas</small>
+            </div>
+            <span class="lida">✓ Lida</span>
+        </div>
+
+        <div class="notificacao-item">
+            <div class="icone"><i class="fas fa-star"></i></div>
+            <div class="texto">
+                Recebeste uma nova avaliação de <strong>Maria</
