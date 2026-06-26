@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interessados - Clourf</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .top-bar { background: transparent; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .menu-btn { background: none; border: none; color: #FFFFFF; font-size: 1.8rem; cursor: pointer; padding: 0.3rem 0.6rem; }
+        .top-avatar { display: flex; align-items: center; gap: 0.8rem; }
+        .top-avatar .avatar { width: 40px; height: 40px; border-radius: 50%; background: #334155; display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-size: 1.2rem; border: 2px solid #93C5FD; cursor: pointer; overflow: hidden; }
+        .top-avatar .nome { color: #FFFFFF; font-size: 0.9rem; font-weight: 500; }
+        .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: var(--azul-escuro); box-shadow: 2px 0 10px rgba(0,0,0,0.3); transition: left 0.3s ease; z-index: 1001; padding: 2rem 1.5rem; overflow-y: auto; }
+        .sidebar.open { left: 0; }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid #334155; padding-bottom: 1rem; }
+        .sidebar-header .logo { font-size: 1.5rem; font-weight: bold; color: #FFFFFF; }
+        .sidebar-close { background: none; border: none; color: #FFFFFF; font-size: 1.5rem; cursor: pointer; }
+        .sidebar-nav { display: flex; flex-direction: column; gap: 0.5rem; }
+        .sidebar-nav a { padding: 0.8rem 1rem; border-radius: 10px; color: #CBD5E1; transition: background 0.3s, color 0.3s; display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .sidebar-nav a:hover { background: rgba(255,255,255,0.1); color: #FFFFFF; }
+        .sidebar-nav a i { width: 24px; font-size: 1.2rem; }
+        .sidebar-footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #334155; display: flex; flex-direction: column; gap: 0.5rem; }
+        .sidebar-footer a { padding: 0.8rem 1rem; border-radius: 10px; color: #CBD5E1; display: flex; align-items: center; gap: 12px; text-decoration: none; transition: background 0.3s; }
+        .sidebar-footer a:hover { background: rgba(255,255,255,0.1); }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; }
+        .overlay.show { display: block; }
+
+        .dashboard { max-width: 800px; margin: 2rem auto; padding: 2rem; }
+        .dashboard h1 { color: #FFFFFF; font-size: 2rem; margin-bottom: 2rem; }
+        .interessado-card { background: var(--azul-escuro); padding: 1rem; border-radius: 12px; margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem; }
+        .interessado-card .avatar { width: 50px; height: 50px; border-radius: 50%; background: #334155; display: flex; align-items: center; justify-content: center; color: #93C5FD; font-size: 1.5rem; overflow: hidden; }
+        .interessado-card .avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .interessado-card .info { flex: 1; color: #FFFFFF; }
+        .interessado-card .info .nome { font-weight: bold; }
+        .interessado-card .info .mensagem { color: #94A3B8; font-size: 0.9rem; }
+        .btn-secondary { background: transparent; color: #FFFFFF; padding: 0.4rem 1rem; border-radius: 25px; border: 2px solid #FFFFFF; cursor: pointer; transition: all 0.3s; display: inline-block; text-decoration: none; font-size: 0.85rem; }
+        .btn-secondary:hover { background: #FFFFFF; color: var(--azul-escuro); }
+        .badge-pendente { background: #F59E0B; color: #0F1B3A; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.7rem; font-weight: bold; }
+        footer { text-align: center; padding: 2rem; color: #94A3B8; border-top: 1px solid #334155; margin-top: 2rem; }
+        @media (max-width: 768px) { .top-avatar .nome { display: none; } }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <button class="menu-btn" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
+        <div class="top-avatar">
+            <span class="nome">{{ session.nome }}</span>
+            <a href="/perfil" class="avatar"><i class="fas fa-user"></i></a>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo"><i class="fas fa-handshake"></i> Clourf</div>
+            <button class="sidebar-close" onclick="toggleMenu()"><i class="fas fa-times"></i></button>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="/novo-problema"><i class="fas fa-plus-circle"></i> Publicar</a>
+            <a href="/categorias"><i class="fas fa-th-large"></i> Categorias</a>
+            <a href="/minhas-publicacoes"><i class="fas fa-list"></i> Minhas Publicações</a>
+            <a href="/notificacoes"><i class="fas fa-bell"></i> Notificações</a>
+            <a href="/mensagens"><i class="fas fa-comments"></i> Mensagens</a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="/perfil"><i class="fas fa-user-circle"></i> Meu Perfil</a>
+            <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
+        </div>
+    </div>
+
+    <section class="dashboard">
+        <h1><i class="fas fa-users"></i> Interessados</h1>
+        <a href="/problema/{{ problema_id }}" class="btn-secondary" style="margin-bottom: 2rem;">← Voltar ao problema</a>
+
+        {% if interessados %}
+            {% for i in interessados %}
+            <div class="interessado-card">
+                <div class="avatar">
+                    {% if i[5] and i[5] != 'default.png' %}
+                        <img src="{{ url_for('static', filename='perfil/' + i[5]) }}" alt="Foto">
+                    {% else %}
+                        <i class="fas fa-user"></i>
+                    {% endif %}
+                </div>
+                <div class="info">
+                    <div class="nome">{{ i[4] }}</div>
+                    <div class="mensagem">{{ i[3] }}</div>
+                    <small style="color: #94A3B8;">{{ i[7][:16] }}</small>
+                </div>
+                <span class="badge-pendente">{{ i[6] }}</span>
+                <a href="/mensagens/{{ i[2] }}" class="btn-secondary" style="font-size: 0.8rem; padding: 0.2rem 0.8rem;">Mensagem</a>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p style="color: #94A3B8;">Ninguém se interessou ainda.</p>
+        {% endif %}
+    </section>
+
+    <footer>
+        <p>© 2026 Clourf. Conectamos problemas a soluções.</p>
+    </footer>
+
+    <script>
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('show');
+        }
+    </script>
+
+</body>
+</html>
