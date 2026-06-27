@@ -7,196 +7,37 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
-        .top-bar {
-            background: transparent;
-            padding: 1rem 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-        .menu-btn {
-            background: none;
-            border: none;
-            color: #FFFFFF;
-            font-size: 1.8rem;
-            cursor: pointer;
-            padding: 0.3rem 0.6rem;
-        }
-        .top-avatar {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-        }
-        .top-avatar .avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: #334155;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #FFFFFF;
-            font-size: 1.2rem;
-            border: 2px solid #93C5FD;
-            cursor: pointer;
-            overflow: hidden;
-        }
-        .top-avatar .nome {
-            color: #FFFFFF;
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: -280px;
-            width: 280px;
-            height: 100%;
-            background: var(--azul-escuro);
-            box-shadow: 2px 0 10px rgba(0,0,0,0.3);
-            transition: left 0.3s ease;
-            z-index: 1001;
-            padding: 2rem 1.5rem;
-            overflow-y: auto;
-        }
+        .top-bar { background: transparent; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .menu-btn { background: none; border: none; color: #FFFFFF; font-size: 1.8rem; cursor: pointer; padding: 0.3rem 0.6rem; }
+        .top-avatar { display: flex; align-items: center; gap: 0.8rem; }
+        .top-avatar .avatar { width: 40px; height: 40px; border-radius: 50%; background: #334155; display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-size: 1.2rem; border: 2px solid #93C5FD; cursor: pointer; overflow: hidden; }
+        .top-avatar .nome { color: #FFFFFF; font-size: 0.9rem; font-weight: 500; }
+        .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: var(--azul-escuro); box-shadow: 2px 0 10px rgba(0,0,0,0.3); transition: left 0.3s ease; z-index: 1001; padding: 2rem 1.5rem; overflow-y: auto; }
         .sidebar.open { left: 0; }
-        .sidebar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            border-bottom: 1px solid #334155;
-            padding-bottom: 1rem;
-        }
-        .sidebar-header .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #FFFFFF;
-        }
-        .sidebar-close {
-            background: none;
-            border: none;
-            color: #FFFFFF;
-            font-size: 1.5rem;
-            cursor: pointer;
-        }
-        .sidebar-nav {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        .sidebar-nav a {
-            padding: 0.8rem 1rem;
-            border-radius: 10px;
-            color: #CBD5E1;
-            transition: background 0.3s, color 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-decoration: none;
-        }
-        .sidebar-nav a:hover {
-            background: rgba(255,255,255,0.1);
-            color: #FFFFFF;
-        }
-        .sidebar-nav a i {
-            width: 24px;
-            font-size: 1.2rem;
-        }
-        .sidebar-footer {
-            margin-top: 2rem;
-            padding-top: 1rem;
-            border-top: 1px solid #334155;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        .sidebar-footer a {
-            padding: 0.8rem 1rem;
-            border-radius: 10px;
-            color: #CBD5E1;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-decoration: none;
-            transition: background 0.3s;
-        }
-        .sidebar-footer a:hover {
-            background: rgba(255,255,255,0.1);
-        }
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            display: none;
-        }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid #334155; padding-bottom: 1rem; }
+        .sidebar-header .logo { font-size: 1.5rem; font-weight: bold; color: #FFFFFF; }
+        .sidebar-close { background: none; border: none; color: #FFFFFF; font-size: 1.5rem; cursor: pointer; }
+        .sidebar-nav { display: flex; flex-direction: column; gap: 0.5rem; }
+        .sidebar-nav a { padding: 0.8rem 1rem; border-radius: 10px; color: #CBD5E1; transition: background 0.3s, color 0.3s; display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .sidebar-nav a:hover { background: rgba(255,255,255,0.1); color: #FFFFFF; }
+        .sidebar-nav a i { width: 24px; font-size: 1.2rem; }
+        .sidebar-footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #334155; display: flex; flex-direction: column; gap: 0.5rem; }
+        .sidebar-footer a { padding: 0.8rem 1rem; border-radius: 10px; color: #CBD5E1; display: flex; align-items: center; gap: 12px; text-decoration: none; transition: background 0.3s; }
+        .sidebar-footer a:hover { background: rgba(255,255,255,0.1); }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; }
         .overlay.show { display: block; }
 
-        .dashboard {
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 2rem;
-        }
-        .dashboard h1 {
-            color: #FFFFFF;
-            font-size: 2rem;
-            margin-bottom: 2rem;
-        }
-        .notificacao-item {
-            background: var(--azul-escuro);
-            padding: 1rem;
-            border-radius: 12px;
-            margin-bottom: 0.8rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            transition: transform 0.2s;
-        }
-        .notificacao-item:hover {
-            transform: translateX(5px);
-        }
-        .notificacao-item .icone {
-            font-size: 1.5rem;
-            color: #93C5FD;
-        }
-        .notificacao-item .texto {
-            flex: 1;
-            color: #FFFFFF;
-        }
-        .notificacao-item .texto small {
-            color: #94A3B8;
-            display: block;
-            margin-top: 0.3rem;
-        }
-        .lida {
-            color: #94A3B8;
-            font-size: 0.8rem;
-        }
-        .nao-lida {
-            background: #93C5FD;
-            color: #0F1B3A;
-            padding: 0.2rem 0.6rem;
-            border-radius: 12px;
-            font-size: 0.7rem;
-            font-weight: bold;
-        }
-        footer {
-            text-align: center;
-            padding: 2rem;
-            color: #94A3B8;
-            border-top: 1px solid #334155;
-            margin-top: 2rem;
-        }
-        @media (max-width: 768px) {
-            .top-avatar .nome { display: none; }
-        }
+        .dashboard { max-width: 800px; margin: 2rem auto; padding: 2rem; }
+        .dashboard h1 { color: #FFFFFF; font-size: 2rem; margin-bottom: 2rem; }
+        .notificacao-item { background: var(--azul-escuro); padding: 1rem; border-radius: 12px; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 1rem; transition: transform 0.2s; }
+        .notificacao-item:hover { transform: translateX(5px); }
+        .notificacao-item .icone { font-size: 1.5rem; color: #93C5FD; }
+        .notificacao-item .texto { flex: 1; color: #FFFFFF; }
+        .notificacao-item .texto small { color: #94A3B8; display: block; margin-top: 0.3rem; }
+        .nao-lida { background: #93C5FD; color: #0F1B3A; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.7rem; font-weight: bold; }
+        .lida { color: #94A3B8; font-size: 0.8rem; }
+        footer { text-align: center; padding: 2rem; color: #94A3B8; border-top: 1px solid #334155; margin-top: 2rem; }
+        @media (max-width: 768px) { .top-avatar .nome { display: none; } }
     </style>
 </head>
 <body>
@@ -234,41 +75,39 @@
     <section class="dashboard">
         <h1><i class="fas fa-bell"></i> Notificações</h1>
 
-        <div class="notificacao-item">
-            <div class="icone"><i class="fas fa-user-plus"></i></div>
-            <div class="texto">
-                <strong>João</strong> respondeu ao teu problema "Preciso de um eletricista"
-                <small>Há 2 horas</small>
-            </div>
-            <span class="nao-lida">Nova</span>
-        </div>
+        <h3 style="color: #93C5FD;">Mensagens não lidas: {{ mensagens_nao_lidas }}</h3>
+        <h3 style="color: #93C5FD; margin-bottom: 2rem;">Interesses pendentes: {{ interesses_pendentes }}</h3>
 
-        <div class="notificacao-item">
-            <div class="icone"><i class="fas fa-check-circle"></i></div>
-            <div class="texto">
-                O teu problema "Preciso de um logo" foi marcado como resolvido
-                <small>Há 5 horas</small>
+        {% if notificacoes_mensagens %}
+            {% for n in notificacoes_mensagens %}
+            <div class="notificacao-item">
+                <div class="icone"><i class="fas fa-envelope"></i></div>
+                <div class="texto">
+                    <strong>{{ n[2] }}</strong> enviou: <br>"{{ n[1][:100] }}" 
+                    <small>{{ n[3][:16] }}</small>
+                </div>
+                <span class="nao-lida">Nova</span>
             </div>
-            <span class="lida">✓ Lida</span>
-        </div>
+            {% endfor %}
+        {% endif %}
 
-        <div class="notificacao-item">
-            <div class="icone"><i class="fas fa-star"></i></div>
-            <div class="texto">
-                Recebeste uma nova avaliação de <strong>Maria</strong>
-                <small>Há 1 dia</small>
+        {% if notificacoes_interesses %}
+            {% for n in notificacoes_interesses %}
+            <div class="notificacao-item">
+                <div class="icone"><i class="fas fa-handshake"></i></div>
+                <div class="texto">
+                    <strong>{{ n[2] }}</strong> quer resolver o problema <strong>"{{ n[4] }}"</strong><br>
+                    "{{ n[1][:100] }}"
+                    <small>{{ n[3][:16] }}</small>
+                </div>
+                <span class="nao-lida">Pendente</span>
             </div>
-            <span class="nao-lida">Nova</span>
-        </div>
+            {% endfor %}
+        {% endif %}
 
-        <div class="notificacao-item">
-            <div class="icone"><i class="fas fa-message"></i></div>
-            <div class="texto">
-                Nova mensagem de <strong>Carlos</strong> sobre "Transporte"
-                <small>Há 2 dias</small>
-            </div>
-            <span class="lida">✓ Lida</span>
-        </div>
+        {% if not notificacoes_mensagens and not notificacoes_interesses %}
+            <p style="text-align: center; color: #94A3B8; margin-top: 2rem;">Nenhuma notificação nova.</p>
+        {% endif %}
     </section>
 
     <footer>
