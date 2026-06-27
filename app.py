@@ -281,7 +281,7 @@ def ver_interessados(problema_id):
     return render_template('interessados.html', interessados=interessados, problema_id=problema_id)
 
 # ============================================
-# MENSAGENS (CORRIGIDA)
+# MENSAGENS (CORRIGIDA - VERSÃO SIMPLIFICADA)
 # ============================================
 
 @app.route('/mensagens')
@@ -292,37 +292,44 @@ def mensagens():
     conn = get_db()
     c = conn.cursor()
     
+    # Buscar IDs dos utilizadores com quem troquei mensagens
     c.execute('''
         SELECT DISTINCT 
             CASE 
                 WHEN remetente_id = ? THEN destinatario_id 
                 ELSE remetente_id 
-            END as outro_id,
-            u.nome, 
-            u.foto,
-            (SELECT conteudo FROM mensagens 
-             WHERE (remetente_id = ? AND destinatario_id = u.id) 
-                OR (remetente_id = u.id AND destinatario_id = ?)
-             ORDER BY data_envio DESC LIMIT 1) as ultima,
-            (SELECT data_envio FROM mensagens 
-             WHERE (remetente_id = ? AND destinatario_id = u.id) 
-                OR (remetente_id = u.id AND destinatario_id = ?)
-             ORDER BY data_envio DESC LIMIT 1) as ultima_data
-        FROM mensagens m
-        JOIN users u ON u.id = (
-            CASE 
-                WHEN remetente_id = ? THEN destinatario_id 
-                ELSE remetente_id 
-            END
-        )
+            END as outro_id
+        FROM mensagens 
         WHERE remetente_id = ? OR destinatario_id = ?
-        GROUP BY u.id
-    ''', (session['user_id'], session['user_id'], session['user_id'], session['user_id'], session['user_id'], session['user_id'], session['user_id']))
-    # 7 placeholders: 1, 2, 3, 4, 5, 6, 7 ✅
+    ''', (session['user_id'], session['user_id'], session['user_id']))
     
-    conversas = c.fetchall()
+    ids = c.fetchall()
+    conversas = []
+    
+    for id_tuple in ids:
+        outro_id = id_tuple[0]
+        c.execute("SELECT id, nome, foto FROM users WHERE id = ?", (outro_id,))
+        user = c.fetchone()
+        
+        if user:
+            c.execute('''
+                SELECT conteudo, data_envio 
+                FROM mensagens 
+                WHERE (remetente_id = ? AND destinatario_id = ?) 
+                   OR (remetente_id = ? AND destinatario_id = ?)
+                ORDER BY data_envio DESC LIMIT 1
+            ''', (session['user_id'], outro_id, outro_id, session['user_id']))
+            ultima = c.fetchone()
+            
+            conversas.append({
+                'outro_id': user[0],
+                'nome': user[1],
+                'foto': user[2],
+                'ultima': ultima[0] if ultima else 'Nenhuma mensagem',
+                'ultima_data': ultima[1] if ultima else ''
+            })
+    
     conn.close()
-    
     return render_template('mensagens.html', conversas=conversas)
 
 @app.route('/mensagens/<int:outro_id>')
@@ -511,6 +518,10 @@ def categorias():
     
     return render_template('categorias.html', categorias=categorias_lista, contagem=contagem)
 
+# ============================================
+# MINHAS PUBLICAÇÕES (CORRIGIDA)
+# ============================================
+
 @app.route('/minhas-publicacoes')
 def minhas_publicacoes():
     if 'user_id' not in session:
@@ -521,6 +532,10 @@ def minhas_publicacoes():
     c.execute("SELECT * FROM problemas WHERE usuario_id = ? ORDER BY data_criacao DESC", (session['user_id'],))
     publicacoes = c.fetchall()
     conn.close()
+    
+    # Se não houver publicações, passar lista vazia
+    if not publicacoes:
+        publicacoes = []
     
     return render_template('minhas_publicacoes.html', publicacoes=publicacoes)
 
