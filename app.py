@@ -281,7 +281,7 @@ def ver_interessados(problema_id):
     return render_template('interessados.html', interessados=interessados, problema_id=problema_id)
 
 # ============================================
-# MENSAGENS
+# MENSAGENS (CORRIGIDA)
 # ============================================
 
 @app.route('/mensagens')
@@ -318,6 +318,7 @@ def mensagens():
         WHERE remetente_id = ? OR destinatario_id = ?
         GROUP BY u.id
     ''', (session['user_id'], session['user_id'], session['user_id'], session['user_id'], session['user_id'], session['user_id'], session['user_id']))
+    # 7 placeholders: 1, 2, 3, 4, 5, 6, 7 ✅
     
     conversas = c.fetchall()
     conn.close()
