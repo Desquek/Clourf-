@@ -101,7 +101,14 @@ def seed_db():
 
 init_db()
 seed_db()
-
+@app.route('/resetar-banco')
+def resetar_banco():
+    import os
+    try:
+        os.remove('database.db')
+        return "Banco apagado! Faz deploy manual agora."
+    except:
+        return "Erro ao apagar o banco."
 # ============================================
 # ROTAS DE AUTENTICAÇÃO
 # ============================================
