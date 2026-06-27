@@ -238,52 +238,31 @@ def ver_problema(problema_id):
 # ============================================
 # INTERESSADOS
 # ============================================
-
-@app.route('/interessar/<int:problema_id>', methods=['POST'])
-def interessar(problema_id):
-    if 'user_id' not in session:
-        flash("Faça login para se interessar!")
-        return redirect(url_for('login'))
-    
-    mensagem = request.form.get('mensagem', 'Gostaria de ajudar a resolver este problema.')
-    
-    conn = get_db()
-    c = conn.cursor()
-    
-    c.execute("SELECT * FROM interessados WHERE problema_id = ? AND usuario_id = ?", (problema_id, session['user_id']))
-    if c.fetchone():
-        flash("Você já se interessou por este problema!")
-        conn.close()
-        return redirect(url_for('ver_problema', problema_id=problema_id))
-    
-    c.execute("INSERT INTO interessados (problema_id, usuario_id, mensagem) VALUES (?, ?, ?)",
-             (problema_id, session['user_id'], mensagem))
-    conn.commit()
-    conn.close()
-    
-    flash("Você manifestou interesse! O autor será notificado.")
-    return redirect(url_for('ver_problema', problema_id=problema_id))
-
-@app.route('/interessados/<int:problema_id>')
-def ver_interessados(problema_id):
+@app.route('/novo-problema', methods=['GET', 'POST'])
+def novo_problema():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
-    conn = get_db()
-    c = conn.cursor()
-    
-    c.execute("SELECT usuario_id FROM problemas WHERE id = ?", (problema_id,))
-    problema = c.fetchone()
-    if not problema or problema[0] != session['user_id']:
-        flash("Apenas o autor pode ver os interessados!")
+    if request.method == 'POST':
+        titulo = request.form['titulo']
+        descricao = request.form['descricao']
+        categoria = request.form['categoria']
+        localizacao = request.form['localizacao']
+        
+        conn = get_db()
+        c = conn.cursor()
+        c.execute("INSERT INTO problemas (titulo, descricao, categoria, localizacao, usuario_id) VALUES (?, ?, ?, ?, ?)",
+                 (titulo, descricao, categoria, localizacao, session['user_id']))
+        conn.commit()
         conn.close()
-        return redirect(url_for('ver_problema', problema_id=problema_id))
+        
+        flash("Problema publicado com sucesso!")
+        return redirect(url_for('dashboard'))
     
-    c.execute("SELECT i.*, u.nome, u.foto, u.telefone FROM interessados i JOIN users u ON i.usuario_id = u.id WHERE i.problema_id = ?", (problema_id,))
-    interessados = c.fetchall()
-    conn.close()
+    # Adicionar esta linha para evitar o erro
+    problema = None  # <-- SOLUÇÃO
     
-    return render_template('interessados.html', interessados=interessados, problema_id=problema_id)
+    return render_template('novo_problema.html', problema=problema)
 
 # ============================================
 # MENSAGENS
