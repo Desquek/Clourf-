@@ -2,30 +2,30 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 import os
 import sqlite3
 from supabase import create_client, Client
+from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = "clourf_conecta_secret"
 
 # ============================================
-# CONFIGURAÇÕES
+# CONFIGURAÇÃO SUPABASE
 # ============================================
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
 
-# Tenta conectar ao Supabase
 supabase = None
 try:
     if SUPABASE_URL and SUPABASE_KEY:
         supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
         print("✅ Supabase conectado!")
     else:
-        print("⚠️ Supabase não configurado. Usando SQLite.")
+        print("⚠️ Supabase não configurado.")
 except Exception as e:
-    print(f"❌ Erro Supabase: {e}. Usando SQLite.")
+    print(f"❌ Erro Supabase: {e}")
 
 # ============================================
-# SQLITE (FALLBACK)
+# BANCO DE DADOS SQLITE (FALLBACK)
 # ============================================
 
 def get_db():
@@ -34,24 +34,91 @@ def get_db():
 def init_db():
     conn = get_db()
     c = conn.cursor()
+    
     c.execute('''CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nome TEXT NOT NULL,
         email TEXT UNIQUE NOT NULL,
+        telefone TEXT,
         senha TEXT NOT NULL,
-        telefone TEXT
+        localizacao TEXT,
+        bio TEXT,
+        foto TEXT DEFAULT 'default.png',
+        data_registo TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
+    
+    c.execute('''CREATE TABLE IF NOT EXISTS problemas (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        titulo TEXT NOT NULL,
+        descricao TEXT NOT NULL,
+        categoria TEXT NOT NULL,
+        localizacao TEXT,
+        usuario_id INTEGER,
+        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (usuario_id) REFERENCES users(id)
+    )''')
+    
+    c.execute('''CREATE TABLE IF NOT EXISTS interessados (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        problema_id INTEGER,
+        usuario_id INTEGER,
+        mensagem TEXT,
+        status TEXT DEFAULT 'pendente',
+        data_interesse TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (problema_id) REFERENCES problemas(id),
+        FOREIGN KEY (usuario_id) REFERENCES users(id)
+    )''')
+    
+    c.execute('''CREATE TABLE IF NOT EXISTS mensagens (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        remetente_id INTEGER,
+        destinatario_id INTEGER,
+        problema_id INTEGER,
+        conteudo TEXT NOT NULL,
+        lida INTEGER DEFAULT 0,
+        data_envio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (remetente_id) REFERENCES users(id),
+        FOREIGN KEY (destinatario_id) REFERENCES users(id),
+        FOREIGN KEY (problema_id) REFERENCES problemas(id)
+    )''')
+    
     conn.commit()
     conn.close()
 
 init_db()
 
 # ============================================
-# FUNÇÕES DE BANCO DE DADOS
+# FUNÇÕES DE ACESSO A DADOS
+# ============================================
+
+def db_execute(sql, params=None):
+    """Executa SQL no SQLite"""
+    conn = get_db()
+    c = conn.cursor()
+    if params:
+        c.execute(sql, params)
+    else:
+        c.execute(sql)
+    result = c.fetchall()
+    conn.commit()
+    conn.close()
+    return result
+
+def db_insert(sql, params):
+    """Insere no SQLite e retorna ID"""
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(sql, params)
+    conn.commit()
+    id = c.lastrowid
+    conn.close()
+    return id
+
+# ============================================
+# FUNÇÕES DE USUÁRIOS
 # ============================================
 
 def get_user_by_email(email):
-    # Tenta Supabase primeiro
     if supabase:
         try:
             response = supabase.table('users').select('*').eq('email', email).execute()
@@ -59,44 +126,234 @@ def get_user_by_email(email):
                 return response.data[0]
         except:
             pass
-    
-    # Fallback SQLite
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("SELECT id, nome, email, senha, telefone FROM users WHERE email = ?", (email,))
-    user = c.fetchone()
-    conn.close()
-    if user:
-        return {'id': user[0], 'nome': user[1], 'email': user[2], 'senha': user[3], 'telefone': user[4]}
+    result = db_execute("SELECT * FROM users WHERE email = ?", (email,))
+    if result:
+        return {'id': result[0][0], 'nome': result[0][1], 'email': result[0][2], 
+                'telefone': result[0][3], 'senha': result[0][4], 'localizacao': result[0][5],
+                'bio': result[0][6], 'foto': result[0][7], 'data_registo': result[0][8]}
     return None
 
-def create_user(nome, email, senha, telefone=''):
-    # Tenta Supabase primeiro
+def get_user_by_id(user_id):
     if supabase:
         try:
-            user_data = {'nome': nome, 'email': email, 'senha': senha, 'telefone': telefone}
-            response = supabase.table('users').insert(user_data).execute()
+            response = supabase.table('users').select('*').eq('id', user_id).execute()
             if response.data:
                 return response.data[0]
         except:
             pass
-    
-    # Fallback SQLite
-    conn = get_db()
-    c = conn.cursor()
-    try:
-        c.execute("INSERT INTO users (nome, email, senha, telefone) VALUES (?, ?, ?, ?)",
-                 (nome, email, senha, telefone))
-        conn.commit()
-        user_id = c.lastrowid
-        conn.close()
-        return {'id': user_id, 'nome': nome, 'email': email}
-    except:
-        conn.close()
-        return None
+    result = db_execute("SELECT * FROM users WHERE id = ?", (user_id,))
+    if result:
+        return {'id': result[0][0], 'nome': result[0][1], 'email': result[0][2], 
+                'telefone': result[0][3], 'senha': result[0][4], 'localizacao': result[0][5],
+                'bio': result[0][6], 'foto': result[0][7], 'data_registo': result[0][8]}
+    return None
+
+def create_user(nome, email, telefone, senha):
+    if supabase:
+        try:
+            data = {'nome': nome, 'email': email, 'telefone': telefone, 'senha': senha}
+            response = supabase.table('users').insert(data).execute()
+            if response.data:
+                return response.data[0]
+        except:
+            pass
+    id = db_insert("INSERT INTO users (nome, email, telefone, senha) VALUES (?, ?, ?, ?)",
+                   (nome, email, telefone, senha))
+    return {'id': id, 'nome': nome, 'email': email}
+
+def update_user(user_id, campo, valor):
+    if supabase:
+        try:
+            supabase.table('users').update({campo: valor}).eq('id', user_id).execute()
+            return True
+        except:
+            pass
+    db_execute(f"UPDATE users SET {campo} = ? WHERE id = ?", (valor, user_id))
+    return True
 
 # ============================================
-# ROTAS
+# FUNÇÕES DE PROBLEMAS
+# ============================================
+
+def get_problemas(limit=10):
+    if supabase:
+        try:
+            response = supabase.table('problemas').select('*, users(nome, foto)').order('data_criacao', desc=True).limit(limit).execute()
+            return response.data
+        except:
+            pass
+    result = db_execute("SELECT p.*, u.nome, u.foto FROM problemas p JOIN users u ON p.usuario_id = u.id ORDER BY p.data_criacao DESC LIMIT ?", (limit,))
+    return [{'id': r[0], 'titulo': r[1], 'descricao': r[2], 'categoria': r[3], 'localizacao': r[4],
+             'usuario_id': r[5], 'data_criacao': r[6], 'users': {'nome': r[7], 'foto': r[8]}} for r in result]
+
+def get_problema_by_id(problema_id):
+    if supabase:
+        try:
+            response = supabase.table('problemas').select('*, users(nome, telefone, foto, localizacao, bio)').eq('id', problema_id).execute()
+            if response.data:
+                return response.data[0]
+        except:
+            pass
+    result = db_execute("SELECT p.*, u.nome, u.telefone, u.foto, u.localizacao, u.bio FROM problemas p JOIN users u ON p.usuario_id = u.id WHERE p.id = ?", (problema_id,))
+    if result:
+        r = result[0]
+        return {'id': r[0], 'titulo': r[1], 'descricao': r[2], 'categoria': r[3],
+                'localizacao': r[4], 'usuario_id': r[5], 'data_criacao': r[6],
+                'users': {'nome': r[7], 'telefone': r[8], 'foto': r[9], 'localizacao': r[10], 'bio': r[11]}}
+    return None
+
+def create_problema(titulo, descricao, categoria, localizacao, usuario_id):
+    if supabase:
+        try:
+            data = {'titulo': titulo, 'descricao': descricao, 'categoria': categoria,
+                    'localizacao': localizacao, 'usuario_id': usuario_id}
+            supabase.table('problemas').insert(data).execute()
+            return True
+        except:
+            pass
+    db_insert("INSERT INTO problemas (titulo, descricao, categoria, localizacao, usuario_id) VALUES (?, ?, ?, ?, ?)",
+              (titulo, descricao, categoria, localizacao, usuario_id))
+    return True
+
+def get_meus_problemas(usuario_id):
+    if supabase:
+        try:
+            response = supabase.table('problemas').select('*').eq('usuario_id', usuario_id).order('data_criacao', desc=True).execute()
+            return response.data
+        except:
+            pass
+    result = db_execute("SELECT * FROM problemas WHERE usuario_id = ? ORDER BY data_criacao DESC", (usuario_id,))
+    return [{'id': r[0], 'titulo': r[1], 'descricao': r[2], 'categoria': r[3],
+             'localizacao': r[4], 'usuario_id': r[5], 'data_criacao': r[6]} for r in result]
+
+# ============================================
+# FUNÇÕES DE INTERESSADOS
+# ============================================
+
+def add_interessado(problema_id, usuario_id, mensagem):
+    if supabase:
+        try:
+            data = {'problema_id': problema_id, 'usuario_id': usuario_id, 'mensagem': mensagem}
+            supabase.table('interessados').insert(data).execute()
+            return True
+        except:
+            pass
+    db_insert("INSERT INTO interessados (problema_id, usuario_id, mensagem) VALUES (?, ?, ?)",
+              (problema_id, usuario_id, mensagem))
+    return True
+
+def get_interessados(problema_id):
+    if supabase:
+        try:
+            response = supabase.table('interessados').select('*, users(nome, foto, telefone)').eq('problema_id', problema_id).execute()
+            return response.data
+        except:
+            pass
+    result = db_execute("SELECT i.*, u.nome, u.foto, u.telefone FROM interessados i JOIN users u ON i.usuario_id = u.id WHERE i.problema_id = ?", (problema_id,))
+    return [{'id': r[0], 'problema_id': r[1], 'usuario_id': r[2], 'mensagem': r[3],
+             'status': r[4], 'data_interesse': r[5], 'users': {'nome': r[6], 'foto': r[7], 'telefone': r[8]}} for r in result]
+
+# ============================================
+# FUNÇÕES DE MENSAGENS
+# ============================================
+
+def get_conversas(usuario_id):
+    if supabase:
+        try:
+            # Simplificado para Supabase
+            response = supabase.table('mensagens').select('*').or_(f'remetente_id.eq.{usuario_id},destinatario_id.eq.{usuario_id}').execute()
+            conversas = {}
+            for msg in response.data:
+                outro = msg['destinatario_id'] if msg['remetente_id'] == usuario_id else msg['remetente_id']
+                if outro not in conversas:
+                    user = get_user_by_id(outro)
+                    if user:
+                        conversas[outro] = {
+                            'outro_id': outro,
+                            'nome': user['nome'],
+                            'foto': user['foto'],
+                            'ultima': msg['conteudo'],
+                            'ultima_data': msg['data_envio']
+                        }
+            return list(conversas.values())
+        except:
+            pass
+    # SQLite
+    result = db_execute('''SELECT DISTINCT 
+        CASE WHEN remetente_id = ? THEN destinatario_id ELSE remetente_id END as outro_id,
+        u.nome, u.foto,
+        (SELECT conteudo FROM mensagens 
+         WHERE (remetente_id = ? AND destinatario_id = u.id) 
+            OR (remetente_id = u.id AND destinatario_id = ?)
+         ORDER BY data_envio DESC LIMIT 1) as ultima,
+        (SELECT data_envio FROM mensagens 
+         WHERE (remetente_id = ? AND destinatario_id = u.id) 
+            OR (remetente_id = u.id AND destinatario_id = ?)
+         ORDER BY data_envio DESC LIMIT 1) as ultima_data
+        FROM mensagens m
+        JOIN users u ON u.id = (
+            CASE WHEN remetente_id = ? THEN destinatario_id ELSE remetente_id END
+        )
+        WHERE remetente_id = ? OR destinatario_id = ?
+        GROUP BY u.id
+    ''', (usuario_id, usuario_id, usuario_id, usuario_id, usuario_id, usuario_id, usuario_id))
+    
+    return [{'outro_id': r[0], 'nome': r[1], 'foto': r[2], 'ultima': r[3], 'ultima_data': r[4]} for r in result]
+
+def get_mensagens(usuario_id, outro_id):
+    if supabase:
+        try:
+            response = supabase.table('mensagens').select('*').or_(f'and(remetente_id.eq.{usuario_id},destinatario_id.eq.{outro_id}),and(remetente_id.eq.{outro_id},destinatario_id.eq.{usuario_id})').order('data_envio').execute()
+            return response.data
+        except:
+            pass
+    result = db_execute('''SELECT m.*, u.nome, u.foto FROM mensagens m
+                 JOIN users u ON u.id = m.remetente_id
+                 WHERE (remetente_id = ? AND destinatario_id = ?)
+                 OR (remetente_id = ? AND destinatario_id = ?)
+                 ORDER BY data_envio ASC''', (usuario_id, outro_id, outro_id, usuario_id))
+    return [{'id': r[0], 'remetente_id': r[1], 'destinatario_id': r[2], 'problema_id': r[3],
+             'conteudo': r[4], 'lida': r[5], 'data_envio': r[6], 'users': {'nome': r[7], 'foto': r[8]}} for r in result]
+
+def send_mensagem(remetente_id, destinatario_id, conteudo, problema_id=None):
+    if supabase:
+        try:
+            data = {'remetente_id': remetente_id, 'destinatario_id': destinatario_id,
+                    'conteudo': conteudo, 'problema_id': problema_id}
+            supabase.table('mensagens').insert(data).execute()
+            return True
+        except:
+            pass
+    db_insert("INSERT INTO mensagens (remetente_id, destinatario_id, problema_id, conteudo) VALUES (?, ?, ?, ?)",
+              (remetente_id, destinatario_id, problema_id, conteudo))
+    return True
+
+def marcar_lidas(usuario_id, outro_id):
+    if supabase:
+        try:
+            supabase.table('mensagens').update({'lida': 1}).eq('remetente_id', outro_id).eq('destinatario_id', usuario_id).execute()
+            return True
+        except:
+            pass
+    db_execute("UPDATE mensagens SET lida = 1 WHERE remetente_id = ? AND destinatario_id = ?", (outro_id, usuario_id))
+    return True
+
+# ============================================
+# CONFIGURAÇÃO PARA UPLOAD DE FOTOS
+# ============================================
+
+from werkzeug.utils import secure_filename
+
+UPLOAD_FOLDER = 'static/perfil'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# ============================================
+# ROTAS - AUTENTICAÇÃO
 # ============================================
 
 @app.route('/')
@@ -110,16 +367,14 @@ def register():
     if request.method == 'POST':
         nome = request.form['nome']
         email = request.form['email']
+        telefone = request.form['telefone']
         senha = request.form['senha']
-        telefone = request.form.get('telefone', '')
         
-        # Verificar se já existe
         if get_user_by_email(email):
             flash("Email já registado!")
             return render_template('register.html')
         
-        # Criar utilizador
-        user = create_user(nome, email, senha, telefone)
+        user = create_user(nome, email, telefone, senha)
         if user:
             flash("Conta criada com sucesso!")
             return redirect(url_for('login'))
@@ -138,6 +393,7 @@ def login():
         if user and user['senha'] == senha:
             session['user_id'] = user['id']
             session['nome'] = user['nome']
+            session['email'] = user['email']
             flash(f"Bem-vindo, {user['nome']}!")
             return redirect(url_for('dashboard'))
         else:
@@ -145,17 +401,291 @@ def login():
     
     return render_template('login.html')
 
-@app.route('/dashboard')
-def dashboard():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    return render_template('dashboard.html', nome=session['nome'])
-
 @app.route('/logout')
 def logout():
     session.clear()
     flash("Saiu com sucesso!")
     return redirect(url_for('index'))
+
+# ============================================
+# ROTAS - DASHBOARD E PROBLEMAS
+# ============================================
+
+@app.route('/dashboard')
+def dashboard():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    problemas = get_problemas()
+    meus_problemas = get_meus_problemas(session['user_id'])
+    
+    return render_template('dashboard.html', problemas=problemas, meus_problemas=meus_problemas)
+
+@app.route('/novo-problema', methods=['GET', 'POST'])
+def novo_problema():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        titulo = request.form['titulo']
+        descricao = request.form['descricao']
+        categoria = request.form['categoria']
+        localizacao = request.form['localizacao']
+        
+        if create_problema(titulo, descricao, categoria, localizacao, session['user_id']):
+            flash("Problema publicado com sucesso!")
+        else:
+            flash("Erro ao publicar problema!")
+        return redirect(url_for('dashboard'))
+    
+    return render_template('novo_problema.html')
+
+@app.route('/problema/<int:problema_id>')
+def ver_problema(problema_id):
+    problema = get_problema_by_id(problema_id)
+    if not problema:
+        flash("Problema não encontrado!")
+        return redirect(url_for('index'))
+    
+    ja_interessado = False
+    if 'user_id' in session:
+        interessados = get_interessados(problema_id)
+        ja_interessado = any(i['usuario_id'] == session['user_id'] for i in interessados)
+    
+    return render_template('problema.html', problema=problema, ja_interessado=ja_interessado)
+
+# ============================================
+# ROTAS - INTERESSADOS
+# ============================================
+
+@app.route('/interessar/<int:problema_id>', methods=['POST'])
+def interessar(problema_id):
+    if 'user_id' not in session:
+        flash("Faça login para se interessar!")
+        return redirect(url_for('login'))
+    
+    mensagem = request.form.get('mensagem', 'Gostaria de ajudar a resolver este problema.')
+    
+    interessados = get_interessados(problema_id)
+    if any(i['usuario_id'] == session['user_id'] for i in interessados):
+        flash("Você já se interessou por este problema!")
+        return redirect(url_for('ver_problema', problema_id=problema_id))
+    
+    if add_interessado(problema_id, session['user_id'], mensagem):
+        flash("Interesse manifestado com sucesso!")
+    else:
+        flash("Erro ao manifestar interesse!")
+    
+    return redirect(url_for('ver_problema', problema_id=problema_id))
+
+@app.route('/interessados/<int:problema_id>')
+def ver_interessados(problema_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    problema = get_problema_by_id(problema_id)
+    if not problema or problema['usuario_id'] != session['user_id']:
+        flash("Apenas o autor pode ver os interessados!")
+        return redirect(url_for('ver_problema', problema_id=problema_id))
+    
+    interessados = get_interessados(problema_id)
+    return render_template('interessados.html', interessados=interessados, problema_id=problema_id)
+
+# ============================================
+# ROTAS - MENSAGENS
+# ============================================
+
+@app.route('/mensagens')
+def mensagens():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conversas = get_conversas(session['user_id'])
+    return render_template('mensagens.html', conversas=conversas)
+
+@app.route('/mensagens/<int:outro_id>')
+def conversa(outro_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    outro = get_user_by_id(outro_id)
+    if not outro:
+        flash("Utilizador não encontrado!")
+        return redirect(url_for('mensagens'))
+    
+    mensagens_lista = get_mensagens(session['user_id'], outro_id)
+    marcar_lidas(session['user_id'], outro_id)
+    
+    return render_template('conversa.html', outro=outro, mensagens=mensagens_lista)
+
+@app.route('/enviar-mensagem', methods=['POST'])
+def enviar_mensagem():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    destinatario_id = request.form['destinatario_id']
+    conteudo = request.form['conteudo']
+    problema_id = request.form.get('problema_id', None)
+    
+    if not conteudo.strip():
+        flash("Mensagem vazia!")
+        return redirect(url_for('conversa', outro_id=destinatario_id))
+    
+    if send_mensagem(session['user_id'], destinatario_id, conteudo, problema_id):
+        flash("Mensagem enviada!")
+    else:
+        flash("Erro ao enviar mensagem!")
+    
+    return redirect(url_for('conversa', outro_id=destinatario_id))
+
+# ============================================
+# ROTAS - NOTIFICAÇÕES
+# ============================================
+
+@app.route('/notificacoes')
+def notificacoes():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    # SQLite para notificações (mais simples)
+    conn = get_db()
+    c = conn.cursor()
+    
+    c.execute("SELECT COUNT(*) FROM mensagens WHERE destinatario_id = ? AND lida = 0", (session['user_id'],))
+    mensagens_nao_lidas = c.fetchone()[0]
+    
+    c.execute("SELECT COUNT(*) FROM interessados i JOIN problemas p ON i.problema_id = p.id WHERE p.usuario_id = ? AND i.status = 'pendente'", (session['user_id'],))
+    interesses_pendentes = c.fetchone()[0]
+    
+    c.execute('''SELECT 'mensagem' as tipo, m.conteudo, u.nome, m.data_envio 
+                 FROM mensagens m JOIN users u ON u.id = m.remetente_id 
+                 WHERE m.destinatario_id = ? AND m.lida = 0 
+                 ORDER BY m.data_envio DESC LIMIT 5''', (session['user_id'],))
+    notificacoes_mensagens = c.fetchall()
+    
+    c.execute('''SELECT 'interesse' as tipo, i.mensagem, u.nome, i.data_interesse, p.titulo
+                 FROM interessados i 
+                 JOIN users u ON u.id = i.usuario_id 
+                 JOIN problemas p ON p.id = i.problema_id
+                 WHERE p.usuario_id = ? AND i.status = 'pendente'
+                 ORDER BY i.data_interesse DESC LIMIT 5''', (session['user_id'],))
+    notificacoes_interesses = c.fetchall()
+    
+    conn.close()
+    
+    return render_template('notificacoes.html', 
+                         mensagens_nao_lidas=mensagens_nao_lidas,
+                         interesses_pendentes=interesses_pendentes,
+                         notificacoes_mensagens=notificacoes_mensagens,
+                         notificacoes_interesses=notificacoes_interesses)
+
+# ============================================
+# ROTAS - PERFIL
+# ============================================
+
+@app.route('/perfil')
+def perfil():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user = get_user_by_id(session['user_id'])
+    return render_template('perfil.html', user=user)
+
+@app.route('/perfil/<int:user_id>')
+def perfil_publico(user_id):
+    user = get_user_by_id(user_id)
+    if not user:
+        flash("Utilizador não encontrado!")
+        return redirect(url_for('index'))
+    
+    problemas = get_meus_problemas(user_id)
+    return render_template('perfil_publico.html', user=user, problemas=problemas)
+
+@app.route('/upload-foto', methods=['POST'])
+def upload_foto():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    if 'foto' not in request.files:
+        flash("Nenhuma foto selecionada")
+        return redirect(url_for('perfil'))
+    
+    foto = request.files['foto']
+    if foto.filename == '':
+        flash("Nenhuma foto selecionada")
+        return redirect(url_for('perfil'))
+    
+    if foto and allowed_file(foto.filename):
+        ext = foto.filename.split('.')[-1]
+        filename = f"user_{session['user_id']}.{ext}"
+        caminho = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        foto.save(caminho)
+        
+        update_user(session['user_id'], 'foto', filename)
+        flash("Foto atualizada com sucesso!")
+    else:
+        flash("Formato inválido. Use JPG, PNG ou GIF.")
+    
+    return redirect(url_for('perfil'))
+
+@app.route('/editar-perfil', methods=['POST'])
+def editar_perfil():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    campo = request.form['campo']
+    valor = request.form['valor']
+    
+    campos_validos = ['telefone', 'localizacao', 'bio']
+    if campo not in campos_validos:
+        flash("Campo inválido!")
+        return redirect(url_for('perfil'))
+    
+    if update_user(session['user_id'], campo, valor):
+        flash(f"Campo atualizado com sucesso!")
+    else:
+        flash("Erro ao atualizar!")
+    
+    return redirect(url_for('perfil'))
+
+# ============================================
+# ROTAS - CATEGORIAS E AJUDA
+# ============================================
+
+@app.route('/categorias')
+def categorias():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT categoria, COUNT(*) FROM problemas GROUP BY categoria ORDER BY COUNT(*) DESC")
+    contagem = c.fetchall()
+    conn.close()
+    
+    categorias_lista = [
+        {'nome': 'Serviços', 'icone': 'fa-wrench'},
+        {'nome': 'Design', 'icone': 'fa-paint-brush'},
+        {'nome': 'Reparos', 'icone': 'fa-tools'},
+        {'nome': 'Transporte', 'icone': 'fa-truck'},
+        {'nome': 'Aulas', 'icone': 'fa-chalkboard-teacher'},
+        {'nome': 'Eventos', 'icone': 'fa-calendar-alt'},
+    ]
+    
+    return render_template('categorias.html', categorias=categorias_lista, contagem=contagem)
+
+@app.route('/minhas-publicacoes')
+def minhas_publicacoes():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    publicacoes = get_meus_problemas(session['user_id'])
+    return render_template('minhas_publicacoes.html', publicacoes=publicacoes)
+
+@app.route('/ajuda')
+def ajuda():
+    return render_template('ajuda.html')
+
+# ============================================
+# INICIAR SERVIDOR
+# ============================================
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
