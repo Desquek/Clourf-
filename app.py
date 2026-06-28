@@ -136,54 +136,12 @@ def init_supabase():
             except Exception as create_error:
                 print(f"❌ Erro ao criar tabela mensagens: {create_error}")
 
-def seed_supabase():
-    """Adiciona dados de exemplo se não houver problemas"""
-    if supabase is None:
-        print("❌ Supabase não disponível para seed")
-        return
-    
-    try:
-        # Verificar se já existem problemas
-        response = supabase.table('problemas').select('*').limit(1).execute()
-        if len(response.data) == 0:
-            print("📝 Adicionando dados de exemplo...")
-            # Criar utilizador de teste
-            user_data = {
-                'nome': 'Didi',
-                'email': 'didi@email.com',
-                'telefone': '84 123 4567',
-                'senha': '1234',
-                'localizacao': 'Maputo',
-                'bio': 'Adoro conectar pessoas a soluções!'
-            }
-            user_response = supabase.table('users').insert(user_data).execute()
-            user_id = user_response.data[0]['id']
-            
-            # Problemas de exemplo
-            exemplos = [
-                ("Preciso de um eletricista", "Instalação de tomadas e fiação em casa. Urgente.", "Serviços", "Maputo"),
-                ("Preciso de um logo", "Logo para minha marca de roupas. Estilo minimalista.", "Design", "Nampula"),
-                ("Preciso de um entregador", "Entregue de encomenda urgente na baixa da cidade.", "Transporte", "Beira"),
-                ("Preciso de aulas de inglês", "Aulas particulares de inglês para iniciantes.", "Aulas", "Matola"),
-                ("Preciso de um DJ", "Evento de aniversário com 50 pessoas.", "Eventos", "Maputo"),
-            ]
-            
-            for titulo, desc, cat, local in exemplos:
-                problema_data = {
-                    'titulo': titulo,
-                    'descricao': desc,
-                    'categoria': cat,
-                    'localizacao': local,
-                    'usuario_id': user_id
-                }
-                supabase.table('problemas').insert(problema_data).execute()
-            print("✅ Dados de exemplo adicionados com sucesso!")
-    except Exception as e:
-        print(f"❌ Erro no seed: {e}")
+# ============================================
+# INICIALIZAR (SEM SEED PARA EVITAR ERROS)
+# ============================================
 
-# Inicializar
 init_supabase()
-seed_supabase()
+# seed_supabase()  # REMOVIDO - Causava erro "Name or service not known"
 
 # ============================================
 # ROTAS DE AUTENTICAÇÃO
