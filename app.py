@@ -1,140 +1,50 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory
-from werkzeug.utils import secure_filename
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 import os
-from datetime import datetime
 from supabase import create_client, Client
 
 app = Flask(__name__)
 app.secret_key = "clourf_conecta_secret"
 
 # ============================================
-# CONFIGURAÇÃO DO SUPABASE
+# SUPABASE (com fallback para SQLite)
 # ============================================
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://ozbnlyevbheypglmcbtx.supabase.co")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im96Ym5seWV2YmhleXBnbG1jYnR4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMjA5MDcsImV4cCI6MjA5NDY5NjkwN30.JVR-vUoEIAeEgeKy7DL4cl6TSeTyVa_6trJLqKF_TJk")
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
 
+supabase = None
 try:
-    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-    print("✅ Supabase conectado com sucesso!")
+    if SUPABASE_URL and SUPABASE_KEY:
+        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+        print("✅ Supabase conectado!")
+    else:
+        print("⚠️ Supabase não configurado. Usando SQLite.")
 except Exception as e:
-    print(f"❌ Erro ao conectar Supabase: {e}")
-    supabase = None
+    print(f"❌ Erro Supabase: {e}")
 
 # ============================================
-# CONFIGURAÇÃO PARA UPLOAD DE FOTOS
+# SQLITE (fallback)
 # ============================================
 
-UPLOAD_FOLDER = 'static/perfil'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+import sqlite3
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+def get_db():
+    return sqlite3.connect("database.db")
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+def init_db():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nome TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        telefone TEXT,
+        senha TEXT NOT NULL
+    )''')
+    conn.commit()
+    conn.close()
 
-# ============================================
-# INICIALIZAR TABELAS (sem seed)
-# ============================================
-
-def init_supabase():
-    if supabase is None:
-        print("❌ Supabase não disponível")
-        return
-    
-    try:
-        supabase.table('users').select('*').limit(1).execute()
-        print("✅ Tabela users OK")
-    except:
-        print("⚠️ Tabela users não existe, a criar...")
-        sql = """
-        CREATE TABLE users (
-            id SERIAL PRIMARY KEY,
-            nome TEXT NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            telefone TEXT,
-            senha TEXT NOT NULL,
-            localizacao TEXT,
-            bio TEXT,
-            foto TEXT DEFAULT 'default.png',
-            data_registo TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-        """
-        try:
-            supabase.sql(sql).execute()
-            print("✅ Tabela users criada!")
-        except Exception as e:
-            print(f"❌ Erro ao criar users: {e}")
-    
-    try:
-        supabase.table('problemas').select('*').limit(1).execute()
-        print("✅ Tabela problemas OK")
-    except:
-        print("⚠️ Tabela problemas não existe, a criar...")
-        sql = """
-        CREATE TABLE problemas (
-            id SERIAL PRIMARY KEY,
-            titulo TEXT NOT NULL,
-            descricao TEXT NOT NULL,
-            categoria TEXT NOT NULL,
-            localizacao TEXT,
-            usuario_id INTEGER REFERENCES users(id),
-            status TEXT DEFAULT 'aberto',
-            data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-        """
-        try:
-            supabase.sql(sql).execute()
-            print("✅ Tabela problemas criada!")
-        except Exception as e:
-            print(f"❌ Erro ao criar problemas: {e}")
-    
-    try:
-        supabase.table('interessados').select('*').limit(1).execute()
-        print("✅ Tabela interessados OK")
-    except:
-        print("⚠️ Tabela interessados não existe, a criar...")
-        sql = """
-        CREATE TABLE interessados (
-            id SERIAL PRIMARY KEY,
-            problema_id INTEGER REFERENCES problemas(id),
-            usuario_id INTEGER REFERENCES users(id),
-            mensagem TEXT,
-            status TEXT DEFAULT 'pendente',
-            data_interesse TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-        """
-        try:
-            supabase.sql(sql).execute()
-            print("✅ Tabela interessados criada!")
-        except Exception as e:
-            print(f"❌ Erro ao criar interessados: {e}")
-    
-    try:
-        supabase.table('mensagens').select('*').limit(1).execute()
-        print("✅ Tabela mensagens OK")
-    except:
-        print("⚠️ Tabela mensagens não existe, a criar...")
-        sql = """
-        CREATE TABLE mensagens (
-            id SERIAL PRIMARY KEY,
-            remetente_id INTEGER REFERENCES users(id),
-            destinatario_id INTEGER REFERENCES users(id),
-            problema_id INTEGER REFERENCES problemas(id),
-            conteudo TEXT NOT NULL,
-            lida INTEGER DEFAULT 0,
-            data_envio TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-        """
-        try:
-            supabase.sql(sql).execute()
-            print("✅ Tabela mensagens criada!")
-        except Exception as e:
-            print(f"❌ Erro ao criar mensagens: {e}")
-
-# INICIALIZAR (SEM SEED)
-init_supabase()
+init_db()
 
 # ============================================
 # ROTAS
@@ -142,510 +52,112 @@ init_supabase()
 
 @app.route('/')
 def index():
-    if supabase is None:
-        flash("⚠️ Base de dados não disponível.")
-        return render_template('landing.html')
-    
     if 'user_id' in session:
-        try:
-            response = supabase.table('problemas').select('*, users(nome, foto)').order('data_criacao', desc=True).limit(10).execute()
-            problemas = response.data
-        except:
-            problemas = []
-        return render_template('dashboard.html', problemas=problemas)
+        return redirect(url_for('dashboard'))
     return render_template('landing.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    if supabase is None:
-        flash("⚠️ Base de dados não disponível.")
-        return render_template('register.html')
-    
     if request.method == 'POST':
         nome = request.form['nome']
         email = request.form['email']
         telefone = request.form['telefone']
         senha = request.form['senha']
         
+        # Tenta Supabase primeiro
+        if supabase:
+            try:
+                existing = supabase.table('users').select('*').eq('email', email).execute()
+                if len(existing.data) > 0:
+                    flash("Email já registado!")
+                    return render_template('register.html')
+                
+                user_data = {'nome': nome, 'email': email, 'telefone': telefone, 'senha': senha}
+                supabase.table('users').insert(user_data).execute()
+                flash("Conta criada com sucesso!")
+                return redirect(url_for('login'))
+            except Exception as e:
+                flash(f"Erro Supabase: {e}. A tentar SQLite...")
+                # Fallback para SQLite se Supabase falhar
+                conn = get_db()
+                c = conn.cursor()
+                try:
+                    c.execute("INSERT INTO users (nome, email, telefone, senha) VALUES (?, ?, ?, ?)",
+                             (nome, email, telefone, senha))
+                    conn.commit()
+                    conn.close()
+                    flash("Conta criada com sucesso (SQLite)!")
+                    return redirect(url_for('login'))
+                except:
+                    conn.close()
+                    flash("Erro ao criar conta!")
+                    return render_template('register.html')
+        
+        # Usa SQLite diretamente
+        conn = get_db()
+        c = conn.cursor()
         try:
-            existing = supabase.table('users').select('*').eq('email', email).execute()
-            if len(existing.data) > 0:
-                flash("Email já registado!")
-                return render_template('register.html')
-            
-            user_data = {
-                'nome': nome,
-                'email': email,
-                'telefone': telefone,
-                'senha': senha
-            }
-            supabase.table('users').insert(user_data).execute()
+            c.execute("INSERT INTO users (nome, email, telefone, senha) VALUES (?, ?, ?, ?)",
+                     (nome, email, telefone, senha))
+            conn.commit()
+            conn.close()
             flash("Conta criada com sucesso!")
             return redirect(url_for('login'))
-        except Exception as e:
-            flash(f"Erro: {str(e)}")
+        except:
+            conn.close()
+            flash("Email já registado!")
     
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if supabase is None:
-        flash("⚠️ Base de dados não disponível.")
-        return render_template('login.html')
-    
     if request.method == 'POST':
         email = request.form['email']
         senha = request.form['senha']
         
-        try:
-            response = supabase.table('users').select('id, nome').eq('email', email).eq('senha', senha).execute()
-            if response.data:
-                user = response.data[0]
-                session['user_id'] = user['id']
-                session['nome'] = user['nome']
-                flash(f"Bem-vindo, {user['nome']}!")
-                return redirect(url_for('dashboard'))
-            else:
-                flash("Email ou senha inválidos!")
-        except Exception as e:
-            flash(f"Erro: {str(e)}")
+        # Tenta Supabase primeiro
+        if supabase:
+            try:
+                response = supabase.table('users').select('id, nome').eq('email', email).eq('senha', senha).execute()
+                if response.data:
+                    user = response.data[0]
+                    session['user_id'] = user['id']
+                    session['nome'] = user['nome']
+                    flash(f"Bem-vindo, {user['nome']}!")
+                    return redirect(url_for('dashboard'))
+                else:
+                    flash("Email ou senha inválidos!")
+                    return render_template('login.html')
+            except:
+                pass  # Fallback para SQLite
+        
+        # SQLite
+        conn = get_db()
+        c = conn.cursor()
+        c.execute("SELECT id, nome FROM users WHERE email = ? AND senha = ?", (email, senha))
+        user = c.fetchone()
+        conn.close()
+        if user:
+            session['user_id'] = user[0]
+            session['nome'] = user[1]
+            flash(f"Bem-vindo, {user[1]}!")
+            return redirect(url_for('dashboard'))
+        else:
+            flash("Email ou senha inválidos!")
     
     return render_template('login.html')
+
+@app.route('/dashboard')
+def dashboard():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('dashboard.html', nome=session['nome'])
 
 @app.route('/logout')
 def logout():
     session.clear()
     flash("Saiu com sucesso!")
     return redirect(url_for('index'))
-
-@app.route('/dashboard')
-def dashboard():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    if supabase is None:
-        return render_template('dashboard.html', problemas=[], meus_problemas=[])
-    
-    try:
-        response = supabase.table('problemas').select('*, users(nome, foto)').order('data_criacao', desc=True).limit(10).execute()
-        problemas = response.data
-    except:
-        problemas = []
-    
-    try:
-        response_meus = supabase.table('problemas').select('*').eq('usuario_id', session['user_id']).order('data_criacao', desc=True).execute()
-        meus_problemas = response_meus.data
-    except:
-        meus_problemas = []
-    
-    return render_template('dashboard.html', problemas=problemas, meus_problemas=meus_problemas)
-
-@app.route('/novo-problema', methods=['GET', 'POST'])
-def novo_problema():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    if supabase is None:
-        flash("⚠️ Base de dados não disponível.")
-        return render_template('novo_problema.html')
-    
-    if request.method == 'POST':
-        titulo = request.form['titulo']
-        descricao = request.form['descricao']
-        categoria = request.form['categoria']
-        localizacao = request.form['localizacao']
-        
-        problema_data = {
-            'titulo': titulo,
-            'descricao': descricao,
-            'categoria': categoria,
-            'localizacao': localizacao,
-            'usuario_id': session['user_id']
-        }
-        try:
-            supabase.table('problemas').insert(problema_data).execute()
-            flash("Problema publicado com sucesso!")
-        except Exception as e:
-            flash(f"Erro: {str(e)}")
-        return redirect(url_for('dashboard'))
-    
-    return render_template('novo_problema.html')
-
-@app.route('/problema/<int:problema_id>')
-def ver_problema(problema_id):
-    if supabase is None:
-        flash("⚠️ Base de dados não disponível.")
-        return redirect(url_for('index'))
-    
-    try:
-        response = supabase.table('problemas').select('*, users(nome, telefone, foto, localizacao, bio)').eq('id', problema_id).execute()
-    except:
-        flash("Erro ao carregar problema!")
-        return redirect(url_for('index'))
-    
-    if not response.data:
-        flash("Problema não encontrado!")
-        return redirect(url_for('index'))
-    
-    problema = response.data[0]
-    
-    ja_interessado = False
-    if 'user_id' in session:
-        try:
-            interesse_response = supabase.table('interessados').select('*').eq('problema_id', problema_id).eq('usuario_id', session['user_id']).execute()
-            ja_interessado = len(interesse_response.data) > 0
-        except:
-            ja_interessado = False
-    
-    return render_template('problema.html', problema=problema, ja_interessado=ja_interessado)
-
-@app.route('/interessar/<int:problema_id>', methods=['POST'])
-def interessar(problema_id):
-    if 'user_id' not in session:
-        flash("Faça login para se interessar!")
-        return redirect(url_for('login'))
-    
-    if supabase is None:
-        flash("⚠️ Base de dados não disponível.")
-        return redirect(url_for('ver_problema', problema_id=problema_id))
-    
-    mensagem = request.form.get('mensagem', 'Gostaria de ajudar a resolver este problema.')
-    
-    try:
-        existing = supabase.table('interessados').select('*').eq('problema_id', problema_id).eq('usuario_id', session['user_id']).execute()
-        if len(existing.data) > 0:
-            flash("Você já se interessou!")
-            return redirect(url_for('ver_problema', problema_id=problema_id))
-        
-        interesse_data = {
-            'problema_id': problema_id,
-            'usuario_id': session['user_id'],
-            'mensagem': mensagem
-        }
-        supabase.table('interessados').insert(interesse_data).execute()
-        flash("Interesse manifestado!")
-    except Exception as e:
-        flash(f"Erro: {str(e)}")
-    
-    return redirect(url_for('ver_problema', problema_id=problema_id))
-
-@app.route('/interessados/<int:problema_id>')
-def ver_interessados(problema_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    if supabase is None:
-        flash("⚠️ Base de dados não disponível.")
-        return redirect(url_for('ver_problema', problema_id=problema_id))
-    
-    try:
-        problema_response = supabase.table('problemas').select('usuario_id').eq('id', problema_id).execute()
-        if not problema_response.data or problema_response.data[0]['usuario_id'] != session['user_id']:
-            flash("Apenas o autor pode ver os interessados!")
-            return redirect(url_for('ver_problema', problema_id=problema_id))
-    except:
-        flash("Erro ao verificar autor!")
-        return redirect(url_for('ver_problema', problema_id=problema_id))
-    
-    try:
-        response = supabase.table('interessados').select('*, users(nome, foto, telefone)').eq('problema_id', problema_id).execute()
-        interessados = response.data
-    except:
-        interessados = []
-    
-    return render_template('interessados.html', interessados=interessados, problema_id=problema_id)
-
-@app.route('/mensagens')
-def mensagens():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    if supabase is None:
-        return render_template('mensagens.html', conversas=[])
-    
-    try:
-        response = supabase.table('mensagens').select('*').or_(f'remetente_id.eq.{session["user_id"]},destinatario_id.eq.{session["user_id"]}').execute()
-    except:
-        response = []
-    
-    conversas_dict = {}
-    for msg in response.data:
-        outro_id = msg['destinatario_id'] if msg['remetente_id'] == session['user_id'] else msg['remetente_id']
-        if outro_id not in conversas_dict:
-            try:
-                user_response = supabase.table('users').select('id, nome, foto').eq('id', outro_id).execute()
-                if user_response.data:
-                    user = user_response.data[0]
-                    conversas_dict[outro_id] = {
-                        'outro_id': user['id'],
-                        'nome': user['nome'],
-                        'foto': user['foto'],
-                        'ultima': msg['conteudo'],
-                        'ultima_data': msg['data_envio']
-                    }
-            except:
-                pass
-    
-    conversas = list(conversas_dict.values())
-    return render_template('mensagens.html', conversas=conversas)
-
-@app.route('/mensagens/<int:outro_id>')
-def conversa(outro_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    if supabase is None:
-        flash("⚠️ Base de dados não disponível.")
-        return redirect(url_for('mensagens'))
-    
-    try:
-        user_response = supabase.table('users').select('id, nome, foto').eq('id', outro_id).execute()
-        if not user_response.data:
-            flash("Utilizador não encontrado!")
-            return redirect(url_for('mensagens'))
-        outro = user_response.data[0]
-    except:
-        flash("Erro ao carregar utilizador!")
-        return redirect(url_for('mensagens'))
-    
-    try:
-        response = supabase.table('mensagens').select('*').or_(f'and(remetente_id.eq.{session["user_id"]},destinatario_id.eq.{outro_id}),and(remetente_id.eq.{outro_id},destinatario_id.eq.{session["user_id"]})').order('data_envio').execute()
-        mensagens_lista = response.data
-        supabase.table('mensagens').update({'lida': 1}).eq('remetente_id', outro_id).eq('destinatario_id', session['user_id']).execute()
-    except:
-        mensagens_lista = []
-    
-    return render_template('conversa.html', outro=outro, mensagens=mensagens_lista)
-
-@app.route('/enviar-mensagem', methods=['POST'])
-def enviar_mensagem():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    if supabase is None:
-        flash("⚠️ Base de dados não disponível.")
-        return redirect(url_for('mensagens'))
-    
-    destinatario_id = request.form['destinatario_id']
-    conteudo = request.form['conteudo']
-    problema_id = request.form.get('problema_id', None)
-    
-    if not conteudo.strip():
-        flash("Mensagem vazia!")
-        return redirect(url_for('conversa', outro_id=destinatario_id))
-    
-    msg_data = {
-        'remetente_id': session['user_id'],
-        'destinatario_id': destinatario_id,
-        'conteudo': conteudo,
-        'problema_id': problema_id
-    }
-    try:
-        supabase.table('mensagens').insert(msg_data).execute()
-    except Exception as e:
-        flash(f"Erro: {str(e)}")
-    
-    return redirect(url_for('conversa', outro_id=destinatario_id))
-
-@app.route('/notificacoes')
-def notificacoes():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    if supabase is None:
-        return render_template('notificacoes.html', 
-                             mensagens_nao_lidas=0,
-                             interesses_pendentes=0,
-                             notificacoes_mensagens=[],
-                             notificacoes_interesses=[])
-    
-    mensagens_nao_lidas = 0
-    interesses_pendentes = 0
-    notificacoes_mensagens = []
-    notificacoes_interesses = []
-    
-    try:
-        msgs_response = supabase.table('mensagens').select('*').eq('destinatario_id', session['user_id']).eq('lida', 0).execute()
-        mensagens_nao_lidas = len(msgs_response.data)
-        for msg in msgs_response.data[:5]:
-            user_resp = supabase.table('users').select('nome').eq('id', msg['remetente_id']).execute()
-            if user_resp.data:
-                notificacoes_mensagens.append({
-                    'conteudo': msg['conteudo'],
-                    'nome': user_resp.data[0]['nome'],
-                    'data_envio': msg['data_envio']
-                })
-    except:
-        pass
-    
-    try:
-        interesses_response = supabase.table('interessados').select('*, users(nome), problemas(titulo)').eq('status', 'pendente').execute()
-        interesses_pendentes = len(interesses_response.data)
-        for interesse in interesses_response.data[:5]:
-            notificacoes_interesses.append({
-                'mensagem': interesse['mensagem'],
-                'nome': interesse.get('users', {}).get('nome', 'Alguém'),
-                'data_interesse': interesse['data_interesse'],
-                'titulo': interesse.get('problemas', {}).get('titulo', 'Problema')
-            })
-    except:
-        pass
-    
-    return render_template('notificacoes.html', 
-                         mensagens_nao_lidas=mensagens_nao_lidas,
-                         interesses_pendentes=interesses_pendentes,
-                         notificacoes_mensagens=notificacoes_mensagens,
-                         notificacoes_interesses=notificacoes_interesses)
-
-@app.route('/perfil')
-def perfil():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    if supabase is None:
-        return render_template('perfil.html', user=None)
-    
-    try:
-        response = supabase.table('users').select('nome, email, telefone, foto, localizacao, bio, data_registo').eq('id', session['user_id']).execute()
-        user = response.data[0] if response.data else None
-    except:
-        user = None
-    
-    return render_template('perfil.html', user=user)
-
-@app.route('/perfil/<int:user_id>')
-def perfil_publico(user_id):
-    if supabase is None:
-        flash("⚠️ Base de dados não disponível.")
-        return redirect(url_for('index'))
-    
-    try:
-        response = supabase.table('users').select('id, nome, email, telefone, foto, localizacao, bio, data_registo').eq('id', user_id).execute()
-        user = response.data[0] if response.data else None
-    except:
-        user = None
-    
-    if not user:
-        flash("Utilizador não encontrado!")
-        return redirect(url_for('index'))
-    
-    try:
-        problemas_response = supabase.table('problemas').select('*').eq('usuario_id', user_id).order('data_criacao', desc=True).execute()
-        problemas = problemas_response.data
-    except:
-        problemas = []
-    
-    return render_template('perfil_publico.html', user=user, problemas=problemas)
-
-@app.route('/upload-foto', methods=['POST'])
-def upload_foto():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    if supabase is None:
-        flash("⚠️ Base de dados não disponível.")
-        return redirect(url_for('perfil'))
-    
-    if 'foto' not in request.files:
-        flash("Nenhuma foto selecionada")
-        return redirect(url_for('perfil'))
-    
-    foto = request.files['foto']
-    if foto.filename == '':
-        flash("Nenhuma foto selecionada")
-        return redirect(url_for('perfil'))
-    
-    if foto and allowed_file(foto.filename):
-        ext = foto.filename.split('.')[-1]
-        filename = f"user_{session['user_id']}.{ext}"
-        caminho = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        foto.save(caminho)
-        
-        try:
-            supabase.table('users').update({'foto': filename}).eq('id', session['user_id']).execute()
-            flash("Foto atualizada com sucesso!")
-        except Exception as e:
-            flash(f"Erro: {str(e)}")
-    else:
-        flash("Formato inválido. Use JPG, PNG ou GIF.")
-    
-    return redirect(url_for('perfil'))
-
-@app.route('/editar-perfil', methods=['POST'])
-def editar_perfil():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    if supabase is None:
-        flash("⚠️ Base de dados não disponível.")
-        return redirect(url_for('perfil'))
-    
-    campo = request.form['campo']
-    valor = request.form['valor']
-    
-    campos_validos = ['telefone', 'localizacao', 'bio']
-    if campo not in campos_validos:
-        flash("Campo inválido!")
-        return redirect(url_for('perfil'))
-    
-    try:
-        supabase.table('users').update({campo: valor}).eq('id', session['user_id']).execute()
-        flash("Campo atualizado com sucesso!")
-    except Exception as e:
-        flash(f"Erro: {str(e)}")
-    
-    return redirect(url_for('perfil'))
-
-@app.route('/categorias')
-def categorias():
-    contagem = []
-    if supabase is None:
-        return render_template('categorias.html', categorias=[], contagem=[])
-    
-    try:
-        response = supabase.table('problemas').select('categoria').execute()
-        contagem_dict = {}
-        for item in response.data:
-            cat = item['categoria']
-            contagem_dict[cat] = contagem_dict.get(cat, 0) + 1
-        contagem = [(cat, count) for cat, count in contagem_dict.items()]
-    except:
-        pass
-    
-    categorias_lista = [
-        {'nome': 'Serviços', 'icone': 'fa-wrench'},
-        {'nome': 'Design', 'icone': 'fa-paint-brush'},
-        {'nome': 'Reparos', 'icone': 'fa-tools'},
-        {'nome': 'Transporte', 'icone': 'fa-truck'},
-        {'nome': 'Aulas', 'icone': 'fa-chalkboard-teacher'},
-        {'nome': 'Eventos', 'icone': 'fa-calendar-alt'},
-    ]
-    
-    return render_template('categorias.html', categorias=categorias_lista, contagem=contagem)
-
-@app.route('/minhas-publicacoes')
-def minhas_publicacoes():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    if supabase is None:
-        return render_template('minhas_publicacoes.html', publicacoes=[])
-    
-    try:
-        response = supabase.table('problemas').select('*').eq('usuario_id', session['user_id']).order('data_criacao', desc=True).execute()
-        publicacoes = response.data
-    except:
-        publicacoes = []
-    
-    return render_template('minhas_publicacoes.html', publicacoes=publicacoes)
-
-@app.route('/ajuda')
-def ajuda():
-    return render_template('ajuda.html')
-
-@app.route('/resetar-banco')
-def resetar_banco():
-    return "Com Supabase não é necessário resetar. Os dados são persistentes!"
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
