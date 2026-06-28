@@ -14,7 +14,6 @@ app.secret_key = "clourf_conecta_secret"
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://ozbnlyevbheypglmcbtx.supabase.co")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im96Ym5seWV2YmhleXBnbG1jYnR4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMjA5MDcsImV4cCI6MjA5NDY5NjkwN30.JVR-vUoEIAeEgeKy7DL4cl6TSeTyVa_6trJLqKF_TJk")
 
-# Criar cliente Supabase com tratamento de erro
 try:
     supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
     print("✅ Supabase conectado com sucesso!")
@@ -36,129 +35,122 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # ============================================
-# FUNÇÕES DE INICIALIZAÇÃO (TABELAS NO SUPABASE)
+# INICIALIZAR TABELAS (sem seed)
 # ============================================
 
 def init_supabase():
-    """Cria as tabelas no Supabase via SQL"""
     if supabase is None:
-        print("❌ Supabase não disponível para criar tabelas")
+        print("❌ Supabase não disponível")
         return
     
     try:
-        # Tabela de usuários
         supabase.table('users').select('*').limit(1).execute()
-        print("✅ Tabela users já existe")
-    except Exception as e:
-        if "relation" in str(e) or "does not exist" in str(e):
-            sql = """
-            CREATE TABLE users (
-                id SERIAL PRIMARY KEY,
-                nome TEXT NOT NULL,
-                email TEXT UNIQUE NOT NULL,
-                telefone TEXT,
-                senha TEXT NOT NULL,
-                localizacao TEXT,
-                bio TEXT,
-                foto TEXT DEFAULT 'default.png',
-                data_registo TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-            """
-            try:
-                supabase.sql(sql).execute()
-                print("✅ Tabela users criada com sucesso!")
-            except Exception as create_error:
-                print(f"❌ Erro ao criar tabela users: {create_error}")
+        print("✅ Tabela users OK")
+    except:
+        print("⚠️ Tabela users não existe, a criar...")
+        sql = """
+        CREATE TABLE users (
+            id SERIAL PRIMARY KEY,
+            nome TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            telefone TEXT,
+            senha TEXT NOT NULL,
+            localizacao TEXT,
+            bio TEXT,
+            foto TEXT DEFAULT 'default.png',
+            data_registo TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        """
+        try:
+            supabase.sql(sql).execute()
+            print("✅ Tabela users criada!")
+        except Exception as e:
+            print(f"❌ Erro ao criar users: {e}")
     
     try:
         supabase.table('problemas').select('*').limit(1).execute()
-        print("✅ Tabela problemas já existe")
-    except Exception as e:
-        if "relation" in str(e) or "does not exist" in str(e):
-            sql = """
-            CREATE TABLE problemas (
-                id SERIAL PRIMARY KEY,
-                titulo TEXT NOT NULL,
-                descricao TEXT NOT NULL,
-                categoria TEXT NOT NULL,
-                localizacao TEXT,
-                usuario_id INTEGER REFERENCES users(id),
-                status TEXT DEFAULT 'aberto',
-                data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-            """
-            try:
-                supabase.sql(sql).execute()
-                print("✅ Tabela problemas criada com sucesso!")
-            except Exception as create_error:
-                print(f"❌ Erro ao criar tabela problemas: {create_error}")
+        print("✅ Tabela problemas OK")
+    except:
+        print("⚠️ Tabela problemas não existe, a criar...")
+        sql = """
+        CREATE TABLE problemas (
+            id SERIAL PRIMARY KEY,
+            titulo TEXT NOT NULL,
+            descricao TEXT NOT NULL,
+            categoria TEXT NOT NULL,
+            localizacao TEXT,
+            usuario_id INTEGER REFERENCES users(id),
+            status TEXT DEFAULT 'aberto',
+            data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        """
+        try:
+            supabase.sql(sql).execute()
+            print("✅ Tabela problemas criada!")
+        except Exception as e:
+            print(f"❌ Erro ao criar problemas: {e}")
     
     try:
         supabase.table('interessados').select('*').limit(1).execute()
-        print("✅ Tabela interessados já existe")
-    except Exception as e:
-        if "relation" in str(e) or "does not exist" in str(e):
-            sql = """
-            CREATE TABLE interessados (
-                id SERIAL PRIMARY KEY,
-                problema_id INTEGER REFERENCES problemas(id),
-                usuario_id INTEGER REFERENCES users(id),
-                mensagem TEXT,
-                status TEXT DEFAULT 'pendente',
-                data_interesse TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-            """
-            try:
-                supabase.sql(sql).execute()
-                print("✅ Tabela interessados criada com sucesso!")
-            except Exception as create_error:
-                print(f"❌ Erro ao criar tabela interessados: {create_error}")
+        print("✅ Tabela interessados OK")
+    except:
+        print("⚠️ Tabela interessados não existe, a criar...")
+        sql = """
+        CREATE TABLE interessados (
+            id SERIAL PRIMARY KEY,
+            problema_id INTEGER REFERENCES problemas(id),
+            usuario_id INTEGER REFERENCES users(id),
+            mensagem TEXT,
+            status TEXT DEFAULT 'pendente',
+            data_interesse TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        """
+        try:
+            supabase.sql(sql).execute()
+            print("✅ Tabela interessados criada!")
+        except Exception as e:
+            print(f"❌ Erro ao criar interessados: {e}")
     
     try:
         supabase.table('mensagens').select('*').limit(1).execute()
-        print("✅ Tabela mensagens já existe")
-    except Exception as e:
-        if "relation" in str(e) or "does not exist" in str(e):
-            sql = """
-            CREATE TABLE mensagens (
-                id SERIAL PRIMARY KEY,
-                remetente_id INTEGER REFERENCES users(id),
-                destinatario_id INTEGER REFERENCES users(id),
-                problema_id INTEGER REFERENCES problemas(id),
-                conteudo TEXT NOT NULL,
-                lida INTEGER DEFAULT 0,
-                data_envio TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-            """
-            try:
-                supabase.sql(sql).execute()
-                print("✅ Tabela mensagens criada com sucesso!")
-            except Exception as create_error:
-                print(f"❌ Erro ao criar tabela mensagens: {create_error}")
+        print("✅ Tabela mensagens OK")
+    except:
+        print("⚠️ Tabela mensagens não existe, a criar...")
+        sql = """
+        CREATE TABLE mensagens (
+            id SERIAL PRIMARY KEY,
+            remetente_id INTEGER REFERENCES users(id),
+            destinatario_id INTEGER REFERENCES users(id),
+            problema_id INTEGER REFERENCES problemas(id),
+            conteudo TEXT NOT NULL,
+            lida INTEGER DEFAULT 0,
+            data_envio TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        """
+        try:
+            supabase.sql(sql).execute()
+            print("✅ Tabela mensagens criada!")
+        except Exception as e:
+            print(f"❌ Erro ao criar mensagens: {e}")
 
-# ============================================
-# INICIALIZAR (SEM SEED PARA EVITAR ERROS)
-# ============================================
-
+# INICIALIZAR (SEM SEED)
 init_supabase()
-# seed_supabase()  # REMOVIDO - Causava erro "Name or service not known"
 
 # ============================================
-# ROTAS DE AUTENTICAÇÃO
+# ROTAS
 # ============================================
 
 @app.route('/')
 def index():
     if supabase is None:
-        flash("⚠️ Base de dados não disponível. Tenta novamente mais tarde.")
+        flash("⚠️ Base de dados não disponível.")
         return render_template('landing.html')
     
     if 'user_id' in session:
         try:
             response = supabase.table('problemas').select('*, users(nome, foto)').order('data_criacao', desc=True).limit(10).execute()
             problemas = response.data
-        except Exception as e:
-            print(f"Erro ao carregar problemas: {e}")
+        except:
             problemas = []
         return render_template('dashboard.html', problemas=problemas)
     return render_template('landing.html')
@@ -166,7 +158,7 @@ def index():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if supabase is None:
-        flash("⚠️ Base de dados não disponível. Tenta novamente mais tarde.")
+        flash("⚠️ Base de dados não disponível.")
         return render_template('register.html')
     
     if request.method == 'POST':
@@ -176,13 +168,11 @@ def register():
         senha = request.form['senha']
         
         try:
-            # Verificar se email já existe
             existing = supabase.table('users').select('*').eq('email', email).execute()
             if len(existing.data) > 0:
                 flash("Email já registado!")
                 return render_template('register.html')
             
-            # Criar novo utilizador
             user_data = {
                 'nome': nome,
                 'email': email,
@@ -193,14 +183,14 @@ def register():
             flash("Conta criada com sucesso!")
             return redirect(url_for('login'))
         except Exception as e:
-            flash(f"Erro ao criar conta: {str(e)}")
+            flash(f"Erro: {str(e)}")
     
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if supabase is None:
-        flash("⚠️ Base de dados não disponível. Tenta novamente mais tarde.")
+        flash("⚠️ Base de dados não disponível.")
         return render_template('login.html')
     
     if request.method == 'POST':
@@ -209,17 +199,16 @@ def login():
         
         try:
             response = supabase.table('users').select('id, nome').eq('email', email).eq('senha', senha).execute()
-            user = response.data
-            
-            if user:
-                session['user_id'] = user[0]['id']
-                session['nome'] = user[0]['nome']
-                flash(f"Bem-vindo, {user[0]['nome']}!")
+            if response.data:
+                user = response.data[0]
+                session['user_id'] = user['id']
+                session['nome'] = user['nome']
+                flash(f"Bem-vindo, {user['nome']}!")
                 return redirect(url_for('dashboard'))
             else:
                 flash("Email ou senha inválidos!")
         except Exception as e:
-            flash(f"Erro ao fazer login: {str(e)}")
+            flash(f"Erro: {str(e)}")
     
     return render_template('login.html')
 
@@ -229,33 +218,24 @@ def logout():
     flash("Saiu com sucesso!")
     return redirect(url_for('index'))
 
-# ============================================
-# DASHBOARD E PROBLEMAS
-# ============================================
-
 @app.route('/dashboard')
 def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
     if supabase is None:
-        flash("⚠️ Base de dados não disponível.")
         return render_template('dashboard.html', problemas=[], meus_problemas=[])
     
     try:
-        # Problemas de todos os utilizadores
         response = supabase.table('problemas').select('*, users(nome, foto)').order('data_criacao', desc=True).limit(10).execute()
         problemas = response.data
-    except Exception as e:
-        print(f"Erro ao carregar problemas: {e}")
+    except:
         problemas = []
     
     try:
-        # Meus problemas
         response_meus = supabase.table('problemas').select('*').eq('usuario_id', session['user_id']).order('data_criacao', desc=True).execute()
         meus_problemas = response_meus.data
-    except Exception as e:
-        print(f"Erro ao carregar meus problemas: {e}")
+    except:
         meus_problemas = []
     
     return render_template('dashboard.html', problemas=problemas, meus_problemas=meus_problemas)
@@ -286,7 +266,7 @@ def novo_problema():
             supabase.table('problemas').insert(problema_data).execute()
             flash("Problema publicado com sucesso!")
         except Exception as e:
-            flash(f"Erro ao publicar: {str(e)}")
+            flash(f"Erro: {str(e)}")
         return redirect(url_for('dashboard'))
     
     return render_template('novo_problema.html')
@@ -299,8 +279,8 @@ def ver_problema(problema_id):
     
     try:
         response = supabase.table('problemas').select('*, users(nome, telefone, foto, localizacao, bio)').eq('id', problema_id).execute()
-    except Exception as e:
-        flash(f"Erro ao carregar problema: {str(e)}")
+    except:
+        flash("Erro ao carregar problema!")
         return redirect(url_for('index'))
     
     if not response.data:
@@ -309,21 +289,15 @@ def ver_problema(problema_id):
     
     problema = response.data[0]
     
-    # Verificar se já está interessado
     ja_interessado = False
     if 'user_id' in session:
         try:
             interesse_response = supabase.table('interessados').select('*').eq('problema_id', problema_id).eq('usuario_id', session['user_id']).execute()
             ja_interessado = len(interesse_response.data) > 0
-        except Exception as e:
-            print(f"Erro ao verificar interesse: {e}")
+        except:
             ja_interessado = False
     
     return render_template('problema.html', problema=problema, ja_interessado=ja_interessado)
-
-# ============================================
-# INTERESSADOS
-# ============================================
 
 @app.route('/interessar/<int:problema_id>', methods=['POST'])
 def interessar(problema_id):
@@ -338,20 +312,18 @@ def interessar(problema_id):
     mensagem = request.form.get('mensagem', 'Gostaria de ajudar a resolver este problema.')
     
     try:
-        # Verificar se já está interessado
         existing = supabase.table('interessados').select('*').eq('problema_id', problema_id).eq('usuario_id', session['user_id']).execute()
         if len(existing.data) > 0:
-            flash("Você já se interessou por este problema!")
+            flash("Você já se interessou!")
             return redirect(url_for('ver_problema', problema_id=problema_id))
         
-        # Adicionar interesse
         interesse_data = {
             'problema_id': problema_id,
             'usuario_id': session['user_id'],
             'mensagem': mensagem
         }
         supabase.table('interessados').insert(interesse_data).execute()
-        flash("Você manifestou interesse! O autor será notificado.")
+        flash("Interesse manifestado!")
     except Exception as e:
         flash(f"Erro: {str(e)}")
     
@@ -366,28 +338,22 @@ def ver_interessados(problema_id):
         flash("⚠️ Base de dados não disponível.")
         return redirect(url_for('ver_problema', problema_id=problema_id))
     
-    # Verificar se é o autor
     try:
         problema_response = supabase.table('problemas').select('usuario_id').eq('id', problema_id).execute()
         if not problema_response.data or problema_response.data[0]['usuario_id'] != session['user_id']:
             flash("Apenas o autor pode ver os interessados!")
             return redirect(url_for('ver_problema', problema_id=problema_id))
-    except Exception as e:
-        flash(f"Erro: {str(e)}")
+    except:
+        flash("Erro ao verificar autor!")
         return redirect(url_for('ver_problema', problema_id=problema_id))
     
     try:
         response = supabase.table('interessados').select('*, users(nome, foto, telefone)').eq('problema_id', problema_id).execute()
         interessados = response.data
-    except Exception as e:
-        print(f"Erro ao carregar interessados: {e}")
+    except:
         interessados = []
     
     return render_template('interessados.html', interessados=interessados, problema_id=problema_id)
-
-# ============================================
-# MENSAGENS
-# ============================================
 
 @app.route('/mensagens')
 def mensagens():
@@ -395,13 +361,11 @@ def mensagens():
         return redirect(url_for('login'))
     
     if supabase is None:
-        flash("⚠️ Base de dados não disponível.")
         return render_template('mensagens.html', conversas=[])
     
     try:
         response = supabase.table('mensagens').select('*').or_(f'remetente_id.eq.{session["user_id"]},destinatario_id.eq.{session["user_id"]}').execute()
-    except Exception as e:
-        print(f"Erro ao carregar mensagens: {e}")
+    except:
         response = []
     
     conversas_dict = {}
@@ -419,8 +383,7 @@ def mensagens():
                         'ultima': msg['conteudo'],
                         'ultima_data': msg['data_envio']
                     }
-            except Exception as e:
-                print(f"Erro ao carregar utilizador: {e}")
+            except:
                 pass
     
     conversas = list(conversas_dict.values())
@@ -441,18 +404,15 @@ def conversa(outro_id):
             flash("Utilizador não encontrado!")
             return redirect(url_for('mensagens'))
         outro = user_response.data[0]
-    except Exception as e:
-        flash(f"Erro ao carregar utilizador: {str(e)}")
+    except:
+        flash("Erro ao carregar utilizador!")
         return redirect(url_for('mensagens'))
     
     try:
         response = supabase.table('mensagens').select('*').or_(f'and(remetente_id.eq.{session["user_id"]},destinatario_id.eq.{outro_id}),and(remetente_id.eq.{outro_id},destinatario_id.eq.{session["user_id"]})').order('data_envio').execute()
         mensagens_lista = response.data
-        
-        # Marcar como lidas
         supabase.table('mensagens').update({'lida': 1}).eq('remetente_id', outro_id).eq('destinatario_id', session['user_id']).execute()
-    except Exception as e:
-        print(f"Erro ao carregar conversa: {e}")
+    except:
         mensagens_lista = []
     
     return render_template('conversa.html', outro=outro, mensagens=mensagens_lista)
@@ -483,13 +443,9 @@ def enviar_mensagem():
     try:
         supabase.table('mensagens').insert(msg_data).execute()
     except Exception as e:
-        flash(f"Erro ao enviar mensagem: {str(e)}")
+        flash(f"Erro: {str(e)}")
     
     return redirect(url_for('conversa', outro_id=destinatario_id))
-
-# ============================================
-# NOTIFICAÇÕES
-# ============================================
 
 @app.route('/notificacoes')
 def notificacoes():
@@ -497,7 +453,6 @@ def notificacoes():
         return redirect(url_for('login'))
     
     if supabase is None:
-        flash("⚠️ Base de dados não disponível.")
         return render_template('notificacoes.html', 
                              mensagens_nao_lidas=0,
                              interesses_pendentes=0,
@@ -512,7 +467,6 @@ def notificacoes():
     try:
         msgs_response = supabase.table('mensagens').select('*').eq('destinatario_id', session['user_id']).eq('lida', 0).execute()
         mensagens_nao_lidas = len(msgs_response.data)
-        
         for msg in msgs_response.data[:5]:
             user_resp = supabase.table('users').select('nome').eq('id', msg['remetente_id']).execute()
             if user_resp.data:
@@ -521,23 +475,21 @@ def notificacoes():
                     'nome': user_resp.data[0]['nome'],
                     'data_envio': msg['data_envio']
                 })
-    except Exception as e:
-        print(f"Erro ao carregar notificações de mensagens: {e}")
+    except:
+        pass
     
     try:
         interesses_response = supabase.table('interessados').select('*, users(nome), problemas(titulo)').eq('status', 'pendente').execute()
         interesses_pendentes = len(interesses_response.data)
-        
         for interesse in interesses_response.data[:5]:
-            user_resp = supabase.table('users').select('nome').eq('id', interesse['usuario_id']).execute()
             notificacoes_interesses.append({
                 'mensagem': interesse['mensagem'],
-                'nome': user_resp.data[0]['nome'] if user_resp.data else 'Alguém',
+                'nome': interesse.get('users', {}).get('nome', 'Alguém'),
                 'data_interesse': interesse['data_interesse'],
                 'titulo': interesse.get('problemas', {}).get('titulo', 'Problema')
             })
-    except Exception as e:
-        print(f"Erro ao carregar notificações de interesses: {e}")
+    except:
+        pass
     
     return render_template('notificacoes.html', 
                          mensagens_nao_lidas=mensagens_nao_lidas,
@@ -545,24 +497,18 @@ def notificacoes():
                          notificacoes_mensagens=notificacoes_mensagens,
                          notificacoes_interesses=notificacoes_interesses)
 
-# ============================================
-# PERFIL
-# ============================================
-
 @app.route('/perfil')
 def perfil():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
     if supabase is None:
-        flash("⚠️ Base de dados não disponível.")
         return render_template('perfil.html', user=None)
     
     try:
         response = supabase.table('users').select('nome, email, telefone, foto, localizacao, bio, data_registo').eq('id', session['user_id']).execute()
         user = response.data[0] if response.data else None
-    except Exception as e:
-        print(f"Erro ao carregar perfil: {e}")
+    except:
         user = None
     
     return render_template('perfil.html', user=user)
@@ -576,8 +522,7 @@ def perfil_publico(user_id):
     try:
         response = supabase.table('users').select('id, nome, email, telefone, foto, localizacao, bio, data_registo').eq('id', user_id).execute()
         user = response.data[0] if response.data else None
-    except Exception as e:
-        print(f"Erro ao carregar perfil público: {e}")
+    except:
         user = None
     
     if not user:
@@ -587,8 +532,7 @@ def perfil_publico(user_id):
     try:
         problemas_response = supabase.table('problemas').select('*').eq('usuario_id', user_id).order('data_criacao', desc=True).execute()
         problemas = problemas_response.data
-    except Exception as e:
-        print(f"Erro ao carregar problemas do utilizador: {e}")
+    except:
         problemas = []
     
     return render_template('perfil_publico.html', user=user, problemas=problemas)
@@ -621,7 +565,7 @@ def upload_foto():
             supabase.table('users').update({'foto': filename}).eq('id', session['user_id']).execute()
             flash("Foto atualizada com sucesso!")
         except Exception as e:
-            flash(f"Erro ao atualizar foto: {str(e)}")
+            flash(f"Erro: {str(e)}")
     else:
         flash("Formato inválido. Use JPG, PNG ou GIF.")
     
@@ -646,21 +590,16 @@ def editar_perfil():
     
     try:
         supabase.table('users').update({campo: valor}).eq('id', session['user_id']).execute()
-        flash(f"Campo atualizado com sucesso!")
+        flash("Campo atualizado com sucesso!")
     except Exception as e:
-        flash(f"Erro ao atualizar: {str(e)}")
+        flash(f"Erro: {str(e)}")
     
     return redirect(url_for('perfil'))
-
-# ============================================
-# CATEGORIAS E AJUDA
-# ============================================
 
 @app.route('/categorias')
 def categorias():
     contagem = []
     if supabase is None:
-        flash("⚠️ Base de dados não disponível.")
         return render_template('categorias.html', categorias=[], contagem=[])
     
     try:
@@ -670,8 +609,8 @@ def categorias():
             cat = item['categoria']
             contagem_dict[cat] = contagem_dict.get(cat, 0) + 1
         contagem = [(cat, count) for cat, count in contagem_dict.items()]
-    except Exception as e:
-        print(f"Erro ao carregar categorias: {e}")
+    except:
+        pass
     
     categorias_lista = [
         {'nome': 'Serviços', 'icone': 'fa-wrench'},
@@ -690,14 +629,12 @@ def minhas_publicacoes():
         return redirect(url_for('login'))
     
     if supabase is None:
-        flash("⚠️ Base de dados não disponível.")
         return render_template('minhas_publicacoes.html', publicacoes=[])
     
     try:
         response = supabase.table('problemas').select('*').eq('usuario_id', session['user_id']).order('data_criacao', desc=True).execute()
         publicacoes = response.data
-    except Exception as e:
-        print(f"Erro ao carregar publicações: {e}")
+    except:
         publicacoes = []
     
     return render_template('minhas_publicacoes.html', publicacoes=publicacoes)
@@ -706,17 +643,9 @@ def minhas_publicacoes():
 def ajuda():
     return render_template('ajuda.html')
 
-# ============================================
-# ROTA PARA RESETAR BANCO (TEMPORÁRIA)
-# ============================================
-
 @app.route('/resetar-banco')
 def resetar_banco():
     return "Com Supabase não é necessário resetar. Os dados são persistentes!"
-
-# ============================================
-# INICIAR SERVIDOR
-# ============================================
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
