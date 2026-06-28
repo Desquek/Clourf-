@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import os
-import sqlite3
 from supabase import create_client, Client
 from datetime import datetime
 from werkzeug.utils import secure_filename
@@ -9,87 +8,116 @@ app = Flask(__name__)
 app.secret_key = "clourf_conecta_secret"
 
 # ============================================
-# CONFIGURAÇÃO SUPABASE
+# SUPABASE
 # ============================================
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://ozbnlyevbheypglmcbtx.supabase.co")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im96Ym5seWV2YmhleXBnbG1jYnR4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMjA5MDcsImV4cCI6MjA5NDY5NjkwN30.JVR-vUoEIAeEgeKy7DL4cl6TSeTyVa_6trJLqKF_TJk")
 
-supabase = None
 try:
-    if SUPABASE_URL and SUPABASE_KEY:
-        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-        print("✅ Supabase conectado!")
-    else:
-        print("⚠️ Supabase não configurado.")
+    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+    print("✅ Supabase conectado!")
 except Exception as e:
-    print(f"❌ Erro Supabase: {e}")
+    print(f"❌ Erro: {e}")
+    supabase = None
 
 # ============================================
-# BANCO DE DADOS SQLITE (FALLBACK)
+# INICIALIZAR TABELAS
 # ============================================
 
-def get_db():
-    return sqlite3.connect("database.db")
+def init_supabase():
+    if supabase is None:
+        return
+    
+    try:
+        supabase.table('users').select('*').limit(1).execute()
+        print("✅ Tabela users OK")
+    except:
+        print("⚠️ Criando tabela users...")
+        try:
+            supabase.sql("""
+            CREATE TABLE users (
+                id SERIAL PRIMARY KEY,
+                nome TEXT NOT NULL,
+                email TEXT UNIQUE NOT NULL,
+                telefone TEXT,
+                senha TEXT NOT NULL,
+                localizacao TEXT,
+                bio TEXT,
+                foto TEXT DEFAULT 'default.png',
+                data_registo TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            """).execute()
+            print("✅ Tabela users criada!")
+        except Exception as e:
+            print(f"❌ Erro: {e}")
+    
+    try:
+        supabase.table('problemas').select('*').limit(1).execute()
+        print("✅ Tabela problemas OK")
+    except:
+        print("⚠️ Criando tabela problemas...")
+        try:
+            supabase.sql("""
+            CREATE TABLE problemas (
+                id SERIAL PRIMARY KEY,
+                titulo TEXT NOT NULL,
+                descricao TEXT NOT NULL,
+                categoria TEXT NOT NULL,
+                localizacao TEXT,
+                usuario_id INTEGER REFERENCES users(id),
+                data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            """).execute()
+            print("✅ Tabela problemas criada!")
+        except Exception as e:
+            print(f"❌ Erro: {e}")
+    
+    try:
+        supabase.table('interessados').select('*').limit(1).execute()
+        print("✅ Tabela interessados OK")
+    except:
+        print("⚠️ Criando tabela interessados...")
+        try:
+            supabase.sql("""
+            CREATE TABLE interessados (
+                id SERIAL PRIMARY KEY,
+                problema_id INTEGER REFERENCES problemas(id),
+                usuario_id INTEGER REFERENCES users(id),
+                mensagem TEXT,
+                status TEXT DEFAULT 'pendente',
+                data_interesse TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            """).execute()
+            print("✅ Tabela interessados criada!")
+        except Exception as e:
+            print(f"❌ Erro: {e}")
+    
+    try:
+        supabase.table('mensagens').select('*').limit(1).execute()
+        print("✅ Tabela mensagens OK")
+    except:
+        print("⚠️ Criando tabela mensagens...")
+        try:
+            supabase.sql("""
+            CREATE TABLE mensagens (
+                id SERIAL PRIMARY KEY,
+                remetente_id INTEGER REFERENCES users(id),
+                destinatario_id INTEGER REFERENCES users(id),
+                problema_id INTEGER REFERENCES problemas(id),
+                conteudo TEXT NOT NULL,
+                lida INTEGER DEFAULT 0,
+                data_envio TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            """).execute()
+            print("✅ Tabela mensagens criada!")
+        except Exception as e:
+            print(f"❌ Erro: {e}")
 
-def init_db():
-    conn = get_db()
-    c = conn.cursor()
-
-    c.execute('''CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nome TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        telefone TEXT,
-        senha TEXT NOT NULL,
-        localizacao TEXT,
-        bio TEXT,
-        foto TEXT DEFAULT 'default.png',
-        data_registo TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )''')
-
-    c.execute('''CREATE TABLE IF NOT EXISTS problemas (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        titulo TEXT NOT NULL,
-        descricao TEXT NOT NULL,
-        categoria TEXT NOT NULL,
-        localizacao TEXT,
-        usuario_id INTEGER,
-        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (usuario_id) REFERENCES users(id)
-    )''')
-
-    c.execute('''CREATE TABLE IF NOT EXISTS interessados (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        problema_id INTEGER,
-        usuario_id INTEGER,
-        mensagem TEXT,
-        status TEXT DEFAULT 'pendente',
-        data_interesse TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (problema_id) REFERENCES problemas(id),
-        FOREIGN KEY (usuario_id) REFERENCES users(id)
-    )''')
-
-    c.execute('''CREATE TABLE IF NOT EXISTS mensagens (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        remetente_id INTEGER,
-        destinatario_id INTEGER,
-        problema_id INTEGER,
-        conteudo TEXT NOT NULL,
-        lida INTEGER DEFAULT 0,
-        data_envio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (remetente_id) REFERENCES users(id),
-        FOREIGN KEY (destinatario_id) REFERENCES users(id),
-        FOREIGN KEY (problema_id) REFERENCES problemas(id)
-    )''')
-
-    conn.commit()
-    conn.close()
-
-init_db()
+init_supabase()
 
 # ============================================
-# CONFIGURAÇÃO UPLOAD
+# CONFIGURAÇÃO PARA UPLOAD DE FOTOS
 # ============================================
 
 UPLOAD_FOLDER = 'static/perfil'
@@ -104,247 +132,199 @@ def allowed_file(filename):
 # FUNÇÕES DE ACESSO A DADOS
 # ============================================
 
-def db_execute(sql, params=None):
-    conn = get_db()
-    c = conn.cursor()
-    if params:
-        c.execute(sql, params)
-    else:
-        c.execute(sql)
-    result = c.fetchall()
-    conn.commit()
-    conn.close()
-    return result
-
-def db_insert(sql, params):
-    conn = get_db()
-    c = conn.cursor()
-    c.execute(sql, params)
-    conn.commit()
-    id = c.lastrowid
-    conn.close()
-    return id
-
-# ============================================
-# FUNÇÕES DE USUÁRIOS
-# ============================================
-
 def get_user_by_email(email):
-    if supabase:
-        try:
-            response = supabase.table('users').select('*').eq('email', email).execute()
-            if response.data:
-                return response.data[0]
-        except:
-            pass
-    result = db_execute("SELECT * FROM users WHERE email = ?", (email,))
-    if result:
-        return {'id': result[0][0], 'nome': result[0][1], 'email': result[0][2], 
-                'telefone': result[0][3], 'senha': result[0][4], 'localizacao': result[0][5],
-                'bio': result[0][6], 'foto': result[0][7], 'data_registo': result[0][8]}
+    if supabase is None:
+        return None
+    try:
+        response = supabase.table('users').select('*').eq('email', email).execute()
+        if response.data:
+            return response.data[0]
+    except Exception as e:
+        print(f"Erro: {e}")
     return None
 
 def get_user_by_id(user_id):
-    if supabase:
-        try:
-            response = supabase.table('users').select('*').eq('id', user_id).execute()
-            if response.data:
-                return response.data[0]
-        except:
-            pass
-    result = db_execute("SELECT * FROM users WHERE id = ?", (user_id,))
-    if result:
-        return {'id': result[0][0], 'nome': result[0][1], 'email': result[0][2], 
-                'telefone': result[0][3], 'senha': result[0][4], 'localizacao': result[0][5],
-                'bio': result[0][6], 'foto': result[0][7], 'data_registo': result[0][8]}
+    if supabase is None:
+        return None
+    try:
+        response = supabase.table('users').select('*').eq('id', user_id).execute()
+        if response.data:
+            return response.data[0]
+    except:
+        pass
     return None
 
 def create_user(nome, email, telefone, senha):
-    if supabase:
-        try:
-            data = {'nome': nome, 'email': email, 'telefone': telefone, 'senha': senha}
-            response = supabase.table('users').insert(data).execute()
-            if response.data:
-                return response.data[0]
-        except:
-            pass
-    id = db_insert("INSERT INTO users (nome, email, telefone, senha) VALUES (?, ?, ?, ?)",
-                   (nome, email, telefone, senha))
-    return {'id': id, 'nome': nome, 'email': email}
+    if supabase is None:
+        return None
+    try:
+        data = {'nome': nome, 'email': email, 'telefone': telefone, 'senha': senha}
+        response = supabase.table('users').insert(data).execute()
+        if response.data:
+            return response.data[0]
+    except:
+        pass
+    return None
 
 def update_user(user_id, campo, valor):
-    if supabase:
-        try:
-            supabase.table('users').update({campo: valor}).eq('id', user_id).execute()
-            return True
-        except:
-            pass
-    db_execute(f"UPDATE users SET {campo} = ? WHERE id = ?", (valor, user_id))
-    return True
-
-# ============================================
-# FUNÇÕES DE PROBLEMAS
-# ============================================
+    if supabase is None:
+        return False
+    try:
+        supabase.table('users').update({campo: valor}).eq('id', user_id).execute()
+        return True
+    except:
+        return False
 
 def get_problemas(limit=10):
-    if supabase:
-        try:
-            response = supabase.table('problemas').select('*, users(nome, foto)').order('data_criacao', desc=True).limit(limit).execute()
-            return response.data
-        except:
-            pass
-    result = db_execute("SELECT p.*, u.nome, u.foto FROM problemas p JOIN users u ON p.usuario_id = u.id ORDER BY p.data_criacao DESC LIMIT ?", (limit,))
-    return [{'id': r[0], 'titulo': r[1], 'descricao': r[2], 'categoria': r[3], 'localizacao': r[4],
-             'usuario_id': r[5], 'data_criacao': r[6], 'users': {'nome': r[7], 'foto': r[8]}} for r in result]
+    if supabase is None:
+        return []
+    try:
+        response = supabase.table('problemas').select('*, users(nome, foto)').order('data_criacao', desc=True).limit(limit).execute()
+        return response.data
+    except:
+        return []
 
 def get_problema_by_id(problema_id):
-    if supabase:
-        try:
-            response = supabase.table('problemas').select('*, users(nome, telefone, foto, localizacao, bio)').eq('id', problema_id).execute()
-            if response.data:
-                return response.data[0]
-        except:
-            pass
-    result = db_execute("SELECT p.*, u.nome, u.telefone, u.foto, u.localizacao, u.bio FROM problemas p JOIN users u ON p.usuario_id = u.id WHERE p.id = ?", (problema_id,))
-    if result:
-        r = result[0]
-        return {'id': r[0], 'titulo': r[1], 'descricao': r[2], 'categoria': r[3],
-                'localizacao': r[4], 'usuario_id': r[5], 'data_criacao': r[6],
-                'users': {'nome': r[7], 'telefone': r[8], 'foto': r[9], 'localizacao': r[10], 'bio': r[11]}}
+    if supabase is None:
+        return None
+    try:
+        response = supabase.table('problemas').select('*, users(nome, telefone, foto, localizacao, bio)').eq('id', problema_id).execute()
+        if response.data:
+            return response.data[0]
+    except:
+        pass
     return None
 
 def create_problema(titulo, descricao, categoria, localizacao, usuario_id):
-    if supabase:
-        try:
-            data = {'titulo': titulo, 'descricao': descricao, 'categoria': categoria,
-                    'localizacao': localizacao, 'usuario_id': usuario_id}
-            supabase.table('problemas').insert(data).execute()
-            return True
-        except:
-            pass
-    db_insert("INSERT INTO problemas (titulo, descricao, categoria, localizacao, usuario_id) VALUES (?, ?, ?, ?, ?)",
-              (titulo, descricao, categoria, localizacao, usuario_id))
-    return True
+    if supabase is None:
+        return False
+    try:
+        data = {'titulo': titulo, 'descricao': descricao, 'categoria': categoria,
+                'localizacao': localizacao, 'usuario_id': usuario_id}
+        supabase.table('problemas').insert(data).execute()
+        return True
+    except:
+        return False
 
 def get_meus_problemas(usuario_id):
-    if supabase:
-        try:
-            response = supabase.table('problemas').select('*').eq('usuario_id', usuario_id).order('data_criacao', desc=True).execute()
-            return response.data
-        except:
-            pass
-    result = db_execute("SELECT * FROM problemas WHERE usuario_id = ? ORDER BY data_criacao DESC", (usuario_id,))
-    return [{'id': r[0], 'titulo': r[1], 'descricao': r[2], 'categoria': r[3],
-             'localizacao': r[4], 'usuario_id': r[5], 'data_criacao': r[6]} for r in result]
-
-# ============================================
-# FUNÇÕES DE INTERESSADOS
-# ============================================
+    if supabase is None:
+        return []
+    try:
+        response = supabase.table('problemas').select('*').eq('usuario_id', usuario_id).order('data_criacao', desc=True).execute()
+        return response.data
+    except:
+        return []
 
 def add_interessado(problema_id, usuario_id, mensagem):
-    if supabase:
-        try:
-            data = {'problema_id': problema_id, 'usuario_id': usuario_id, 'mensagem': mensagem}
-            supabase.table('interessados').insert(data).execute()
-            return True
-        except:
-            pass
-    db_insert("INSERT INTO interessados (problema_id, usuario_id, mensagem) VALUES (?, ?, ?)",
-              (problema_id, usuario_id, mensagem))
-    return True
+    if supabase is None:
+        return False
+    try:
+        data = {'problema_id': problema_id, 'usuario_id': usuario_id, 'mensagem': mensagem}
+        supabase.table('interessados').insert(data).execute()
+        return True
+    except:
+        return False
 
 def get_interessados(problema_id):
-    if supabase:
-        try:
-            response = supabase.table('interessados').select('*, users(nome, foto, telefone)').eq('problema_id', problema_id).execute()
-            return response.data
-        except:
-            pass
-    result = db_execute("SELECT i.*, u.nome, u.foto, u.telefone FROM interessados i JOIN users u ON i.usuario_id = u.id WHERE i.problema_id = ?", (problema_id,))
-    return [{'id': r[0], 'problema_id': r[1], 'usuario_id': r[2], 'mensagem': r[3],
-             'status': r[4], 'data_interesse': r[5], 'users': {'nome': r[6], 'foto': r[7], 'telefone': r[8]}} for r in result]
-
-# ============================================
-# FUNÇÕES DE MENSAGENS
-# ============================================
+    if supabase is None:
+        return []
+    try:
+        response = supabase.table('interessados').select('*, users(nome, foto, telefone)').eq('problema_id', problema_id).execute()
+        return response.data
+    except:
+        return []
 
 def get_conversas(usuario_id):
-    if supabase:
-        try:
-            response = supabase.table('mensagens').select('*').or_(f'remetente_id.eq.{usuario_id},destinatario_id.eq.{usuario_id}').execute()
-            conversas = {}
-            for msg in response.data:
-                outro = msg['destinatario_id'] if msg['remetente_id'] == usuario_id else msg['remetente_id']
-                if outro not in conversas:
-                    user = get_user_by_id(outro)
-                    if user:
-                        conversas[outro] = {
-                            'outro_id': outro,
-                            'nome': user['nome'],
-                            'foto': user['foto'],
-                            'ultima': msg['conteudo'],
-                            'ultima_data': msg['data_envio']
-                        }
-            return list(conversas.values())
-        except:
-            pass
-    result = db_execute('''SELECT DISTINCT 
-        CASE WHEN remetente_id = ? THEN destinatario_id ELSE remetente_id END as outro_id,
-        u.nome, u.foto,
-        (SELECT conteudo FROM mensagens 
-         WHERE (remetente_id = ? AND destinatario_id = u.id) 
-            OR (remetente_id = u.id AND destinatario_id = ?)
-         ORDER BY data_envio DESC LIMIT 1) as ultima,
-        (SELECT data_envio FROM mensagens 
-         WHERE (remetente_id = ? AND destinatario_id = u.id) 
-            OR (remetente_id = u.id AND destinatario_id = ?)
-         ORDER BY data_envio DESC LIMIT 1) as ultima_data
-        FROM mensagens m
-        JOIN users u ON u.id = (
-            CASE WHEN remetente_id = ? THEN destinatario_id ELSE remetente_id END
-        )
-        WHERE remetente_id = ? OR destinatario_id = ?
-        GROUP BY u.id
-    ''', (usuario_id, usuario_id, usuario_id, usuario_id, usuario_id, usuario_id, usuario_id))
-    return [{'outro_id': r[0], 'nome': r[1], 'foto': r[2], 'ultima': r[3], 'ultima_data': r[4]} for r in result]
+    if supabase is None:
+        return []
+    try:
+        response = supabase.table('mensagens').select('*').or_(f'remetente_id.eq.{usuario_id},destinatario_id.eq.{usuario_id}').execute()
+        conversas = {}
+        for msg in response.data:
+            outro = msg['destinatario_id'] if msg['remetente_id'] == usuario_id else msg['remetente_id']
+            if outro not in conversas:
+                user = get_user_by_id(outro)
+                if user:
+                    conversas[outro] = {
+                        'outro_id': outro,
+                        'nome': user['nome'],
+                        'foto': user['foto'],
+                        'ultima': msg['conteudo'],
+                        'ultima_data': msg['data_envio']
+                    }
+        return list(conversas.values())
+    except:
+        return []
 
 def get_mensagens(usuario_id, outro_id):
-    if supabase:
-        try:
-            response = supabase.table('mensagens').select('*').or_(f'and(remetente_id.eq.{usuario_id},destinatario_id.eq.{outro_id}),and(remetente_id.eq.{outro_id},destinatario_id.eq.{usuario_id})').order('data_envio').execute()
-            return response.data
-        except:
-            pass
-    result = db_execute('''SELECT m.*, u.nome, u.foto FROM mensagens m
-                 JOIN users u ON u.id = m.remetente_id
-                 WHERE (remetente_id = ? AND destinatario_id = ?)
-                 OR (remetente_id = ? AND destinatario_id = ?)
-                 ORDER BY data_envio ASC''', (usuario_id, outro_id, outro_id, usuario_id))
-    return [{'id': r[0], 'remetente_id': r[1], 'destinatario_id': r[2], 'problema_id': r[3],
-             'conteudo': r[4], 'lida': r[5], 'data_envio': r[6], 'users': {'nome': r[7], 'foto': r[8]}} for r in result]
+    if supabase is None:
+        return []
+    try:
+        response = supabase.table('mensagens').select('*').or_(f'and(remetente_id.eq.{usuario_id},destinatario_id.eq.{outro_id}),and(remetente_id.eq.{outro_id},destinatario_id.eq.{usuario_id})').order('data_envio').execute()
+        return response.data
+    except:
+        return []
 
 def send_mensagem(remetente_id, destinatario_id, conteudo, problema_id=None):
-    if supabase:
-        try:
-            data = {'remetente_id': remetente_id, 'destinatario_id': destinatario_id,
-                    'conteudo': conteudo, 'problema_id': problema_id}
-            supabase.table('mensagens').insert(data).execute()
-            return True
-        except:
-            pass
-    db_insert("INSERT INTO mensagens (remetente_id, destinatario_id, problema_id, conteudo) VALUES (?, ?, ?, ?)",
-              (remetente_id, destinatario_id, problema_id, conteudo))
-    return True
+    if supabase is None:
+        return False
+    try:
+        data = {'remetente_id': remetente_id, 'destinatario_id': destinatario_id,
+                'conteudo': conteudo, 'problema_id': problema_id}
+        supabase.table('mensagens').insert(data).execute()
+        return True
+    except:
+        return False
 
 def marcar_lidas(usuario_id, outro_id):
-    if supabase:
-        try:
-            supabase.table('mensagens').update({'lida': 1}).eq('remetente_id', outro_id).eq('destinatario_id', usuario_id).execute()
-            return True
-        except:
-            pass
-    db_execute("UPDATE mensagens SET lida = 1 WHERE remetente_id = ? AND destinatario_id = ?", (outro_id, usuario_id))
-    return True
+    if supabase is None:
+        return False
+    try:
+        supabase.table('mensagens').update({'lida': 1}).eq('remetente_id', outro_id).eq('destinatario_id', usuario_id).execute()
+        return True
+    except:
+        return False
+
+def get_notificacoes(usuario_id):
+    if supabase is None:
+        return {'mensagens_nao_lidas': 0, 'interesses_pendentes': 0, 'notificacoes_mensagens': [], 'notificacoes_interesses': []}
+    
+    mensagens_nao_lidas = 0
+    interesses_pendentes = 0
+    notificacoes_mensagens = []
+    notificacoes_interesses = []
+    
+    try:
+        msgs_response = supabase.table('mensagens').select('*, remetente:nome').eq('destinatario_id', usuario_id).eq('lida', 0).execute()
+        mensagens_nao_lidas = len(msgs_response.data)
+        for msg in msgs_response.data[:5]:
+            notificacoes_mensagens.append({
+                'conteudo': msg['conteudo'],
+                'nome': msg.get('remetente', {}).get('nome', 'Alguém'),
+                'data_envio': msg['data_envio']
+            })
+    except:
+        pass
+    
+    try:
+        interesses_response = supabase.table('interessados').select('*, users(nome), problemas(titulo)').eq('status', 'pendente').execute()
+        interesses_pendentes = len(interesses_response.data)
+        for interesse in interesses_response.data[:5]:
+            notificacoes_interesses.append({
+                'mensagem': interesse['mensagem'],
+                'nome': interesse.get('users', {}).get('nome', 'Alguém'),
+                'data_interesse': interesse['data_interesse'],
+                'titulo': interesse.get('problemas', {}).get('titulo', 'Problema')
+            })
+    except:
+        pass
+    
+    return {
+        'mensagens_nao_lidas': mensagens_nao_lidas,
+        'interesses_pendentes': interesses_pendentes,
+        'notificacoes_mensagens': notificacoes_mensagens,
+        'notificacoes_interesses': notificacoes_interesses
+    }
 
 # ============================================
 # ROTAS
@@ -525,36 +505,13 @@ def notificacoes():
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
-    conn = get_db()
-    c = conn.cursor()
-
-    c.execute("SELECT COUNT(*) FROM mensagens WHERE destinatario_id = ? AND lida = 0", (session['user_id'],))
-    mensagens_nao_lidas = c.fetchone()[0]
-
-    c.execute("SELECT COUNT(*) FROM interessados i JOIN problemas p ON i.problema_id = p.id WHERE p.usuario_id = ? AND i.status = 'pendente'", (session['user_id'],))
-    interesses_pendentes = c.fetchone()[0]
-
-    c.execute('''SELECT 'mensagem' as tipo, m.conteudo, u.nome, m.data_envio 
-                 FROM mensagens m JOIN users u ON u.id = m.remetente_id 
-                 WHERE m.destinatario_id = ? AND m.lida = 0 
-                 ORDER BY m.data_envio DESC LIMIT 5''', (session['user_id'],))
-    notificacoes_mensagens = c.fetchall()
-
-    c.execute('''SELECT 'interesse' as tipo, i.mensagem, u.nome, i.data_interesse, p.titulo
-                 FROM interessados i 
-                 JOIN users u ON u.id = i.usuario_id 
-                 JOIN problemas p ON p.id = i.problema_id
-                 WHERE p.usuario_id = ? AND i.status = 'pendente'
-                 ORDER BY i.data_interesse DESC LIMIT 5''', (session['user_id'],))
-    notificacoes_interesses = c.fetchall()
-
-    conn.close()
-
+    notificacoes_data = get_notificacoes(session['user_id'])
+    
     return render_template('notificacoes.html', 
-                         mensagens_nao_lidas=mensagens_nao_lidas,
-                         interesses_pendentes=interesses_pendentes,
-                         notificacoes_mensagens=notificacoes_mensagens,
-                         notificacoes_interesses=notificacoes_interesses)
+                         mensagens_nao_lidas=notificacoes_data['mensagens_nao_lidas'],
+                         interesses_pendentes=notificacoes_data['interesses_pendentes'],
+                         notificacoes_mensagens=notificacoes_data['notificacoes_mensagens'],
+                         notificacoes_interesses=notificacoes_data['notificacoes_interesses'])
 
 @app.route('/perfil')
 def perfil():
@@ -623,11 +580,19 @@ def editar_perfil():
 
 @app.route('/categorias')
 def categorias():
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("SELECT categoria, COUNT(*) FROM problemas GROUP BY categoria ORDER BY COUNT(*) DESC")
-    contagem = c.fetchall()
-    conn.close()
+    if supabase is None:
+        return render_template('categorias.html', categorias=[], contagem=[])
+    
+    contagem = []
+    try:
+        response = supabase.table('problemas').select('categoria').execute()
+        contagem_dict = {}
+        for item in response.data:
+            cat = item['categoria']
+            contagem_dict[cat] = contagem_dict.get(cat, 0) + 1
+        contagem = [(cat, count) for cat, count in contagem_dict.items()]
+    except:
+        pass
 
     categorias_lista = [
         {'nome': 'Serviços', 'icone': 'fa-wrench'},
