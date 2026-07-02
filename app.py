@@ -1,69 +1,30 @@
-import os
-import sqlite3
-from supabase import create_client
+from flask import Flask
+from config import Config
+from database import init_db
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+# Importar as rotas
+from routes.auth import auth
+from routes.home import home
+from routes.posts import posts
+from routes.profile import profile
+from routes.messages import messages
+from routes.notifications import notifications
 
-supabase = None
+app = Flask(__name__)
 
-if SUPABASE_URL and SUPABASE_KEY:
-    try:
-        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-        print("✅ Supabase conectado.")
-    except Exception as e:
-        print(f"❌ Erro ao conectar ao Supabase: {e}")
+# Configurações
+app.config.from_object(Config)
 
+# Inicializar base de dados
+init_db()
 
-def get_db():
-    conn = sqlite3.connect("database.db")
-    conn.row_factory = sqlite3.Row
-    return conn
+# Registar módulos (Blueprints)
+app.register_blueprint(auth)
+app.register_blueprint(home)
+app.register_blueprint(posts)
+app.register_blueprint(profile)
+app.register_blueprint(messages)
+app.register_blueprint(notifications)
 
-
-def init_db():
-    conn = get_db()
-    c = conn.cursor()
-
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nome TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        senha TEXT NOT NULL,
-        telefone TEXT,
-        cidade TEXT,
-        foto TEXT DEFAULT 'default.png',
-        bio TEXT,
-        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
-
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS posts (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        utilizador_id INTEGER,
-        tipo TEXT,
-        titulo TEXT,
-        descricao TEXT,
-        categoria TEXT,
-        cidade TEXT,
-        imagem TEXT,
-        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(utilizador_id) REFERENCES users(id)
-    )
-    """)
-
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS mensagens (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        remetente INTEGER,
-        destinatario INTEGER,
-        mensagem TEXT,
-        lida INTEGER DEFAULT 0,
-        criada_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
-
-    conn.commit()
-    conn.close()
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
