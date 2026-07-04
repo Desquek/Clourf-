@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Início - Clourf{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="dashboard-header">
+        <h1>Olá, {{ session.nome }}!</h1>
+        <a href="{{ url_for('posts.novo_problema') }}" class="btn-primary">
+            <i class="fas fa-plus"></i> Publicar problema
+        </a>
+    </div>
+
+    <!-- BARRA DE PESQUISA RÁPIDA -->
+    <div class="search-bar">
+        <form action="{{ url_for('search.pesquisar') }}" method="GET">
+            <input type="text" name="q" placeholder="Pesquisar problemas..." required>
+            <button type="submit"><i class="fas fa-search"></i></button>
+        </form>
+    </div>
+
+    <!-- PROBLEMAS -->
+    <div class="problemas-container">
+        <h2>Problemas recentes</h2>
+
+        {% if problemas %}
+            <div class="problemas-grid">
+                {% for p in problemas %}
+                <div class="problema-card">
+                    <div class="problema-header">
+                        <div class="autor-info">
+                            <img src="{{ url_for('static', filename='uploads/perfil/' + p.autor_foto) if p.autor_foto else url_for('static', filename='img/default.png') }}" 
+                                 alt="{{ p.autor_nome }}" class="avatar">
+                            <span class="autor-nome">{{ p.autor_nome }}</span>
+                        </div>
+                        <span class="categoria-badge">{{ p.categoria }}</span>
+                    </div>
+
+                    <h3><a href="{{ url_for('posts.ver_problema', problema_id=p.id) }}">{{ p.titulo }}</a></h3>
+                    <p>{{ p.descricao[:150] }}{% if p.descricao|length > 150 %}...{% endif %}</p>
+
+                    <div class="problema-footer">
+                        <span><i class="fas fa-map-marker-alt"></i> {{ p.localizacao or 'Local não definido' }}</span>
+                        <span><i class="fas fa-clock"></i> {{ p.data_criacao.strftime('%d/%m/%Y') }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <p>Nenhum problema publicado ainda.</p>
+                <a href="{{ url_for('posts.novo_problema') }}" class="btn-primary">Seja o primeiro a publicar!</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
