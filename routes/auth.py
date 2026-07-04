@@ -4,9 +4,9 @@ from database import get_db
 
 auth = Blueprint("auth", __name__)
 
-# ===========================
-# REGISTO
-# ===========================
+# ==========================
+# REGISTAR
+# ==========================
 
 @auth.route("/register", methods=["GET", "POST"])
 def register():
@@ -14,99 +14,105 @@ def register():
     if request.method == "POST":
 
         nome = request.form["nome"]
+        username = request.form["username"]
         email = request.form["email"]
-        senha = request.form["senha"]
+        password = request.form["password"]
 
         conn = get_db()
-        c = conn.cursor()
+        cur = conn.cursor()
 
-        c.execute(
-            "SELECT id FROM users WHERE email=?",
+        cur.execute(
+            "SELECT id FROM users WHERE email=%s",
             (email,)
         )
 
-        if c.fetchone():
+        existe = cur.fetchone()
 
+        if existe:
             flash("Este email já existe.")
-
+            cur.close()
             conn.close()
-
             return redirect(url_for("auth.register"))
 
-        senha_hash = generate_password_hash(senha)
+        senha = generate_password_hash(password)
 
-        c.execute(
-            """
-            INSERT INTO users
-            (nome,email,senha)
-            VALUES(?,?,?)
-            """,
-            (
-                nome,
-                email,
-                senha_hash
-            )
-        )
+        cur.execute("""
+        INSERT INTO users
+        (nome,username,email,password)
+        VALUES(%s,%s,%s,%s)
+        """,
+        (
+            nome,
+            username,
+            email,
+            senha
+        ))
 
         conn.commit()
 
+        cur.close()
         conn.close()
 
-        flash("Conta criada com sucesso.")
+        flash("Conta criada com sucesso!")
 
         return redirect(url_for("auth.login"))
 
     return render_template("register.html")
 
 
-# ===========================
+# ==========================
 # LOGIN
-# ===========================
+# ==========================
 
-@auth.route("/login", methods=["GET","POST"])
+@auth.route("/login", methods=["GET", "POST"])
 def login():
 
-    if request.method=="POST":
+    if request.method == "POST":
 
-        email=request.form["email"]
+        email = request.form["email"]
+        password = request.form["password"]
 
-        senha=request.form["senha"]
+        conn = get_db()
 
-        conn=get_db()
+        cur = conn.cursor()
 
-        c=conn.cursor()
+        cur.execute("""
+        SELECT *
+        FROM users
+        WHERE email=%s
+        """,(email,))
 
-        c.execute(
-            """
-            SELECT *
-            FROM users
-            WHERE email=?
-            """,
-            (email,)
-        )
+        user = cur.fetchone()
 
-        user=c.fetchone()
-
+        cur.close()
         conn.close()
 
-        if user:
+        if not user:
 
-            if check_password_hash(user["senha"],senha):
+            flash("Email não encontrado.")
+            return redirect(url_for("auth.login"))
 
-                session["user_id"]=user["id"]
+        if not check_password_hash(
+            user["password"],
+            password
+        ):
 
-                session["nome"]=user["nome"]
+            flash("Senha incorreta.")
+            return redirect(url_for("auth.login"))
 
-                return redirect(url_for("home.inicio"))
+        session["user_id"] = str(user["id"])
+        session["nome"] = user["nome"]
 
-        flash("Email ou senha inválidos.")
+        flash("Bem-vindo!")
+
+        return redirect(url_for("home.home"))
 
     return render_template("login.html")
 
 
-# ===========================
+# ==========================
 # LOGOUT
-# ===========================
+# ==========================
 
 @auth.route("/logout")
 def logout():
