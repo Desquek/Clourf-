@@ -1,11 +1,6 @@
 import os
 
 class Config:
-    SECRET_KEY = os.environ.get("SECRET_KEY", "clourf_secret")
+    SECRET_KEY = os.environ.get("SECRET_KEY")
 
-    SUPABASE_URL = os.environ.get("SUPABASE_URL")
-    SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
-
-    UPLOAD_FOLDER = "static/uploads"
-
-    MAX_CONTENT_LENGTH = 10 * 1024 * 1024
+    DATABASE_URL = os.environ.get("DATABASE_URL")
