@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Clourf{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <!-- Top Bar -->
+    <header class="top-bar">
+        <button class="menu-btn" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
+        <div class="logo"><i class="fas fa-handshake"></i> Clourf</div>
+        <div class="user-avatar">
+            <a href="{{ url_for('profile.perfil') }}">
+                <i class="fas fa-user-circle"></i>
+            </a>
+        </div>
+    </header>
+
+    <!-- Menu Lateral -->
+    <nav class="sidebar" id="sidebar">
+        <button class="close-btn" onclick="toggleMenu()"><i class="fas fa-times"></i></button>
+        <ul>
+            <li><a href="{{ url_for('home.index') }}"><i class="fas fa-home"></i> Início</a></li>
+            <li><a href="{{ url_for('posts.novo_problema') }}"><i class="fas fa-plus-circle"></i> Publicar</a></li>
+            <li><a href="{{ url_for('favorites.favoritos') }}"><i class="fas fa-heart"></i> Favoritos</a></li>
+            <li><a href="{{ url_for('messages.mensagens') }}"><i class="fas fa-envelope"></i> Mensagens</a></li>
+            <li><a href="{{ url_for('notifications.notificacoes') }}"><i class="fas fa-bell"></i> Notificações</a></li>
+            <li><a href="{{ url_for('profile.perfil') }}"><i class="fas fa-user"></i> Perfil</a></li>
+            <li><a href="{{ url_for('search.pesquisar') }}"><i class="fas fa-search"></i> Pesquisar</a></li>
+            <li><a href="{{ url_for('categorias') }}"><i class="fas fa-th-large"></i> Categorias</a></li>
+            <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Sair</a></li>
+        </ul>
+    </nav>
+
+    <!-- Overlay -->
+    <div class="overlay" onclick="toggleMenu()"></div>
+
+    <!-- Conteúdo Principal -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Rodapé -->
+    <footer>
+        <p>© 2026 Clourf. Conectamos problemas a soluções.</p>
+    </footer>
+
+    <script>
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.querySelector('.overlay').classList.toggle('show');
+        }
+    </script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
