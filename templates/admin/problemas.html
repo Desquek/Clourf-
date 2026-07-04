@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Gerir Problemas - Clourf{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="admin-header">
+        <h1><i class="fas fa-file-alt"></i> Gerir Problemas</h1>
+        <a href="{{ url_for('admin_dashboard.dashboard') }}" class="btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Título</th>
+                    <th>Autor</th>
+                    <th>Categoria</th>
+                    <th>Localização</th>
+                    <th>Data</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in problemas %}
+                <tr>
+                    <td>{{ p.id }}</td>
+                    <td><a href="{{ url_for('posts.ver_problema', problema_id=p.id) }}">{{ p.titulo[:50] }}{% if p.titulo|length > 50 %}...{% endif %}</a></td>
+                    <td>{{ p.autor_nome }}</td>
+                    <td><span class="categoria-badge">{{ p.categoria }}</span></td>
+                    <td>{{ p.localizacao or '-' }}</td>
+                    <td>{{ p.data_criacao.strftime('%d/%m/%Y') }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('admin_problemas.apagar', problema_id=p.id) }}" style="display:inline;">
+                            <button type="submit" class="btn-danger btn-sm" onclick="return confirm('Tem certeza que deseja apagar este problema?')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
