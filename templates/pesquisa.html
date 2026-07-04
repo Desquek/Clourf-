@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Pesquisar - Clourf{% endblock %}
+
+{% block content %}
+<div class="pesquisa-container">
+    <h1><i class="fas fa-search"></i> Pesquisar problemas</h1>
+
+    <!-- Formulário de Pesquisa -->
+    <div class="pesquisa-form">
+        <form method="GET" action="{{ url_for('search.pesquisar') }}">
+            <div class="pesquisa-input-group">
+                <input type="text" name="q" placeholder="O que procura?" value="{{ query }}">
+                <button type="submit"><i class="fas fa-search"></i></button>
+            </div>
+            <div class="pesquisa-filtros">
+                <select name="categoria">
+                    <option value="">Todas as categorias</option>
+                    <option value="Serviços" {% if categoria == 'Serviços' %}selected{% endif %}>Serviços</option>
+                    <option value="Design" {% if categoria == 'Design' %}selected{% endif %}>Design</option>
+                    <option value="Reparos" {% if categoria == 'Reparos' %}selected{% endif %}>Reparos</option>
+                    <option value="Transporte" {% if categoria == 'Transporte' %}selected{% endif %}>Transporte</option>
+                    <option value="Aulas" {% if categoria == 'Aulas' %}selected{% endif %}>Aulas</option>
+                    <option value="Eventos" {% if categoria == 'Eventos' %}selected{% endif %}>Eventos</option>
+                </select>
+                <input type="text" name="localizacao" placeholder="Localização (ex: Maputo)" value="{{ localizacao }}">
+            </div>
+        </form>
+    </div>
+
+    <!-- Resultados -->
+    <div class="pesquisa-resultados">
+        {% if query or categoria or localizacao %}
+            <div class="resultados-info">
+                <span>{{ problemas|length }} resultado(s) encontrado(s)</span>
+            </div>
+
+            {% if problemas %}
+                <div class="problemas-grid">
+                    {% for p in problemas %}
+                    <div class="problema-card">
+                        <div class="problema-header">
+                            <div class="autor-info">
+                                <img src="{{ url_for('static', filename='uploads/perfil/' + p.autor_foto) if p.autor_foto else url_for('static', filename='img/default.png') }}" 
+                                     alt="{{ p.autor_nome }}" class="avatar">
+                                <span class="autor-nome">{{ p.autor_nome }}</span>
+                            </div>
+                            <span class="categoria-badge">{{ p.categoria }}</span>
+                        </div>
+
+                        <h3><a href="{{ url_for('posts.ver_problema', problema_id=p.id) }}">{{ p.titulo }}</a></h3>
+                        <p>{{ p.descricao[:150] }}{% if p.descricao|length > 150 %}...{% endif %}</p>
+
+                        <div class="problema-footer">
+                            <span><i class="fas fa-map-marker-alt"></i> {{ p.localizacao or 'Local não definido' }}</span>
+                            <span><i class="fas fa-clock"></i> {{ p.data_criacao.strftime('%d/%m/%Y') }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-search"></i>
+                    <p>Nenhum resultado encontrado para "<strong>{{ query }}</strong>"</p>
+                    <p class="sub-text">Tente usar palavras diferentes ou remover filtros.</p>
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-search"></i>
+                <p>Digite um termo para pesquisar.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
