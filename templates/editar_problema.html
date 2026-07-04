@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Editar problema - Clourf{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1><i class="fas fa-edit"></i> Editar problema</h1>
+    <p>Atualize as informações do seu problema.</p>
+
+    <form method="POST">
+        <div class="form-group">
+            <label>Título do problema <span class="required">*</span></label>
+            <input type="text" name="titulo" value="{{ problema.titulo }}" required>
+        </div>
+
+        <div class="form-group">
+            <label>Descrição detalhada <span class="required">*</span></label>
+            <textarea name="descricao" rows="5" required>{{ problema.descricao }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Categoria <span class="required">*</span></label>
+            <select name="categoria" required>
+                <option value="Serviços" {% if problema.categoria == 'Serviços' %}selected{% endif %}>Serviços</option>
+                <option value="Design" {% if problema.categoria == 'Design' %}selected{% endif %}>Design</option>
+                <option value="Reparos" {% if problema.categoria == 'Reparos' %}selected{% endif %}>Reparos</option>
+                <option value="Transporte" {% if problema.categoria == 'Transporte' %}selected{% endif %}>Transporte</option>
+                <option value="Aulas" {% if problema.categoria == 'Aulas' %}selected{% endif %}>Aulas</option>
+                <option value="Eventos" {% if problema.categoria == 'Eventos' %}selected{% endif %}>Eventos</option>
+                <option value="Outros" {% if problema.categoria == 'Outros' %}selected{% endif %}>Outros</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Localização</label>
+            <input type="text" name="localizacao" value="{{ problema.localizacao or '' }}" placeholder="Cidade, bairro">
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Guardar</button>
+            <a href="{{ url_for('posts.ver_problema', problema_id=problema.id) }}" class="btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
