@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Gerir Utilizadores - Clourf{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="admin-header">
+        <h1><i class="fas fa-users"></i> Gerir Utilizadores</h1>
+        <a href="{{ url_for('admin_dashboard.dashboard') }}" class="btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Email</th>
+                    <th>Telefone</th>
+                    <th>Localização</th>
+                    <th>Registo</th>
+                    <th>Admin</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in usuarios %}
+                <tr>
+                    <td>{{ u.id }}</td>
+                    <td><strong>{{ u.nome }}</strong></td>
+                    <td>{{ u.email }}</td>
+                    <td>{{ u.telefone or '-' }}</td>
+                    <td>{{ u.localizacao or '-' }}</td>
+                    <td>{{ u.data_registo.strftime('%d/%m/%Y') }}</td>
+                    <td>
+                        {% if u.is_admin %}
+                            <span class="badge badge-success">Sim</span>
+                        {% else %}
+                            <span class="badge badge-secondary">Não</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <form method="POST" action="{{ url_for('admin_usuarios.apagar', user_id=u.id) }}" style="display:inline;">
+                            <button type="submit" class="btn-danger btn-sm" onclick="return confirm('Tem certeza que deseja apagar este utilizador?')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
