@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Painel Admin - Clourf{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <h1><i class="fas fa-shield-alt"></i> Painel Administrativo</h1>
+
+    <div class="admin-stats">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-users"></i></div>
+            <div class="stat-info">
+                <h3>{{ total_users }}</h3>
+                <p>Utilizadores</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-file-alt"></i></div>
+            <div class="stat-info">
+                <h3>{{ total_problemas }}</h3>
+                <p>Problemas</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
+            <div class="stat-info">
+                <h3>{{ problemas_hoje }}</h3>
+                <p>Problemas hoje</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-user-plus"></i></div>
+            <div class="stat-info">
+                <h3>{{ novos_usuarios }}</h3>
+                <p>Novos utilizadores hoje</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-tables">
+        <div class="admin-table">
+            <h2>Últimos utilizadores</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Email</th>
+                        <th>Data</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in ultimos_utilizadores %}
+                    <tr>
+                        <td>{{ u.nome }}</td>
+                        <td>{{ u.email }}</td>
+                        <td>{{ u.data_registo.strftime('%d/%m/%Y') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="admin-table">
+            <h2>Últimos problemas</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Título</th>
+                        <th>Autor</th>
+                        <th>Data</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in ultimos_problemas %}
+                    <tr>
+                        <td>{{ p.titulo }}</td>
+                        <td>{{ p.autor }}</td>
+                        <td>{{ p.data_criacao.strftime('%d/%m/%Y') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="admin-actions">
+        <a href="{{ url_for('admin.admin_usuarios') }}" class="btn-primary">
+            <i class="fas fa-users"></i> Gerir utilizadores
+        </a>
+        <a href="{{ url_for('admin.admin_problemas') }}" class="btn-primary">
+            <i class="fas fa-file-alt"></i> Gerir problemas
+        </a>
+    </div>
+</div>
+{% endblock %}
