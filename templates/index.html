@@ -1,312 +1,47 @@
-<!DOCTYPE html>
-<html lang="pt">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clourf - Conectamos problemas a soluções</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-        /* TOP BAR */
-        .top-bar {
-            background: var(--azul-escuro);
-            padding: 0.8rem 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-        }
+{% extends "base.html" %}
 
-        .menu-btn {
-            background: none;
-            border: none;
-            color: #FFFFFF;
-            font-size: 1.8rem;
-            cursor: pointer;
-            padding: 0.3rem 0.6rem;
-        }
+{% block title %}Clourf - Conectamos problemas a soluções{% endblock %}
 
-        .top-logo {
-            font-size: 1.3rem;
-            font-weight: bold;
-            color: #FFFFFF;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .top-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: #334155;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #FFFFFF;
-            font-size: 1.2rem;
-            border: 2px solid #93C5FD;
-            cursor: pointer;
-            overflow: hidden;
-        }
-
-        .top-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        /* MENU LATERAL */
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: -280px;
-            width: 280px;
-            height: 100%;
-            background: var(--azul-escuro);
-            box-shadow: 2px 0 10px rgba(0,0,0,0.3);
-            transition: left 0.3s ease;
-            z-index: 1001;
-            padding: 2rem 1.5rem;
-            overflow-y: auto;
-        }
-
-        .sidebar.open {
-            left: 0;
-        }
-
-        .sidebar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            border-bottom: 1px solid #334155;
-            padding-bottom: 1rem;
-        }
-
-        .sidebar-header .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #FFFFFF;
-        }
-
-        .sidebar-close {
-            background: none;
-            border: none;
-            color: #FFFFFF;
-            font-size: 1.5rem;
-            cursor: pointer;
-        }
-
-        .sidebar-nav {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .sidebar-nav a {
-            padding: 0.8rem 1rem;
-            border-radius: 10px;
-            color: #CBD5E1;
-            transition: background 0.3s, color 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .sidebar-nav a:hover {
-            background: rgba(255,255,255,0.1);
-            color: #FFFFFF;
-        }
-
-        .sidebar-nav a.active {
-            background: rgba(255,255,255,0.15);
-            color: #FFFFFF;
-        }
-
-        .sidebar-nav a i {
-            width: 24px;
-            font-size: 1.2rem;
-        }
-
-        .sidebar-footer {
-            margin-top: 2rem;
-            padding-top: 1rem;
-            border-top: 1px solid #334155;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .sidebar-footer a {
-            padding: 0.8rem 1rem;
-            border-radius: 10px;
-            color: #CBD5E1;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            transition: background 0.3s;
-        }
-
-        .sidebar-footer a:hover {
-            background: rgba(255,255,255,0.1);
-        }
-
-        /* OVERLAY */
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            display: none;
-        }
-
-        .overlay.show {
-            display: block;
-        }
-
-        /* CONTEÚDO (ajuste para header) */
-        .main-content {
-            padding-top: 0.5rem;
-        }
-    </style>
-</head>
-<body>
-
-    <!-- TOP BAR -->
-    <div class="top-bar">
-        <button class="menu-btn" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
-        <div class="top-logo"><i class="fas fa-handshake"></i> Clourf</div>
-        <a href="/perfil" class="top-avatar">
-            {% if session.user_id %}
-                <i class="fas fa-user"></i>
-            {% else %}
-                <i class="fas fa-sign-in-alt"></i>
-            {% endif %}
-        </a>
-    </div>
-
-    <!-- OVERLAY -->
-    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
-
-    <!-- MENU LATERAL -->
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="logo"><i class="fas fa-handshake"></i> Clourf</div>
-            <button class="sidebar-close" onclick="toggleMenu()"><i class="fas fa-times"></i></button>
-        </div>
-
-        <nav class="sidebar-nav">
-            <a href="/" class="active"><i class="fas fa-home"></i> Início</a>
-            <a href="/novo-problema"><i class="fas fa-plus-circle"></i> Publicar</a>
-            <a href="/categorias"><i class="fas fa-th-large"></i> Categorias</a>
-            <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-            <a href="/minhas-publicacoes"><i class="fas fa-list"></i> Minhas Publicações</a>
-            <a href="/notificacoes"><i class="fas fa-bell"></i> Notificações</a>
-            <a href="/mensagens"><i class="fas fa-comments"></i> Mensagens</a>
-            <a href="/ajuda"><i class="fas fa-life-ring"></i> Ajuda e Segurança</a>
-        </nav>
-
-        <div class="sidebar-footer">
-            {% if session.user_id %}
-                <a href="/perfil"><i class="fas fa-user-circle"></i> Meu Perfil</a>
-                <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
-            {% else %}
-                <a href="/login"><i class="fas fa-sign-in-alt"></i> Entrar</a>
-                <a href="/register"><i class="fas fa-user-plus"></i> Criar conta</a>
-            {% endif %}
+{% block content %}
+<section class="hero">
+    <div class="hero-content">
+        <h1>Tem um problema? <br><span class="destaque">A gente conecta você a quem resolve.</span></h1>
+        <p>Publique o que você precisa e encontre pessoas confiáveis para resolver.</p>
+        <div class="hero-buttons">
+            <a href="{{ url_for('auth.register') }}" class="btn-primary"><i class="fas fa-user-plus"></i> Criar conta</a>
+            <a href="{{ url_for('auth.login') }}" class="btn-secondary"><i class="fas fa-sign-in-alt"></i> Entrar</a>
         </div>
     </div>
+</section>
 
-    <!-- CONTEÚDO PRINCIPAL -->
-    <div class="main-content">
-
-        <section class="hero">
-            <div class="hero-content">
-                <h1>Tem um problema? <br><span class="destaque">A gente conecta você a quem resolve.</span></h1>
-                <p>Publique o que você precisa e encontre pessoas confiáveis para resolver.</p>
-                <div class="hero-buttons">
-                    <a href="/novo-problema" class="btn-primary"><i class="fas fa-plus"></i> Publicar problema</a>
-                    <a href="/categorias" class="btn-secondary">Explorar categorias</a>
+<section class="problemas-recentes">
+    <h2>Problemas recentes</h2>
+    <div class="problemas-grid">
+        {% if problemas %}
+            {% for p in problemas %}
+            <div class="problema-card">
+                <div class="problema-header">
+                    <div class="autor-info">
+                        <img src="{{ url_for('static', filename='uploads/perfil/' + p.autor_foto) if p.autor_foto else url_for('static', filename='img/default.png') }}" 
+                             alt="{{ p.autor_nome }}" class="avatar">
+                        <span class="autor-nome">{{ p.autor_nome }}</span>
+                    </div>
+                    <span class="categoria-badge">{{ p.categoria }}</span>
+                </div>
+                <h3><a href="{{ url_for('posts.ver_problema', problema_id=p.id) }}">{{ p.titulo }}</a></h3>
+                <p>{{ p.descricao[:150] }}{% if p.descricao|length > 150 %}...{% endif %}</p>
+                <div class="problema-footer">
+                    <span><i class="fas fa-map-marker-alt"></i> {{ p.localizacao or 'Local não definido' }}</span>
+                    <span><i class="fas fa-clock"></i> {{ p.data_criacao.strftime('%d/%m/%Y') }}</span>
                 </div>
             </div>
-        </section>
-
-        <section class="categorias">
-            <h2>Explore por categoria</h2>
-            <div class="categorias-grid">
-                <a href="/categorias?cat=Serviços" class="categoria-card">
-                    <i class="fas fa-wrench"></i>
-                    <h3>Serviços</h3>
-                    <p>+250 disponíveis</p>
-                </a>
-                <a href="/categorias?cat=Design" class="categoria-card">
-                    <i class="fas fa-paint-brush"></i>
-                    <h3>Design</h3>
-                    <p>+120 disponíveis</p>
-                </a>
-                <a href="/categorias?cat=Reparos" class="categoria-card">
-                    <i class="fas fa-tools"></i>
-                    <h3>Reparos</h3>
-                    <p>+95 disponíveis</p>
-                </a>
-                <a href="/categorias?cat=Transporte" class="categoria-card">
-                    <i class="fas fa-truck"></i>
-                    <h3>Transporte</h3>
-                    <p>+80 disponíveis</p>
-                </a>
-                <a href="/categorias?cat=Aulas" class="categoria-card">
-                    <i class="fas fa-chalkboard-teacher"></i>
-                    <h3>Aulas</h3>
-                    <p>+60 disponíveis</p>
-                </a>
-                <a href="/categorias?cat=Eventos" class="categoria-card">
-                    <i class="fas fa-calendar-alt"></i>
-                    <h3>Eventos</h3>
-                    <p>+45 disponíveis</p>
-                </a>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <p>Nenhum problema publicado ainda.</p>
             </div>
-        </section>
-
-        <section class="solicitacoes">
-            <h2>Solicitações recentes</h2>
-            <div class="solicitacoes-grid">
-                {% if problemas %}
-                    {% for p in problemas %}
-                    <a href="/problema/{{ p[0] }}" class="solicitacao-card">
-                        <h3>{{ p[1] }}</h3>
-                        <p>{{ p[2][:100] }}{% if p[2]|length > 100 %}...{% endif %}</p>
-                        <div class="solicitacao-footer">
-                            <span><i class="fas fa-map-marker-alt"></i> {{ p[4] or 'Local não definido' }}</span>
-                            <span><i class="fas fa-clock"></i> {{ p[7][:10] }}</span>
-                        </div>
-                    </a>
-                    {% endfor %}
-                {% else %}
-                    <p style="text-align: center; grid-column: 1/-1;">Nenhum problema publicado ainda. Seja o primeiro!</p>
-                {% endif %}
-            </div>
-        </section>
-
-        <footer>
-            <p>© 2026 Clourf. Conectamos problemas a soluções.</p>
-        </footer>
+        {% endif %}
     </div>
-
-    <script>
-        function toggleMenu() {
-            var sidebar = document.getElementById('sidebar');
-            var overlay = document.getElementById('overlay');
-            sidebar.classList.toggle('open');
-            overlay.classList.toggle('show');
-        }
-    </script>
-
-</body>
-</html>
+</section>
+{% endblock %}
