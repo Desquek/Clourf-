@@ -4,45 +4,40 @@ from database import get_db
 home = Blueprint("home", __name__)
 
 # ==========================
-# PÁGINA INICIAL
+# PÁGINA PÚBLICA (LANDING)
 # ==========================
 
 @home.route("/")
-def home():
-
+def index():
+    """Página pública - mostra os problemas mais recentes"""
     conn = get_db()
     cur = conn.cursor()
 
     cur.execute("""
         SELECT
-            posts.*,
-            users.nome,
-            users.username,
-            users.foto
-        FROM posts
-        JOIN users
-        ON posts.user_id = users.id
-        ORDER BY criado_em DESC
+            problemas.*,
+            users.nome AS autor_nome,
+            users.foto AS autor_foto
+        FROM problemas
+        JOIN users ON problemas.usuario_id = users.id
+        ORDER BY problemas.data_criacao DESC
+        LIMIT 10
     """)
 
-    posts = cur.fetchall()
-
+    problemas = cur.fetchall()
     cur.close()
     conn.close()
 
-    return render_template(
-        "home.html",
-        posts=posts
-    )
+    return render_template("index.html", problemas=problemas)
 
 
 # ==========================
-# INÍCIO (UTILIZADOR LOGADO)
+# DASHBOARD (UTILIZADOR LOGADO)
 # ==========================
 
 @home.route("/inicio")
 def inicio():
-
+    """Página inicial do utilizador logado"""
     if "user_id" not in session:
         return redirect(url_for("auth.login"))
 
@@ -51,22 +46,16 @@ def inicio():
 
     cur.execute("""
         SELECT
-            posts.*,
-            users.nome,
-            users.username,
-            users.foto
-        FROM posts
-        JOIN users
-        ON posts.user_id = users.id
-        ORDER BY criado_em DESC
+            problemas.*,
+            users.nome AS autor_nome,
+            users.foto AS autor_foto
+        FROM problemas
+        JOIN users ON problemas.usuario_id = users.id
+        ORDER BY problemas.data_criacao DESC
     """)
 
-    posts = cur.fetchall()
-
+    problemas = cur.fetchall()
     cur.close()
     conn.close()
 
-    return render_template(
-        "inicio.html",
-        posts=posts
-    )
+    return render_template("inicio.html", problemas=problemas)
