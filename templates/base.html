@@ -6,9 +6,11 @@
     <title>{% block title %}Clourf{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet">
     {% block head %}{% endblock %}
 </head>
 <body>
+
     <!-- Top Bar -->
     <header class="top-bar">
         <button class="menu-btn" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
@@ -24,7 +26,7 @@
     <nav class="sidebar" id="sidebar">
         <button class="close-btn" onclick="toggleMenu()"><i class="fas fa-times"></i></button>
         <ul>
-            <li><a href="{{ url_for('home.index') }}"><i class="fas fa-home"></i> Início</a></li>
+            <li><a href="{{ url_for('home.inicio') }}"><i class="fas fa-home"></i> Início</a></li>
             <li><a href="{{ url_for('posts.novo_problema') }}"><i class="fas fa-plus-circle"></i> Publicar</a></li>
             <li><a href="{{ url_for('favorites.favoritos') }}"><i class="fas fa-heart"></i> Favoritos</a></li>
             <li><a href="{{ url_for('messages.mensagens') }}"><i class="fas fa-envelope"></i> Mensagens</a></li>
@@ -41,6 +43,12 @@
 
     <!-- Conteúdo Principal -->
     <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+        
         {% block content %}{% endblock %}
     </main>
 
