@@ -1,0 +1,1 @@
+# Ficheiro vazio para tornar a pasta um módulo Python
