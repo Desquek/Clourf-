@@ -4,7 +4,9 @@ from config import Config
 # Blueprints
 from routes.auth import auth
 from routes.home import home
+from routes.auth import auth
 
+app.register_blueprint(auth)
 app = Flask(__name__)
 
 # Configurações
