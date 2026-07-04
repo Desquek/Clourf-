@@ -1,465 +1,54 @@
-<!DOCTYPE html>
-<html lang="pt">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ problema[1] }} - Clourf</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-        .top-bar {
-            background: transparent;
-            padding: 1rem 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-        .menu-btn {
-            background: none;
-            border: none;
-            color: #FFFFFF;
-            font-size: 1.8rem;
-            cursor: pointer;
-            padding: 0.3rem 0.6rem;
-        }
-        .top-avatar {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-        }
-        .top-avatar .avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: #334155;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #FFFFFF;
-            font-size: 1.2rem;
-            border: 2px solid #93C5FD;
-            cursor: pointer;
-            overflow: hidden;
-        }
-        .top-avatar .avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .top-avatar .nome {
-            color: #FFFFFF;
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
+{% extends "base.html" %}
 
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: -280px;
-            width: 280px;
-            height: 100%;
-            background: var(--azul-escuro);
-            box-shadow: 2px 0 10px rgba(0,0,0,0.3);
-            transition: left 0.3s ease;
-            z-index: 1001;
-            padding: 2rem 1.5rem;
-            overflow-y: auto;
-        }
-        .sidebar.open { left: 0; }
-        .sidebar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            border-bottom: 1px solid #334155;
-            padding-bottom: 1rem;
-        }
-        .sidebar-header .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #FFFFFF;
-        }
-        .sidebar-close {
-            background: none;
-            border: none;
-            color: #FFFFFF;
-            font-size: 1.5rem;
-            cursor: pointer;
-        }
-        .sidebar-nav {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        .sidebar-nav a {
-            padding: 0.8rem 1rem;
-            border-radius: 10px;
-            color: #CBD5E1;
-            transition: background 0.3s, color 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-decoration: none;
-        }
-        .sidebar-nav a:hover {
-            background: rgba(255,255,255,0.1);
-            color: #FFFFFF;
-        }
-        .sidebar-nav a i {
-            width: 24px;
-            font-size: 1.2rem;
-        }
-        .sidebar-footer {
-            margin-top: 2rem;
-            padding-top: 1rem;
-            border-top: 1px solid #334155;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        .sidebar-footer a {
-            padding: 0.8rem 1rem;
-            border-radius: 10px;
-            color: #CBD5E1;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-decoration: none;
-            transition: background 0.3s;
-        }
-        .sidebar-footer a:hover {
-            background: rgba(255,255,255,0.1);
-        }
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            display: none;
-        }
-        .overlay.show { display: block; }
+{% block title %}{{ problema.titulo }} - Clourf{% endblock %}
 
-        .problema-container {
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 2rem;
-        }
-        .problema-card {
-            background: var(--azul-escuro);
-            border-radius: 20px;
-            padding: 2rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            color: #FFFFFF;
-        }
-        .voltar {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            color: #93C5FD;
-            margin-bottom: 1.5rem;
-            text-decoration: none;
-        }
-        .voltar:hover { color: #FFFFFF; }
-
-        .problema-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-        .problema-header h1 {
-            color: #FFFFFF;
-            font-size: 1.6rem;
-            margin: 0;
-        }
-        .categoria-badge {
-            background: var(--fundo-escuro);
-            color: #93C5FD;
-            padding: 0.3rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-
-        .problema-info {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            padding: 1rem 0;
-            border-top: 1px solid #334155;
-            border-bottom: 1px solid #334155;
-            margin-bottom: 1.5rem;
-        }
-        .problema-info p {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #CBD5E1;
-            font-size: 0.9rem;
-            margin: 0;
-        }
-
-        .problema-descricao h3 {
-            color: #FFFFFF;
-            margin-bottom: 0.5rem;
-        }
-        .problema-descricao p {
-            color: #CBD5E1;
-            line-height: 1.6;
-        }
-
-        .problema-contato {
-            background: var(--fundo-escuro);
-            padding: 1rem;
-            border-radius: 10px;
-            margin-bottom: 1.5rem;
-        }
-        .problema-contato h3 {
-            color: #FFFFFF;
-            margin-bottom: 0.5rem;
-        }
-        .problema-contato p {
-            color: #CBD5E1;
-            margin: 0.3rem 0;
-        }
-
-        .btn-primary {
-            background: #FFFFFF;
-            color: var(--azul-escuro) !important;
-            padding: 0.6rem 1.2rem;
-            border-radius: 25px;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-            transition: background 0.3s;
-        }
-        .btn-primary:hover { background: #E5E7EB; }
-
-        .btn-secondary {
-            background: transparent;
-            color: #FFFFFF;
-            padding: 0.6rem 1.2rem;
-            border-radius: 25px;
-            border: 2px solid #FFFFFF;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: inline-block;
-            text-decoration: none;
-            font-size: 0.9rem;
-        }
-        .btn-secondary:hover {
-            background: #FFFFFF;
-            color: var(--azul-escuro);
-        }
-
-        .btn-success {
-            background: #22C55E;
-            color: #FFFFFF;
-            padding: 0.6rem 1.2rem;
-            border-radius: 25px;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-            transition: background 0.3s;
-        }
-        .btn-success:hover { background: #16A34A; }
-
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        .form-group textarea {
-            width: 100%;
-            padding: 0.8rem;
-            border-radius: 8px;
-            border: 1px solid #334155;
-            background: #0F1B3A;
-            color: #FFFFFF;
-            resize: vertical;
-        }
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #93C5FD;
-        }
-
-        .ja-interessado {
-            background: #334155;
-            padding: 0.8rem;
-            border-radius: 10px;
-            color: #94A3B8;
-            text-align: center;
-        }
-
-        footer {
-            text-align: center;
-            padding: 2rem;
-            color: #94A3B8;
-            border-top: 1px solid #334155;
-            margin-top: 2rem;
-        }
-
-        @media (max-width: 768px) {
-            .top-avatar .nome { display: none; }
-            .problema-header { flex-direction: column; }
-            .problema-container { padding: 1rem; }
-        }
-    </style>
-</head>
-<body>
-
-    <!-- TOP BAR -->
-    <div class="top-bar">
-        <button class="menu-btn" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
-        <div class="top-avatar">
-            {% if session.user_id %}
-                <span class="nome">{{ session.nome }}</span>
-                <a href="/perfil" class="avatar"><i class="fas fa-user"></i></a>
-            {% else %}
-                <a href="/login" style="color: #CBD5E1;">Entrar</a>
-                <a href="/register" class="btn-primary" style="background:#FFFFFF; color:var(--azul-escuro); padding:0.4rem 1rem; border-radius:25px; font-weight:600; text-decoration:none;">Criar conta</a>
-            {% endif %}
-        </div>
-    </div>
-
-    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="logo"><i class="fas fa-handshake"></i> Clourf</div>
-            <button class="sidebar-close" onclick="toggleMenu()"><i class="fas fa-times"></i></button>
-        </div>
-        <nav class="sidebar-nav">
-            <a href="/"><i class="fas fa-home"></i> Início</a>
-            <a href="/novo-problema"><i class="fas fa-plus-circle"></i> Publicar</a>
-            <a href="/categorias"><i class="fas fa-th-large"></i> Categorias</a>
-            <a href="/ajuda"><i class="fas fa-life-ring"></i> Ajuda</a>
-            {% if session.user_id %}
-                <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-                <a href="/minhas-publicacoes"><i class="fas fa-list"></i> Minhas Publicações</a>
-                <a href="/notificacoes"><i class="fas fa-bell"></i> Notificações</a>
-                <a href="/mensagens"><i class="fas fa-comments"></i> Mensagens</a>
-            {% endif %}
-        </nav>
-        <div class="sidebar-footer">
-            {% if session.user_id %}
-                <a href="/perfil"><i class="fas fa-user-circle"></i> Meu Perfil</a>
-                <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
-            {% else %}
-                <a href="/login"><i class="fas fa-sign-in-alt"></i> Entrar</a>
-                <a href="/register"><i class="fas fa-user-plus"></i> Criar conta</a>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- CONTEÚDO -->
-    <div class="problema-container">
-        <a href="javascript:history.back()" class="voltar"><i class="fas fa-arrow-left"></i> Voltar</a>
-
-        <div class="problema-card">
-            <div class="problema-header">
-                <h1>{{ problema[1] }}</h1>
-                <span class="categoria-badge">{{ problema[3] }}</span>
-            </div>
-
-            <div class="problema-info">
-                <p><i class="fas fa-user"></i> Publicado por <strong>{{ problema[8] }}</strong></p>
-                <p><i class="fas fa-map-marker-alt"></i> {{ problema[4] or 'Local não definido' }}</p>
-                <p><i class="fas fa-clock"></i> {{ problema[7][:16] }}</p>
-                <p><i class="fas fa-tag"></i> <span class="categoria-badge" style="background: transparent; padding-left: 0;">{{ problema[3] }}</span></p>
-            </div>
-
-            <div class="problema-descricao">
-                <h3>Descrição</h3>
-                <p>{{ problema[2] }}</p>
-            </div>
-
-            <div class="problema-contato">
-                <h3>Contacto do autor</h3>
-                <p><i class="fas fa-phone"></i> {{ problema[9] or 'Não informado' }}</p>
-                <p><i class="fas fa-envelope"></i> {{ problema[8] }} (via Clourf)</p>
-                <p><i class="fas fa-map-marker-alt"></i> {{ problema[10] or 'Localização não informada' }}</p>
-                {% if problema[11] %}
-                    <p><i class="fas fa-align-left"></i> {{ problema[11] }}</p>
-                {% endif %}
-            </div>
-
-            <!-- Quero resolver -->
-            {% if session.user_id and session.user_id != problema[6] %}
-                <div style="margin: 1.5rem 0;">
-                    <h3 style="color: #FFFFFF; margin-bottom: 0.5rem;">Quer resolver este problema?</h3>
-                    
-                    {% if ja_interessado %}
-                        <div class="ja-interessado">
-                            <i class="fas fa-check-circle" style="color: #22C55E;"></i>
-                            Você já manifestou interesse neste problema. Aguarde resposta do autor.
-                        </div>
-                    {% else %}
-                        <form method="POST" action="/interessar/{{ problema[0] }}">
-                            <div class="form-group">
-                                <textarea name="mensagem" rows="2" placeholder="Diga por que pode ajudar..." required></textarea>
-                            </div>
-                            <button type="submit" class="btn-success">
-                                <i class="fas fa-handshake"></i> Quero resolver
-                            </button>
-                        </form>
-                    {% endif %}
-                </div>
-            {% endif %}
-
-            <!-- Ver interessados (apenas autor) -->
-            {% if session.user_id and session.user_id == problema[6] %}
-                <div style="margin: 1.5rem 0; display: flex; gap: 1rem; flex-wrap: wrap;">
-                    <a href="/interessados/{{ problema[0] }}" class="btn-secondary">
-                        <i class="fas fa-users"></i> Ver interessados
+{% block content %}
+<div class="problema-detalhes">
+    <div class="problema-card">
+        <div class="problema-header">
+            <div class="autor-info">
+                <img src="{{ url_for('static', filename='uploads/perfil/' + problema.autor_foto) if problema.autor_foto else url_for('static', filename='img/default.png') }}" 
+                     alt="{{ problema.autor_nome }}" class="avatar">
+                <div>
+                    <a href="{{ url_for('profile.perfil_publico', user_id=problema.autor_id) }}" class="autor-nome">
+                        {{ problema.autor_nome }}
                     </a>
+                    <span class="autor-localizacao">{{ problema.autor_localizacao or '' }}</span>
                 </div>
-            {% endif %}
+            </div>
+            <span class="categoria-badge">{{ problema.categoria }}</span>
+        </div>
 
-            {% if not session.user_id %}
-                <div style="margin: 1.5rem 0; text-align: center; color: #94A3B8;">
-                    <p><i class="fas fa-lock"></i> Faça <a href="/login" style="color: #93C5FD;">login</a> para se interessar.</p>
-                </div>
+        <h1>{{ problema.titulo }}</h1>
+
+        <div class="problema-descricao">
+            <p>{{ problema.descricao }}</p>
+        </div>
+
+        <div class="problema-footer">
+            <span><i class="fas fa-map-marker-alt"></i> {{ problema.localizacao or 'Local não definido' }}</span>
+            <span><i class="fas fa-clock"></i> {{ problema.data_criacao.strftime('%d/%m/%Y às %H:%M') }}</span>
+        </div>
+
+        <div class="problema-actions">
+            {% if session.user_id == problema.autor_id %}
+                <a href="{{ url_for('posts.editar_problema', problema_id=problema.id) }}" class="btn-primary">
+                    <i class="fas fa-edit"></i> Editar
+                </a>
+                <form method="POST" action="{{ url_for('posts.apagar_problema', problema_id=problema.id) }}" style="display: inline;">
+                    <button type="submit" class="btn-danger" onclick="return confirm('Tem certeza que deseja apagar este problema?')">
+                        <i class="fas fa-trash"></i> Apagar
+                    </button>
+                </form>
+            {% else %}
+                <a href="{{ url_for('messages.conversa', outro_id=problema.autor_id) }}" class="btn-primary">
+                    <i class="fas fa-envelope"></i> Entrar em contacto
+                </a>
+                <a href="{{ url_for('favorites.favoritar', problema_id=problema.id) }}" class="btn-secondary">
+                    <i class="fas fa-heart"></i> Favoritar
+                </a>
             {% endif %}
         </div>
     </div>
-
-    <footer>
-        <p>© 2026 Clourf. Conectamos problemas a soluções.</p>
-    </footer>
-
-    <script>
-        function toggleMenu() {
-            document.getElementById('sidebar').classList.toggle('open');
-            document.getElementById('overlay').classList.toggle('show');
-        }
-
-        document.addEventListener('click', function(event) {
-            var sidebar = document.getElementById('sidebar');
-            var overlay = document.getElementById('overlay');
-            var menuBtn = document.querySelector('.menu-btn');
-            
-            if (sidebar && sidebar.classList.contains('open')) {
-                if (!sidebar.contains(event.target) && !menuBtn.contains(event.target)) {
-                    sidebar.classList.remove('open');
-                    overlay.classList.remove('show');
-                }
-            }
-        });
-    </script>
-
-</body>
-</html>
+</div>
+{% endblock %}
