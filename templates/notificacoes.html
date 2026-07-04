@@ -1,125 +1,57 @@
-<!DOCTYPE html>
-<html lang="pt">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notificações - Clourf</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-        .top-bar { background: transparent; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
-        .menu-btn { background: none; border: none; color: #FFFFFF; font-size: 1.8rem; cursor: pointer; padding: 0.3rem 0.6rem; }
-        .top-avatar { display: flex; align-items: center; gap: 0.8rem; }
-        .top-avatar .avatar { width: 40px; height: 40px; border-radius: 50%; background: #334155; display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-size: 1.2rem; border: 2px solid #93C5FD; cursor: pointer; overflow: hidden; }
-        .top-avatar .nome { color: #FFFFFF; font-size: 0.9rem; font-weight: 500; }
-        .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: var(--azul-escuro); box-shadow: 2px 0 10px rgba(0,0,0,0.3); transition: left 0.3s ease; z-index: 1001; padding: 2rem 1.5rem; overflow-y: auto; }
-        .sidebar.open { left: 0; }
-        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid #334155; padding-bottom: 1rem; }
-        .sidebar-header .logo { font-size: 1.5rem; font-weight: bold; color: #FFFFFF; }
-        .sidebar-close { background: none; border: none; color: #FFFFFF; font-size: 1.5rem; cursor: pointer; }
-        .sidebar-nav { display: flex; flex-direction: column; gap: 0.5rem; }
-        .sidebar-nav a { padding: 0.8rem 1rem; border-radius: 10px; color: #CBD5E1; transition: background 0.3s, color 0.3s; display: flex; align-items: center; gap: 12px; text-decoration: none; }
-        .sidebar-nav a:hover { background: rgba(255,255,255,0.1); color: #FFFFFF; }
-        .sidebar-nav a i { width: 24px; font-size: 1.2rem; }
-        .sidebar-footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #334155; display: flex; flex-direction: column; gap: 0.5rem; }
-        .sidebar-footer a { padding: 0.8rem 1rem; border-radius: 10px; color: #CBD5E1; display: flex; align-items: center; gap: 12px; text-decoration: none; transition: background 0.3s; }
-        .sidebar-footer a:hover { background: rgba(255,255,255,0.1); }
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; }
-        .overlay.show { display: block; }
+{% extends "base.html" %}
 
-        .dashboard { max-width: 800px; margin: 2rem auto; padding: 2rem; }
-        .dashboard h1 { color: #FFFFFF; font-size: 2rem; margin-bottom: 2rem; }
-        .notificacao-item { background: var(--azul-escuro); padding: 1rem; border-radius: 12px; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 1rem; transition: transform 0.2s; }
-        .notificacao-item:hover { transform: translateX(5px); }
-        .notificacao-item .icone { font-size: 1.5rem; color: #93C5FD; }
-        .notificacao-item .texto { flex: 1; color: #FFFFFF; }
-        .notificacao-item .texto small { color: #94A3B8; display: block; margin-top: 0.3rem; }
-        .nao-lida { background: #93C5FD; color: #0F1B3A; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.7rem; font-weight: bold; }
-        .lida { color: #94A3B8; font-size: 0.8rem; }
-        footer { text-align: center; padding: 2rem; color: #94A3B8; border-top: 1px solid #334155; margin-top: 2rem; }
-        @media (max-width: 768px) { .top-avatar .nome { display: none; } }
-    </style>
-</head>
-<body>
+{% block title %}Notificações - Clourf{% endblock %}
 
-    <div class="top-bar">
-        <button class="menu-btn" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
-        <div class="top-avatar">
-            <span class="nome">{{ session.nome }}</span>
-            <a href="/perfil" class="avatar"><i class="fas fa-user"></i></a>
-        </div>
-    </div>
+{% block content %}
+<div class="notificacoes-container">
+    <h1><i class="fas fa-bell"></i> Notificações</h1>
 
-    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
-
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="logo"><i class="fas fa-handshake"></i> Clourf</div>
-            <button class="sidebar-close" onclick="toggleMenu()"><i class="fas fa-times"></i></button>
-        </div>
-        <nav class="sidebar-nav">
-            <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-            <a href="/novo-problema"><i class="fas fa-plus-circle"></i> Publicar</a>
-            <a href="/categorias"><i class="fas fa-th-large"></i> Categorias</a>
-            <a href="/minhas-publicacoes"><i class="fas fa-list"></i> Minhas Publicações</a>
-            <a href="/notificacoes" class="active"><i class="fas fa-bell"></i> Notificações</a>
-            <a href="/mensagens"><i class="fas fa-comments"></i> Mensagens</a>
-            <a href="/ajuda"><i class="fas fa-life-ring"></i> Ajuda</a>
-        </nav>
-        <div class="sidebar-footer">
-            <a href="/perfil"><i class="fas fa-user-circle"></i> Meu Perfil</a>
-            <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
-        </div>
-    </div>
-
-    <section class="dashboard">
-        <h1><i class="fas fa-bell"></i> Notificações</h1>
-
-        <h3 style="color: #93C5FD;">Mensagens não lidas: {{ mensagens_nao_lidas }}</h3>
-        <h3 style="color: #93C5FD; margin-bottom: 2rem;">Interesses pendentes: {{ interesses_pendentes }}</h3>
-
-        {% if notificacoes_mensagens %}
-            {% for n in notificacoes_mensagens %}
-            <div class="notificacao-item">
-                <div class="icone"><i class="fas fa-envelope"></i></div>
-                <div class="texto">
-                    <strong>{{ n[2] }}</strong> enviou: <br>"{{ n[1][:100] }}" 
-                    <small>{{ n[3][:16] }}</small>
+    {% if notificacoes %}
+        <div class="notificacoes-list">
+            {% for n in notificacoes %}
+            <div class="notificacao-item {% if n.tipo == 'mensagem' %}mensagem{% else %}interesse{% endif %}">
+                <div class="notificacao-icon">
+                    {% if n.tipo == 'mensagem' %}
+                        <i class="fas fa-envelope"></i>
+                    {% else %}
+                        <i class="fas fa-handshake"></i>
+                    {% endif %}
                 </div>
-                <span class="nao-lida">Nova</span>
+                <div class="notificacao-content">
+                    <div class="notificacao-texto">
+                        {% if n.tipo == 'mensagem' %}
+                            <strong>{{ n.de }}</strong> enviou uma mensagem:
+                            <p class="notificacao-descricao">{{ n.descricao[:100] }}{% if n.descricao|length > 100 %}...{% endif %}</p>
+                        {% else %}
+                            <strong>{{ n.de }}</strong> quer resolver o problema <strong>"{{ n.problema_titulo }}"</strong>
+                            <p class="notificacao-descricao">{{ n.descricao[:100] }}{% if n.descricao|length > 100 %}...{% endif %}</p>
+                        {% endif %}
+                    </div>
+                    <div class="notificacao-data">{{ n.data.strftime('%d/%m/%Y às %H:%M') }}</div>
+                </div>
+                <div class="notificacao-actions">
+                    <a href="{{ url_for('notifications.marcar_lida', notificacao_id=n.id, tipo=n.tipo) }}" class="btn-marcar-lida">
+                        <i class="fas fa-check"></i>
+                    </a>
+                    {% if n.tipo == 'mensagem' %}
+                        <a href="{{ url_for('messages.conversa', outro_id=n.de_id) if n.de_id else '#' }}" class="btn-responder">
+                            <i class="fas fa-reply"></i>
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('posts.ver_problema', problema_id=n.problema_id) }}" class="btn-ver">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    {% endif %}
+                </div>
             </div>
             {% endfor %}
-        {% endif %}
-
-        {% if notificacoes_interesses %}
-            {% for n in notificacoes_interesses %}
-            <div class="notificacao-item">
-                <div class="icone"><i class="fas fa-handshake"></i></div>
-                <div class="texto">
-                    <strong>{{ n[2] }}</strong> quer resolver o problema <strong>"{{ n[4] }}"</strong><br>
-                    "{{ n[1][:100] }}"
-                    <small>{{ n[3][:16] }}</small>
-                </div>
-                <span class="nao-lida">Pendente</span>
-            </div>
-            {% endfor %}
-        {% endif %}
-
-        {% if not notificacoes_mensagens and not notificacoes_interesses %}
-            <p style="text-align: center; color: #94A3B8; margin-top: 2rem;">Nenhuma notificação nova.</p>
-        {% endif %}
-    </section>
-
-    <footer>
-        <p>© 2026 Clourf. Conectamos problemas a soluções.</p>
-    </footer>
-
-    <script>
-        function toggleMenu() {
-            document.getElementById('sidebar').classList.toggle('open');
-            document.getElementById('overlay').classList.toggle('show');
-        }
-    </script>
-
-</body>
-</html>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-check-circle"></i>
+            <p>Não tem notificações novas.</p>
+            <p class="sub-text">Tudo em ordem!</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
