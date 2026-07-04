@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Perfil de {{ user.nome }} - Clourf{% endblock %}
+
+{% block content %}
+<div class="perfil-container">
+    <div class="perfil-card">
+        <div class="perfil-avatar">
+            {% if user.foto %}
+                <img src="{{ url_for('static', filename='uploads/perfil/' + user.foto) }}" alt="Foto de perfil">
+            {% else %}
+                <div class="avatar-placeholder">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            {% endif %}
+            <h2>{{ user.nome }}</h2>
+        </div>
+
+        <div class="perfil-info">
+            <div class="campo">
+                <label><i class="fas fa-map-marker-alt"></i> Localização</label>
+                <p>{{ user.localizacao or 'Não informada' }}</p>
+            </div>
+
+            <div class="campo">
+                <label><i class="fas fa-align-left"></i> Sobre</label>
+                <p>{{ user.bio or 'Nenhuma biografia ainda.' }}</p>
+            </div>
+
+            <div class="campo">
+                <label><i class="fas fa-clock"></i> Membro desde</label>
+                <p>{{ user.data_registo.strftime('%d/%m/%Y') if user.data_registo else '2026' }}</p>
+            </div>
+        </div>
+
+        <div class="perfil-actions">
+            <a href="{{ url_for('messages.conversa', outro_id=user.id) }}" class="btn-primary">
+                <i class="fas fa-envelope"></i> Enviar mensagem
+            </a>
+            <a href="{{ url_for('home.inicio') }}" class="btn-secondary">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </div>
+
+    <!-- Problemas do utilizador -->
+    <div class="problemas-container">
+        <h2>Problemas publicados por {{ user.nome }}</h2>
+        
+        {% if problemas %}
+            <div class="problemas-grid">
+                {% for p in problemas %}
+                <div class="problema-card">
+                    <h3><a href="{{ url_for('posts.ver_problema', problema_id=p.id) }}">{{ p.titulo }}</a></h3>
+                    <p>{{ p.descricao[:150] }}{% if p.descricao|length > 150 %}...{% endif %}</p>
+                    <div class="problema-footer">
+                        <span><i class="fas fa-tag"></i> {{ p.categoria }}</span>
+                        <span><i class="fas fa-clock"></i> {{ p.data_criacao.strftime('%d/%m/%Y') }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <p>Este utilizador ainda não publicou nenhum problema.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
