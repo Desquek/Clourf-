@@ -1239,3 +1239,67 @@ a {
         justify-content: center;
     }
 }
+/* ========================================
+   PÁGINAS DE ERRO (404, 500)
+   ======================================== */
+
+.error-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+    padding: 2rem;
+}
+
+.error-card {
+    background: var(--azul-medio);
+    padding: 3rem;
+    border-radius: var(--radius);
+    text-align: center;
+    max-width: 500px;
+    width: 100%;
+    box-shadow: var(--shadow);
+}
+
+.error-icon {
+    font-size: 4rem;
+    color: var(--danger);
+    margin-bottom: 1rem;
+}
+
+.error-card h1 {
+    font-size: 4rem;
+    font-weight: 700;
+    color: var(--danger);
+    margin-bottom: 0.5rem;
+}
+
+.error-card h2 {
+    font-size: 1.5rem;
+    color: var(--branco);
+    margin-bottom: 1rem;
+}
+
+.error-card p {
+    color: var(--cinza-claro);
+    margin-bottom: 0.5rem;
+}
+
+.error-card .error-detalhe {
+    font-size: 0.9rem;
+    color: var(--cinza-medio);
+    margin-bottom: 2rem;
+}
+
+.error-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.error-actions .btn-primary,
+.error-actions .btn-secondary {
+    min-width: 150px;
+    justify-content: center;
+}
