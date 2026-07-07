@@ -21,22 +21,21 @@
             </a>
         </div>
     </header>
-
-    <!-- Menu Lateral -->
-    <nav class="sidebar" id="sidebar">
-        <button class="close-btn" onclick="toggleMenu()"><i class="fas fa-times"></i></button>
-        <ul>
-            <li><a href="{{ url_for('home.inicio') }}"><i class="fas fa-home"></i> Início</a></li>
-            <li><a href="{{ url_for('posts.novo_problema') }}"><i class="fas fa-plus-circle"></i> Publicar</a></li>
-            <li><a href="{{ url_for('favorites.favoritos') }}"><i class="fas fa-heart"></i> Favoritos</a></li>
-            <li><a href="{{ url_for('messages.mensagens') }}"><i class="fas fa-envelope"></i> Mensagens</a></li>
-            <li><a href="{{ url_for('notifications.notificacoes') }}"><i class="fas fa-bell"></i> Notificações</a></li>
-            <li><a href="{{ url_for('profile.perfil') }}"><i class="fas fa-user"></i> Perfil</a></li>
-            <li><a href="{{ url_for('search.pesquisar') }}"><i class="fas fa-search"></i> Pesquisar</a></li>
-            <li><a href="{{ url_for('categorias') }}"><i class="fas fa-th-large"></i> Categorias</a></li>
-            <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Sair</a></li>
-        </ul>
-    </nav>
+<!-- Menu Lateral -->
+<nav class="sidebar" id="sidebar">
+    <button class="close-btn" onclick="toggleMenu()"><i class="fas fa-times"></i></button>
+    <ul>
+        <li><a href="{{ url_for('home.inicio') }}"><i class="fas fa-home"></i> Início</a></li>
+        <li><a href="{{ url_for('posts.novo_problema') }}"><i class="fas fa-plus-circle"></i> Publicar</a></li>
+        <li><a href="{{ url_for('favorites.favoritos') }}"><i class="fas fa-heart"></i> Favoritos</a></li>
+        <li><a href="{{ url_for('messages.mensagens') }}"><i class="fas fa-envelope"></i> Mensagens</a></li>
+        <li><a href="{{ url_for('notifications.notificacoes') }}"><i class="fas fa-bell"></i> Notificações</a></li>
+        <li><a href="{{ url_for('profile.perfil') }}"><i class="fas fa-user"></i> Perfil</a></li>
+        <li><a href="{{ url_for('search.pesquisar') }}"><i class="fas fa-search"></i> Pesquisar</a></li>
+        <li><a href="{{ url_for('categorias.categorias') }}"><i class="fas fa-th-large"></i> Categorias</a></li>
+        <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Sair</a></li>
+    </ul>
+</nav>
 
     <!-- Overlay -->
     <div class="overlay" onclick="toggleMenu()"></div>
