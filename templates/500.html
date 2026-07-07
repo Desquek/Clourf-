@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Erro 500 - Clourf{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-card">
+        <div class="error-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h1>Erro 500</h1>
+        <h2>Algo correu mal no servidor.</h2>
+        <p>Estamos a trabalhar para resolver o problema.</p>
+        <p class="error-detalhe">Por favor, tente novamente mais tarde.</p>
+        <div class="error-actions">
+            <a href="{{ url_for('home.inicio') }}" class="btn-primary">
+                <i class="fas fa-home"></i> Voltar ao início
+            </a>
+            <a href="javascript:history.back()" class="btn-secondary">
+                <i class="fas fa-arrow-left"></i> Voltar atrás
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
