@@ -6,6 +6,11 @@ import database  # <-- Importante: força a execução do init_db()
 app = Flask(__name__)
 app.config.from_object(Config)
 
+# Verificar se a SECRET_KEY foi carregada
+if not app.config.get('SECRET_KEY'):
+    print("⚠️ SECRET_KEY não encontrada! Usando valor temporário.")
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'clourf_secret_2026')
+
 # ============================================
 # REGISTAR TODOS OS BLUEPRINTS
 # ============================================
