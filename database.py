@@ -1,38 +1,27 @@
 import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from psycopg2 import sql
-
-# ============================================
-# CONFIGURAÇÃO DA BASE DE DADOS
-# ============================================
 
 def get_db():
-    """Retorna uma conexão com a base de dados Neon (PostgreSQL)"""
     try:
-        # Obter a URL da variável de ambiente
         database_url = os.environ.get('DATABASE_URL')
         if not database_url:
-            raise Exception("DATABASE_URL não configurada! Adicione a variável no Render.")
-        
-        # Criar a conexão
-        conn = psycopg2.connect(database_url, cursor_factory=RealDictCursor)
-        return conn
+            raise Exception("DATABASE_URL não configurada!")
+        return psycopg2.connect(database_url, cursor_factory=RealDictCursor)
     except Exception as e:
-        print(f"❌ Erro ao conectar ao Neon: {e}")
+        print(f"❌ Erro ao conectar: {e}")
         return None
 
 def init_db():
-    """Cria as tabelas se não existirem"""
+    """Cria as tabelas se elas não existirem."""
     conn = get_db()
     if conn is None:
-        print("❌ Não foi possível conectar à base de dados para criar tabelas.")
+        print("❌ Falha ao conectar.")
         return
-    
+
     cur = conn.cursor()
-    
     try:
-        # ===== TABELA DE USUÁRIOS =====
+        # Tabela users
         cur.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
@@ -47,8 +36,7 @@ def init_db():
                 data_registo TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        
-        # ===== TABELA DE PROBLEMAS =====
+        # Tabela problemas
         cur.execute("""
             CREATE TABLE IF NOT EXISTS problemas (
                 id SERIAL PRIMARY KEY,
@@ -60,8 +48,7 @@ def init_db():
                 data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        
-        # ===== TABELA DE MENSAGENS =====
+        # Tabela mensagens
         cur.execute("""
             CREATE TABLE IF NOT EXISTS mensagens (
                 id SERIAL PRIMARY KEY,
@@ -73,8 +60,7 @@ def init_db():
                 data_envio TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        
-        # ===== TABELA DE FAVORITOS =====
+        # Tabela favoritos
         cur.execute("""
             CREATE TABLE IF NOT EXISTS favoritos (
                 id SERIAL PRIMARY KEY,
@@ -84,8 +70,7 @@ def init_db():
                 UNIQUE(usuario_id, problema_id)
             )
         """)
-        
-        # ===== TABELA DE INTERESSADOS =====
+        # Tabela interessados
         cur.execute("""
             CREATE TABLE IF NOT EXISTS interessados (
                 id SERIAL PRIMARY KEY,
@@ -96,10 +81,8 @@ def init_db():
                 data_interesse TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        
         conn.commit()
-        print("✅ Tabelas criadas/verificadas com sucesso!")
-        
+        print("✅ Tabelas verificadas/criadas com sucesso!")
     except Exception as e:
         print(f"❌ Erro ao criar tabelas: {e}")
         conn.rollback()
@@ -108,11 +91,7 @@ def init_db():
         conn.close()
 
 # ============================================
-# INICIALIZAR A BASE DE DADOS
+# INICIALIZAR AUTOMATICAMENTE
 # ============================================
-
-# Se este ficheiro for executado diretamente, cria as tabelas
-if __name__ == '__main__':
-    print("🚀 A criar tabelas...")
-    init_db()
-    print("✅ Concluído!")
+print("🚀 A verificar/criar tabelas...")
+init_db()
