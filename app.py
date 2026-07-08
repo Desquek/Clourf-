@@ -1,6 +1,7 @@
 from flask import Flask, render_template
 from config import Config
 import os
+import database  # <-- Importante: força a execução do init_db()
 
 app = Flask(__name__)
 app.config.from_object(Config)
