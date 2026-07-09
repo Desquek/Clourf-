@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Estatísticas - Clourf Admin{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="admin-header">
+        <h1><i class="fas fa-chart-bar"></i> Estatísticas do Clourf</h1>
+        <a href="{{ url_for('admin_dashboard.dashboard') }}" class="btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <!-- Cards de Estatísticas -->
+    <div class="admin-stats">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-users"></i></div>
+            <div class="stat-info">
+                <h3>{{ total_users }}</h3>
+                <p>Total de Utilizadores</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-user-plus"></i></div>
+            <div class="stat-info">
+                <h3>{{ users_hoje }}</h3>
+                <p>Novos Hoje</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-file-alt"></i></div>
+            <div class="stat-info">
+                <h3>{{ total_problemas }}</h3>
+                <p>Problemas Publicados</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-envelope"></i></div>
+            <div class="stat-info">
+                <h3>{{ total_mensagens }}</h3>
+                <p>Mensagens Trocadas</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-handshake"></i></div>
+            <div class="stat-info">
+                <h3>{{ total_interesses }}</h3>
+                <p>Interesses em Problemas</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-heart"></i></div>
+            <div class="stat-info">
+                <h3>{{ total_favoritos }}</h3>
+                <p>Favoritos</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Problemas por Categoria -->
+    <div class="admin-table" style="margin-top: 2rem;">
+        <h2>Problemas por Categoria</h2>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Categoria</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cat in problemas_categoria %}
+                    <tr>
+                        <td><strong>{{ cat.categoria }}</strong></td>
+                        <td>{{ cat.total }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
