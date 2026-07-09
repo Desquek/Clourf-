@@ -3,6 +3,10 @@ from database import get_db
 
 admin_dashboard = Blueprint('admin_dashboard', __name__, url_prefix='/admin')
 
+# ============================================
+# VERIFICAR SE É ADMIN
+# ============================================
+
 def is_admin(user_id):
     conn = get_db()
     cur = conn.cursor()
@@ -11,6 +15,11 @@ def is_admin(user_id):
     cur.close()
     conn.close()
     return result and result['is_admin'] is True
+
+
+# ============================================
+# PAINEL ADMIN
+# ============================================
 
 @admin_dashboard.route('/')
 def dashboard():
@@ -54,3 +63,62 @@ def dashboard():
         novos_usuarios=novos_usuarios,
         ultimos_utilizadores=ultimos_utilizadores,
         ultimos_problemas=ultimos_problemas)
+
+
+# ============================================
+# ESTATÍSTICAS (NOVA ROTA)
+# ============================================
+
+@admin_dashboard.route('/estatisticas')
+def estatisticas():
+    if 'user_id' not in session or not is_admin(session['user_id']):
+        flash("Acesso negado.", "danger")
+        return redirect(url_for('home.inicio'))
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    # Total de utilizadores
+    cur.execute("SELECT COUNT(*) FROM users")
+    total_users = cur.fetchone()['count']
+
+    # Utilizadores registados hoje
+    cur.execute("SELECT COUNT(*) FROM users WHERE DATE(data_registo) = CURRENT_DATE")
+    users_hoje = cur.fetchone()['count']
+
+    # Total de problemas
+    cur.execute("SELECT COUNT(*) FROM problemas")
+    total_problemas = cur.fetchone()['count']
+
+    # Total de mensagens
+    cur.execute("SELECT COUNT(*) FROM mensagens")
+    total_mensagens = cur.fetchone()['count']
+
+    # Total de interessados
+    cur.execute("SELECT COUNT(*) FROM interessados")
+    total_interesses = cur.fetchone()['count']
+
+    # Total de favoritos
+    cur.execute("SELECT COUNT(*) FROM favoritos")
+    total_favoritos = cur.fetchone()['count']
+
+    # Problemas por categoria
+    cur.execute("""
+        SELECT categoria, COUNT(*) AS total
+        FROM problemas
+        GROUP BY categoria
+        ORDER BY total DESC
+    """)
+    problemas_categoria = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template('admin/estatisticas.html',
+        total_users=total_users,
+        users_hoje=users_hoje,
+        total_problemas=total_problemas,
+        total_mensagens=total_mensagens,
+        total_interesses=total_interesses,
+        total_favoritos=total_favoritos,
+        problemas_categoria=problemas_categoria)
