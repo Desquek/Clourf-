@@ -1,7 +1,7 @@
 from flask import Flask, render_template
 from config import Config
 import os
-import database  # <-- Importante: força a execução do init_db()
+import database
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -28,7 +28,6 @@ from routes.admin.dashboard import admin_dashboard
 from routes.admin.usuarios import admin_usuarios
 from routes.admin.problemas import admin_problemas
 
-# Registar blueprints
 app.register_blueprint(auth)
 app.register_blueprint(home)
 app.register_blueprint(profile)
@@ -61,9 +60,17 @@ def internal_error(error):
 @app.context_processor
 def inject_user():
     from flask import session
+    from routes.messages import contar_nao_lidas
+    
+    user_id = session.get('user_id')
+    notificacoes = 0
+    if user_id:
+        notificacoes = contar_nao_lidas(user_id)
+    
     return dict(
-        user_id=session.get('user_id'),
-        user_nome=session.get('nome')
+        user_id=user_id,
+        user_nome=session.get('nome'),
+        notificacoes_nao_lidas=notificacoes
     )
 
 # ============================================
