@@ -3,10 +3,26 @@ from database import get_db
 import os
 import re
 from werkzeug.utils import secure_filename
+import cloudinary
+import cloudinary.uploader
+from cloudinary.utils import cloudinary_url
 
 profile = Blueprint('profile', __name__)
 
-UPLOAD_FOLDER = 'static/uploads/perfil'
+# ============================================
+# CONFIGURAÇÃO DO CLOUDINARY
+# ============================================
+
+cloudinary.config(
+    cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    api_key=os.environ.get('CLOUDINARY_API_KEY'),
+    api_secret=os.environ.get('CLOUDINARY_API_SECRET')
+)
+
+# ============================================
+# VALIDAÇÃO DE FICHEIROS
+# ============================================
+
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 def allowed_file(filename):
@@ -19,10 +35,8 @@ def allowed_file(filename):
 def validar_telefone(telefone):
     """Valida número de telemóvel Moçambique (9 dígitos, começa com 8 ou 9)"""
     if not telefone:
-        return True  # Campo opcional
-    # Remove espaços e caracteres especiais
+        return True
     telefone = re.sub(r'[\s\+\(\)\-]', '', telefone)
-    # Verifica se tem 9 dígitos e começa com 8 ou 9
     return bool(re.match(r'^[89]\d{8}$', telefone))
 
 def formatar_telefone(telefone):
@@ -57,7 +71,6 @@ def perfil():
     cur.close()
     conn.close()
 
-    # Formatar telefone para exibição
     if user and user['telefone']:
         user['telefone_formatado'] = formatar_telefone(user['telefone'])
     else:
@@ -87,7 +100,6 @@ def perfil_publico(user_id):
         flash("Utilizador não encontrado.", "danger")
         return redirect(url_for('home.inicio'))
 
-    # Formatar telefone para exibição
     if user['telefone']:
         user['telefone_formatado'] = formatar_telefone(user['telefone'])
     else:
@@ -124,17 +136,14 @@ def editar_perfil():
         localizacao = request.form.get('localizacao', '').strip()
         bio = request.form.get('bio', '').strip()
 
-        # Validar nome
         if not nome:
             flash("O nome não pode estar vazio.", "danger")
             return render_template('editar_perfil.html', user={'nome': nome, 'telefone': telefone, 'localizacao': localizacao, 'bio': bio})
 
-        # Validar telefone (se fornecido)
         if telefone and not validar_telefone(telefone):
             flash("Número de telemóvel inválido. Deve ter 9 dígitos e começar com 8 ou 9.", "danger")
             return render_template('editar_perfil.html', user={'nome': nome, 'telefone': telefone, 'localizacao': localizacao, 'bio': bio})
 
-        # Limpar telefone (remover espaços e caracteres especiais)
         if telefone:
             telefone = re.sub(r'[\s\+\(\)\-]', '', telefone)
 
@@ -153,7 +162,6 @@ def editar_perfil():
         flash("Perfil atualizado com sucesso!", "success")
         return redirect(url_for('profile.perfil'))
 
-    # GET - Mostra formulário com dados atuais
     conn = get_db()
     cur = conn.cursor()
     cur.execute("""
@@ -169,7 +177,7 @@ def editar_perfil():
 
 
 # ============================================
-# UPLOAD DE FOTO DE PERFIL
+# UPLOAD DE FOTO DE PERFIL (CLOUDINARY)
 # ============================================
 
 @profile.route('/upload-foto', methods=['POST'])
@@ -188,20 +196,24 @@ def upload_foto():
         return redirect(url_for('profile.perfil'))
 
     if foto and allowed_file(foto.filename):
-        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-        ext = foto.filename.rsplit('.', 1)[1].lower()
-        filename = f"user_{session['user_id']}.{ext}"
-        filepath = os.path.join(UPLOAD_FOLDER, filename)
-        foto.save(filepath)
+        try:
+            upload_result = cloudinary.uploader.upload(
+                foto,
+                folder=f"clourf/perfil/{session['user_id']}",
+                transformation=[{'width': 300, 'height': 300, 'crop': 'limit'}]
+            )
+            foto_url = upload_result['secure_url']
 
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute("UPDATE users SET foto = %s WHERE id = %s", (filename, session['user_id']))
-        conn.commit()
-        cur.close()
-        conn.close()
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute("UPDATE users SET foto = %s WHERE id = %s", (foto_url, session['user_id']))
+            conn.commit()
+            cur.close()
+            conn.close()
 
-        flash("Foto de perfil atualizada com sucesso!", "success")
+            flash("Foto de perfil atualizada com sucesso!", "success")
+        except Exception as e:
+            flash(f"Erro ao fazer upload da imagem: {e}", "danger")
     else:
         flash("Formato inválido. Use JPG, PNG ou GIF.", "danger")
 
