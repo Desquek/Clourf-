@@ -19,9 +19,13 @@
                 </div>
                 <div class="conversa-info">
                     <div class="conversa-nome">{{ c.outro_nome }}</div>
-                    <div class="conversa-ultima">{{ c.ultima_mensagem or 'Nenhuma mensagem' }}</div>
+                    <div class="conversa-ultima">{{ c.ultima_mensagem }}</div>
                 </div>
-                <div class="conversa-data">{{ c.ultima_data.strftime('%d/%m/%Y') if c.ultima_data else '' }}</div>
+                <div class="conversa-data">
+                    {% if c.ultima_data %}
+                        {{ c.ultima_data.strftime('%d/%m/%Y') }}
+                    {% endif %}
+                </div>
             </a>
             {% endfor %}
         </div>
@@ -29,7 +33,7 @@
         <div class="empty-state">
             <i class="fas fa-inbox"></i>
             <p>Nenhuma conversa ainda.</p>
-            <p class="sub-text">Comece a interagir respondendo a problemas.</p>
+            <p class="sub-text">Interaja com problemas para começar.</p>
         </div>
     {% endif %}
 </div>
