@@ -34,7 +34,7 @@
                         <i class="fas fa-check"></i>
                     </a>
                     {% if n.tipo == 'mensagem' %}
-                        <a href="{{ url_for('messages.conversa', outro_id=n.de_id) if n.de_id else '#' }}" class="btn-responder">
+                        <a href="{{ url_for('messages.conversa', outro_id=n.de_id) }}" class="btn-responder">
                             <i class="fas fa-reply"></i>
                         </a>
                     {% else %}
@@ -48,7 +48,7 @@
         </div>
     {% else %}
         <div class="empty-state">
-            <i class="fas fa-check-circle"></i>
+            <i class="fas fa-check-circle" style="color: #22C55E;"></i>
             <p>Não tem notificações novas.</p>
             <p class="sub-text">Tudo em ordem!</p>
         </div>
