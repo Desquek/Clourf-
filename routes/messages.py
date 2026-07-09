@@ -4,7 +4,24 @@ from database import get_db
 messages = Blueprint('messages', __name__)
 
 # ============================================
-# LISTAR CONVERSAS (VERSÃO SIMPLIFICADA E CORRIGIDA)
+# CONTAR MENSAGENS NÃO LIDAS
+# ============================================
+
+def contar_nao_lidas(usuario_id):
+    """Retorna o número de mensagens não lidas do utilizador"""
+    conn = get_db()
+    if conn is None:
+        return 0
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM mensagens WHERE destinatario_id = %s AND lida = FALSE", (usuario_id,))
+    count = cur.fetchone()['count']
+    cur.close()
+    conn.close()
+    return count
+
+
+# ============================================
+# LISTAR CONVERSAS
 # ============================================
 
 @messages.route('/mensagens')
@@ -21,7 +38,6 @@ def mensagens():
     cur = conn.cursor()
     
     try:
-        # Buscar IDs dos utilizadores com quem há conversas
         cur.execute("""
             SELECT DISTINCT 
                 CASE 
@@ -38,12 +54,10 @@ def mensagens():
         for row in ids:
             outro_id = row['outro_id']
             
-            # Buscar dados do outro utilizador
             cur.execute("SELECT id, nome, foto FROM users WHERE id = %s", (outro_id,))
             user = cur.fetchone()
             
             if user:
-                # Buscar última mensagem
                 cur.execute("""
                     SELECT conteudo, data_envio 
                     FROM mensagens 
@@ -90,7 +104,6 @@ def conversa(outro_id):
 
     cur = conn.cursor()
     
-    # Buscar dados do outro utilizador
     cur.execute("SELECT id, nome, foto, localizacao FROM users WHERE id = %s", (outro_id,))
     outro = cur.fetchone()
 
@@ -98,7 +111,6 @@ def conversa(outro_id):
         flash("Utilizador não encontrado.", "danger")
         return redirect(url_for('messages.mensagens'))
 
-    # Buscar mensagens entre os dois
     cur.execute("""
         SELECT m.*, u.nome AS remetente_nome, u.foto AS remetente_foto
         FROM mensagens m
