@@ -1,19 +1,38 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from database import get_db
 import os
+import re
 from werkzeug.utils import secure_filename
 
 profile = Blueprint('profile', __name__)
-
-# ============================================
-# CONFIGURAÇÃO DE UPLOAD
-# ============================================
 
 UPLOAD_FOLDER = 'static/uploads/perfil'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# ============================================
+# VALIDAR NÚMERO DE TELEMÓVEL (Moçambique)
+# ============================================
+
+def validar_telefone(telefone):
+    """Valida número de telemóvel Moçambique (9 dígitos, começa com 8 ou 9)"""
+    if not telefone:
+        return True  # Campo opcional
+    # Remove espaços e caracteres especiais
+    telefone = re.sub(r'[\s\+\(\)\-]', '', telefone)
+    # Verifica se tem 9 dígitos e começa com 8 ou 9
+    return bool(re.match(r'^[89]\d{8}$', telefone))
+
+def formatar_telefone(telefone):
+    """Formata número para exibição (84 123 4567)"""
+    if not telefone:
+        return ''
+    telefone = re.sub(r'[\s\+\(\)\-]', '', telefone)
+    if len(telefone) == 9:
+        return f"{telefone[:2]} {telefone[2:5]} {telefone[5:]}"
+    return telefone
 
 
 # ============================================
@@ -28,7 +47,6 @@ def perfil():
 
     conn = get_db()
     cur = conn.cursor()
-
     cur.execute("""
         SELECT id, nome, email, telefone, localizacao, bio, foto, data_registo
         FROM users
@@ -38,6 +56,12 @@ def perfil():
     user = cur.fetchone()
     cur.close()
     conn.close()
+
+    # Formatar telefone para exibição
+    if user and user['telefone']:
+        user['telefone_formatado'] = formatar_telefone(user['telefone'])
+    else:
+        user['telefone_formatado'] = ''
 
     return render_template('perfil.html', user=user)
 
@@ -50,13 +74,11 @@ def perfil():
 def perfil_publico(user_id):
     conn = get_db()
     cur = conn.cursor()
-
     cur.execute("""
         SELECT id, nome, email, telefone, localizacao, bio, foto, data_registo
         FROM users
         WHERE id = %s
     """, (user_id,))
-
     user = cur.fetchone()
     cur.close()
     conn.close()
@@ -65,7 +87,12 @@ def perfil_publico(user_id):
         flash("Utilizador não encontrado.", "danger")
         return redirect(url_for('home.inicio'))
 
-    # Buscar problemas do utilizador
+    # Formatar telefone para exibição
+    if user['telefone']:
+        user['telefone_formatado'] = formatar_telefone(user['telefone'])
+    else:
+        user['telefone_formatado'] = ''
+
     conn = get_db()
     cur = conn.cursor()
     cur.execute("""
@@ -82,7 +109,7 @@ def perfil_publico(user_id):
 
 
 # ============================================
-# EDITAR PERFIL
+# EDITAR PERFIL (COM VALIDAÇÃO)
 # ============================================
 
 @profile.route('/editar-perfil', methods=['GET', 'POST'])
@@ -92,10 +119,24 @@ def editar_perfil():
         return redirect(url_for('auth.login'))
 
     if request.method == 'POST':
-        nome = request.form['nome']
-        telefone = request.form['telefone']
-        localizacao = request.form['localizacao']
-        bio = request.form['bio']
+        nome = request.form.get('nome', '').strip()
+        telefone = request.form.get('telefone', '').strip()
+        localizacao = request.form.get('localizacao', '').strip()
+        bio = request.form.get('bio', '').strip()
+
+        # Validar nome
+        if not nome:
+            flash("O nome não pode estar vazio.", "danger")
+            return render_template('editar_perfil.html', user={'nome': nome, 'telefone': telefone, 'localizacao': localizacao, 'bio': bio})
+
+        # Validar telefone (se fornecido)
+        if telefone and not validar_telefone(telefone):
+            flash("Número de telemóvel inválido. Deve ter 9 dígitos e começar com 8 ou 9.", "danger")
+            return render_template('editar_perfil.html', user={'nome': nome, 'telefone': telefone, 'localizacao': localizacao, 'bio': bio})
+
+        # Limpar telefone (remover espaços e caracteres especiais)
+        if telefone:
+            telefone = re.sub(r'[\s\+\(\)\-]', '', telefone)
 
         conn = get_db()
         cur = conn.cursor()
@@ -142,31 +183,20 @@ def upload_foto():
         return redirect(url_for('profile.perfil'))
 
     foto = request.files['foto']
-
     if foto.filename == '':
         flash("Nenhuma foto selecionada.", "danger")
         return redirect(url_for('profile.perfil'))
 
     if foto and allowed_file(foto.filename):
-        # Criar pasta se não existir
         os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-        # Nome único para o ficheiro
         ext = foto.filename.rsplit('.', 1)[1].lower()
         filename = f"user_{session['user_id']}.{ext}"
         filepath = os.path.join(UPLOAD_FOLDER, filename)
-
-        # Guardar a foto
         foto.save(filepath)
 
-        # Atualizar base de dados
         conn = get_db()
         cur = conn.cursor()
-        cur.execute("""
-            UPDATE users
-            SET foto = %s
-            WHERE id = %s
-        """, (filename, session['user_id']))
+        cur.execute("UPDATE users SET foto = %s WHERE id = %s", (filename, session['user_id']))
         conn.commit()
         cur.close()
         conn.close()
