@@ -4,7 +4,7 @@ from database import get_db
 messages = Blueprint('messages', __name__)
 
 # ============================================
-# LISTAR CONVERSAS
+# LISTAR CONVERSAS (VERSÃO SIMPLIFICADA E CORRIGIDA)
 # ============================================
 
 @messages.route('/mensagens')
@@ -14,36 +14,63 @@ def mensagens():
         return redirect(url_for('auth.login'))
 
     conn = get_db()
+    if conn is None:
+        flash("Erro ao conectar à base de dados!", "danger")
+        return render_template('mensagens.html', conversas=[])
+
     cur = conn.cursor()
-    cur.execute("""
-        SELECT DISTINCT
-            CASE WHEN remetente_id = %s THEN destinatario_id ELSE remetente_id END AS outro_id,
-            u.nome AS outro_nome,
-            u.foto AS outro_foto,
-            (SELECT conteudo FROM mensagens 
-             WHERE (remetente_id = %s AND destinatario_id = u.id) 
-                OR (remetente_id = u.id AND destinatario_id = %s)
-             ORDER BY data_envio DESC LIMIT 1) AS ultima_mensagem,
-            (SELECT data_envio FROM mensagens 
-             WHERE (remetente_id = %s AND destinatario_id = u.id) 
-                OR (remetente_id = u.id AND destinatario_id = %s)
-             ORDER BY data_envio DESC LIMIT 1) AS ultima_data
-        FROM mensagens m
-        JOIN users u ON u.id = (CASE WHEN remetente_id = %s THEN destinatario_id ELSE remetente_id END)
-        WHERE remetente_id = %s OR destinatario_id = %s
-        GROUP BY outro_id
-        ORDER BY ultima_data DESC
-    """, (
-        session['user_id'], session['user_id'], session['user_id'],
-        session['user_id'], session['user_id'], session['user_id'],
-        session['user_id'], session['user_id']
-    ))
-
-    conversas = cur.fetchall()
-    cur.close()
-    conn.close()
-
-    return render_template('mensagens.html', conversas=conversas)
+    
+    try:
+        # Buscar IDs dos utilizadores com quem há conversas
+        cur.execute("""
+            SELECT DISTINCT 
+                CASE 
+                    WHEN remetente_id = %s THEN destinatario_id 
+                    ELSE remetente_id 
+                END AS outro_id
+            FROM mensagens 
+            WHERE remetente_id = %s OR destinatario_id = %s
+        """, (session['user_id'], session['user_id'], session['user_id']))
+        
+        ids = cur.fetchall()
+        conversas = []
+        
+        for row in ids:
+            outro_id = row['outro_id']
+            
+            # Buscar dados do outro utilizador
+            cur.execute("SELECT id, nome, foto FROM users WHERE id = %s", (outro_id,))
+            user = cur.fetchone()
+            
+            if user:
+                # Buscar última mensagem
+                cur.execute("""
+                    SELECT conteudo, data_envio 
+                    FROM mensagens 
+                    WHERE (remetente_id = %s AND destinatario_id = %s) 
+                       OR (remetente_id = %s AND destinatario_id = %s)
+                    ORDER BY data_envio DESC 
+                    LIMIT 1
+                """, (session['user_id'], outro_id, outro_id, session['user_id']))
+                ultima = cur.fetchone()
+                
+                conversas.append({
+                    'outro_id': user['id'],
+                    'outro_nome': user['nome'],
+                    'outro_foto': user['foto'],
+                    'ultima_mensagem': ultima['conteudo'] if ultima else 'Nenhuma mensagem',
+                    'ultima_data': ultima['data_envio'] if ultima else None
+                })
+        
+        cur.close()
+        conn.close()
+        
+        return render_template('mensagens.html', conversas=conversas)
+        
+    except Exception as e:
+        print(f"❌ Erro ao carregar mensagens: {e}")
+        flash("Erro ao carregar mensagens.", "danger")
+        return render_template('mensagens.html', conversas=[])
 
 
 # ============================================
@@ -57,7 +84,13 @@ def conversa(outro_id):
         return redirect(url_for('auth.login'))
 
     conn = get_db()
+    if conn is None:
+        flash("Erro ao conectar à base de dados!", "danger")
+        return redirect(url_for('messages.mensagens'))
+
     cur = conn.cursor()
+    
+    # Buscar dados do outro utilizador
     cur.execute("SELECT id, nome, foto, localizacao FROM users WHERE id = %s", (outro_id,))
     outro = cur.fetchone()
 
@@ -65,6 +98,7 @@ def conversa(outro_id):
         flash("Utilizador não encontrado.", "danger")
         return redirect(url_for('messages.mensagens'))
 
+    # Buscar mensagens entre os dois
     cur.execute("""
         SELECT m.*, u.nome AS remetente_nome, u.foto AS remetente_foto
         FROM mensagens m
@@ -75,6 +109,8 @@ def conversa(outro_id):
     """, (session['user_id'], outro_id, outro_id, session['user_id']))
 
     mensagens_lista = cur.fetchall()
+    
+    # Marcar mensagens como lidas
     cur.execute("UPDATE mensagens SET lida = TRUE WHERE remetente_id = %s AND destinatario_id = %s", 
                 (outro_id, session['user_id']))
     conn.commit()
@@ -103,6 +139,10 @@ def enviar_mensagem():
         return redirect(url_for('messages.conversa', outro_id=destinatario_id))
 
     conn = get_db()
+    if conn is None:
+        flash("Erro ao conectar à base de dados!", "danger")
+        return redirect(url_for('messages.mensagens'))
+
     cur = conn.cursor()
     cur.execute("""
         INSERT INTO mensagens (remetente_id, destinatario_id, problema_id, conteudo)
@@ -117,7 +157,7 @@ def enviar_mensagem():
 
 
 # ============================================
-# ENVIAR PROPOSTA (NOVO)
+# ENVIAR PROPOSTA
 # ============================================
 
 @messages.route('/enviar-proposta/<int:problema_id>', methods=['POST'])
@@ -133,6 +173,10 @@ def enviar_proposta(problema_id):
         return redirect(url_for('posts.ver_problema', problema_id=problema_id))
 
     conn = get_db()
+    if conn is None:
+        flash("Erro ao conectar à base de dados!", "danger")
+        return redirect(url_for('home.inicio'))
+
     cur = conn.cursor()
     cur.execute("SELECT usuario_id FROM problemas WHERE id = %s", (problema_id,))
     problema = cur.fetchone()
