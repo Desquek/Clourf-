@@ -82,7 +82,7 @@ def perfil():
         # Formatar telefone
         telefone = user['telefone'] if is_postgres else user[3]
         if telefone:
-            user['telefone_formatado'] = formatar_telefone(telefone) if is_postgres else formatar_telefone(telefone)
+            user['telefone_formatado'] = formatar_telefone(telefone)
         else:
             user['telefone_formatado'] = ''
 
@@ -124,7 +124,7 @@ def perfil_publico(user_id):
     # Formatar telefone
     telefone = user['telefone'] if is_postgres else user[3]
     if telefone:
-        user['telefone_formatado'] = formatar_telefone(telefone) if is_postgres else formatar_telefone(telefone)
+        user['telefone_formatado'] = formatar_telefone(telefone)
     else:
         user['telefone_formatado'] = ''
 
@@ -277,6 +277,16 @@ def upload_foto():
             cur.execute("UPDATE users SET foto = ? WHERE id = ?", (foto_url, session['user_id']))
         
         conn.commit()
+        
+        # Verificar se foi guardado
+        if is_postgres:
+            cur.execute("SELECT foto FROM users WHERE id = %s", (session['user_id'],))
+        else:
+            cur.execute("SELECT foto FROM users WHERE id = ?", (session['user_id'],))
+        
+        resultado = cur.fetchone()
+        print(f"✅ Foto guardada no banco: {resultado['foto'] if resultado else 'NULO'}")
+        
         cur.close()
         conn.close()
 
