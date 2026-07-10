@@ -57,37 +57,62 @@ def perfil():
 
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("""
-        SELECT id, nome, email, telefone, localizacao, bio, foto, data_registo
-        FROM users
-        WHERE id = %s
-    """, (session['user_id'],))
-
+    
+    # Verificar se é PostgreSQL ou SQLite
+    is_postgres = hasattr(cur, 'mogrify')
+    
+    if is_postgres:
+        cur.execute("""
+            SELECT id, nome, email, telefone, localizacao, bio, foto, data_registo
+            FROM users
+            WHERE id = %s
+        """, (session['user_id'],))
+    else:
+        cur.execute("""
+            SELECT id, nome, email, telefone, localizacao, bio, foto, data_registo
+            FROM users
+            WHERE id = ?
+        """, (session['user_id'],))
+    
     user = cur.fetchone()
     cur.close()
     conn.close()
 
-    if user and user['telefone']:
-        user['telefone_formatado'] = formatar_telefone(user['telefone'])
-    else:
-        user['telefone_formatado'] = ''
+    if user:
+        # Formatar telefone
+        telefone = user['telefone'] if is_postgres else user[3]
+        if telefone:
+            user['telefone_formatado'] = formatar_telefone(telefone) if is_postgres else formatar_telefone(telefone)
+        else:
+            user['telefone_formatado'] = ''
 
     return render_template('perfil.html', user=user)
 
 
 # ============================================
-# VER PERFIL PÚBLICO
+# VER PERFIL PÚBLICO DE OUTRO UTILIZADOR
 # ============================================
 
 @profile.route('/perfil/<int:user_id>')
 def perfil_publico(user_id):
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("""
-        SELECT id, nome, email, telefone, localizacao, bio, foto, data_registo
-        FROM users
-        WHERE id = %s
-    """, (user_id,))
+    
+    is_postgres = hasattr(cur, 'mogrify')
+    
+    if is_postgres:
+        cur.execute("""
+            SELECT id, nome, email, telefone, localizacao, bio, foto, data_registo
+            FROM users
+            WHERE id = %s
+        """, (user_id,))
+    else:
+        cur.execute("""
+            SELECT id, nome, email, telefone, localizacao, bio, foto, data_registo
+            FROM users
+            WHERE id = ?
+        """, (user_id,))
+    
     user = cur.fetchone()
     cur.close()
     conn.close()
@@ -96,19 +121,32 @@ def perfil_publico(user_id):
         flash("Utilizador não encontrado.", "danger")
         return redirect(url_for('home.inicio'))
 
-    if user['telefone']:
-        user['telefone_formatado'] = formatar_telefone(user['telefone'])
+    # Formatar telefone
+    telefone = user['telefone'] if is_postgres else user[3]
+    if telefone:
+        user['telefone_formatado'] = formatar_telefone(telefone) if is_postgres else formatar_telefone(telefone)
     else:
         user['telefone_formatado'] = ''
 
+    # Buscar problemas do utilizador
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("""
-        SELECT id, titulo, descricao, categoria, localizacao, data_criacao
-        FROM problemas
-        WHERE usuario_id = %s
-        ORDER BY data_criacao DESC
-    """, (user_id,))
+    
+    if is_postgres:
+        cur.execute("""
+            SELECT id, titulo, descricao, categoria, localizacao, data_criacao
+            FROM problemas
+            WHERE usuario_id = %s
+            ORDER BY data_criacao DESC
+        """, (user_id,))
+    else:
+        cur.execute("""
+            SELECT id, titulo, descricao, categoria, localizacao, data_criacao
+            FROM problemas
+            WHERE usuario_id = ?
+            ORDER BY data_criacao DESC
+        """, (user_id,))
+    
     problemas = cur.fetchall()
     cur.close()
     conn.close()
@@ -145,11 +183,21 @@ def editar_perfil():
 
         conn = get_db()
         cur = conn.cursor()
-        cur.execute("""
-            UPDATE users
-            SET nome = %s, telefone = %s, localizacao = %s, bio = %s
-            WHERE id = %s
-        """, (nome, telefone, localizacao, bio, session['user_id']))
+        is_postgres = hasattr(cur, 'mogrify')
+        
+        if is_postgres:
+            cur.execute("""
+                UPDATE users
+                SET nome = %s, telefone = %s, localizacao = %s, bio = %s
+                WHERE id = %s
+            """, (nome, telefone, localizacao, bio, session['user_id']))
+        else:
+            cur.execute("""
+                UPDATE users
+                SET nome = ?, telefone = ?, localizacao = ?, bio = ?
+                WHERE id = ?
+            """, (nome, telefone, localizacao, bio, session['user_id']))
+        
         conn.commit()
         cur.close()
         conn.close()
@@ -158,13 +206,24 @@ def editar_perfil():
         flash("Perfil atualizado com sucesso!", "success")
         return redirect(url_for('profile.perfil'))
 
+    # GET - Mostra formulário com dados atuais
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("""
-        SELECT nome, telefone, localizacao, bio
-        FROM users
-        WHERE id = %s
-    """, (session['user_id'],))
+    is_postgres = hasattr(cur, 'mogrify')
+    
+    if is_postgres:
+        cur.execute("""
+            SELECT nome, telefone, localizacao, bio
+            FROM users
+            WHERE id = %s
+        """, (session['user_id'],))
+    else:
+        cur.execute("""
+            SELECT nome, telefone, localizacao, bio
+            FROM users
+            WHERE id = ?
+        """, (session['user_id'],))
+    
     user = cur.fetchone()
     cur.close()
     conn.close()
@@ -210,7 +269,13 @@ def upload_foto():
         # Guardar o URL no banco
         conn = get_db()
         cur = conn.cursor()
-        cur.execute("UPDATE users SET foto = %s WHERE id = %s", (foto_url, session['user_id']))
+        is_postgres = hasattr(cur, 'mogrify')
+        
+        if is_postgres:
+            cur.execute("UPDATE users SET foto = %s WHERE id = %s", (foto_url, session['user_id']))
+        else:
+            cur.execute("UPDATE users SET foto = ? WHERE id = ?", (foto_url, session['user_id']))
+        
         conn.commit()
         cur.close()
         conn.close()
