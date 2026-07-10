@@ -58,7 +58,6 @@ def perfil():
     conn = get_db()
     cur = conn.cursor()
     
-    # Verificar se é PostgreSQL ou SQLite
     is_postgres = hasattr(cur, 'mogrify')
     
     if is_postgres:
@@ -79,7 +78,6 @@ def perfil():
     conn.close()
 
     if user:
-        # Formatar telefone
         telefone = user['telefone'] if is_postgres else user[3]
         if telefone:
             user['telefone_formatado'] = formatar_telefone(telefone)
@@ -90,7 +88,7 @@ def perfil():
 
 
 # ============================================
-# VER PERFIL PÚBLICO DE OUTRO UTILIZADOR
+# VER PERFIL PÚBLICO
 # ============================================
 
 @profile.route('/perfil/<int:user_id>')
@@ -121,14 +119,12 @@ def perfil_publico(user_id):
         flash("Utilizador não encontrado.", "danger")
         return redirect(url_for('home.inicio'))
 
-    # Formatar telefone
     telefone = user['telefone'] if is_postgres else user[3]
     if telefone:
         user['telefone_formatado'] = formatar_telefone(telefone)
     else:
         user['telefone_formatado'] = ''
 
-    # Buscar problemas do utilizador
     conn = get_db()
     cur = conn.cursor()
     
@@ -206,7 +202,6 @@ def editar_perfil():
         flash("Perfil atualizado com sucesso!", "success")
         return redirect(url_for('profile.perfil'))
 
-    # GET - Mostra formulário com dados atuais
     conn = get_db()
     cur = conn.cursor()
     is_postgres = hasattr(cur, 'mogrify')
