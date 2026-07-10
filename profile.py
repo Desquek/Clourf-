@@ -2,10 +2,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from database import get_db
 import os
 import re
-from werkzeug.utils import secure_filename
 import cloudinary
 import cloudinary.uploader
-from cloudinary.utils import cloudinary_url
 
 profile = Blueprint('profile', __name__)
 
@@ -29,18 +27,16 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # ============================================
-# VALIDAR NÚMERO DE TELEMÓVEL (Moçambique)
+# VALIDAR NÚMERO DE TELEMÓVEL
 # ============================================
 
 def validar_telefone(telefone):
-    """Valida número de telemóvel Moçambique (9 dígitos, começa com 8 ou 9)"""
     if not telefone:
         return True
     telefone = re.sub(r'[\s\+\(\)\-]', '', telefone)
     return bool(re.match(r'^[89]\d{8}$', telefone))
 
 def formatar_telefone(telefone):
-    """Formata número para exibição (84 123 4567)"""
     if not telefone:
         return ''
     telefone = re.sub(r'[\s\+\(\)\-]', '', telefone)
@@ -80,7 +76,7 @@ def perfil():
 
 
 # ============================================
-# VER PERFIL PÚBLICO DE OUTRO UTILIZADOR
+# VER PERFIL PÚBLICO
 # ============================================
 
 @profile.route('/perfil/<int:user_id>')
@@ -121,7 +117,7 @@ def perfil_publico(user_id):
 
 
 # ============================================
-# EDITAR PERFIL (COM VALIDAÇÃO)
+# EDITAR PERFIL
 # ============================================
 
 @profile.route('/editar-perfil', methods=['GET', 'POST'])
@@ -195,26 +191,34 @@ def upload_foto():
         flash("Nenhuma foto selecionada.", "danger")
         return redirect(url_for('profile.perfil'))
 
-    if foto and allowed_file(foto.filename):
-        try:
-            upload_result = cloudinary.uploader.upload(
-                foto,
-                folder=f"clourf/perfil/{session['user_id']}",
-                transformation=[{'width': 300, 'height': 300, 'crop': 'limit'}]
-            )
-            foto_url = upload_result['secure_url']
-
-            conn = get_db()
-            cur = conn.cursor()
-            cur.execute("UPDATE users SET foto = %s WHERE id = %s", (foto_url, session['user_id']))
-            conn.commit()
-            cur.close()
-            conn.close()
-
-            flash("Foto de perfil atualizada com sucesso!", "success")
-        except Exception as e:
-            flash(f"Erro ao fazer upload da imagem: {e}", "danger")
-    else:
+    if not allowed_file(foto.filename):
         flash("Formato inválido. Use JPG, PNG ou GIF.", "danger")
+        return redirect(url_for('profile.perfil'))
+
+    try:
+        # Upload para o Cloudinary
+        upload_result = cloudinary.uploader.upload(
+            foto,
+            folder=f"clourf/perfil/{session['user_id']}",
+            transformation=[{'width': 300, 'height': 300, 'crop': 'limit'}]
+        )
+        
+        # Obter o URL completo
+        foto_url = upload_result['secure_url']
+        print(f"✅ URL do Cloudinary: {foto_url}")
+
+        # Guardar o URL no banco
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("UPDATE users SET foto = %s WHERE id = %s", (foto_url, session['user_id']))
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        flash("Foto de perfil atualizada com sucesso!", "success")
+
+    except Exception as e:
+        print(f"❌ Erro no upload: {e}")
+        flash(f"Erro ao fazer upload da imagem: {e}", "danger")
 
     return redirect(url_for('profile.perfil'))
