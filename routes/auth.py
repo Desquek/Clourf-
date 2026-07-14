@@ -96,7 +96,7 @@ def login():
                     user_hash = user[2]
                 
                 if bcrypt.checkpw(senha.encode('utf-8'), user_hash.encode('utf-8')):
-                    session['user_id'] = str(user_id)  # Guardar como string
+                    session['user_id'] = user_id
                     session['nome'] = user_nome
                     flash(f"Bem-vindo, {user_nome}!", "success")
                     return redirect(url_for('home.inicio'))
