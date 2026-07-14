@@ -9,14 +9,14 @@
             <i class="fas fa-arrow-left"></i>
         </a>
         <div class="conversa-user">
-            <div class="conversa-avatar">
-                {% if outro.foto and outro.foto != 'default.png' %}
-                    <img src="{{ outro.foto }}" alt="{{ outro.nome }}">
-                {% else %}
+            {% if outro.foto and outro.foto != 'default.png' %}
+                <img src="{{ outro.foto }}" alt="{{ outro.nome }}" class="conversa-avatar-img">
+            {% else %}
+                <div class="conversa-avatar-placeholder">
                     <i class="fas fa-user-circle"></i>
-                {% endif %}
-            </div>
-            <div>
+                </div>
+            {% endif %}
+            <div class="conversa-info">
                 <div class="conversa-nome">{{ outro.nome }}</div>
                 <div class="conversa-localizacao">{{ outro.localizacao or '' }}</div>
             </div>
