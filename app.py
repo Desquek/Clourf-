@@ -47,27 +47,48 @@ app.register_blueprint(admin_usuarios)
 app.register_blueprint(admin_problemas)
 
 # ============================================
-# CONTEXT PROCESSOR (COM TRATAMENTO DE ERRO)
+# CONTEXT PROCESSOR (DISPONÍVEL EM TODAS AS PÁGINAS)
 # ============================================
 
 @app.context_processor
 def inject_user():
     from flask import session
+    from routes.messages import contar_nao_lidas
+    from database import get_db
     
     user_id = session.get('user_id')
     notificacoes = 0
+    user_foto = None
     
     if user_id:
+        # Contar mensagens não lidas
+        notificacoes = contar_nao_lidas(user_id)
+        
+        # Buscar a foto do utilizador
         try:
-            from routes.messages import contar_nao_lidas
-            notificacoes = contar_nao_lidas(user_id)
+            conn = get_db()
+            if conn:
+                cur = conn.cursor()
+                is_postgres = hasattr(cur, 'mogrify')
+                
+                if is_postgres:
+                    cur.execute("SELECT foto FROM users WHERE id = %s", (user_id,))
+                else:
+                    cur.execute("SELECT foto FROM users WHERE id = ?", (user_id,))
+                
+                result = cur.fetchone()
+                cur.close()
+                conn.close()
+                
+                if result:
+                    user_foto = result['foto'] if is_postgres else result[0]
         except Exception as e:
-            print(f"⚠️ Erro ao contar mensagens não lidas: {e}")
-            notificacoes = 0
+            print(f"⚠️ Erro ao buscar foto do utilizador: {e}")
     
     return dict(
         user_id=user_id,
         user_nome=session.get('nome', 'Visitante'),
+        user_foto=user_foto,
         notificacoes_nao_lidas=notificacoes
     )
 
