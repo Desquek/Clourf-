@@ -1521,3 +1521,26 @@ a {
         width: 100%;
     }
 }
+
+/* ========================================
+   BOTÃO DE UPLOAD DE FOTO
+   ======================================== */
+
+.btn-upload {
+    background: var(--azul-claro);
+    color: var(--branco);
+    padding: 0.6rem 1.2rem;
+    border-radius: 25px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-block;
+    transition: var(--transition);
+    font-size: 0.9rem;
+    margin-top: 0.8rem;
+}
+
+.btn-upload:hover {
+    background: var(--azul-muito-claro);
+    transform: translateY(-2px);
+}
