@@ -1544,3 +1544,156 @@ a {
     background: var(--azul-muito-claro);
     transform: translateY(-2px);
 }
+
+/* ========================================
+   CONVERSA - FOTO EM BOLINHA
+   ======================================== */
+
+.conversa-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.conversa-avatar-img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--azul-claro);
+}
+
+.conversa-avatar-placeholder {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: var(--cinza-escuro);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    color: var(--cinza-claro);
+}
+
+.conversa-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.conversa-nome {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--branco);
+}
+
+.conversa-localizacao {
+    font-size: 0.8rem;
+    color: var(--cinza-medio);
+}
+
+/* ========================================
+   MENSAGENS - FOTO EM BOLINHA
+   ======================================== */
+
+.conversa-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 15px;
+    background: var(--azul-medio);
+    border-radius: var(--radius-sm);
+    margin-bottom: 8px;
+    text-decoration: none;
+    color: inherit;
+    transition: var(--transition);
+}
+
+.conversa-item:hover {
+    background: var(--azul-claro);
+}
+
+.conversa-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--cinza-escuro);
+}
+
+.conversa-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.conversa-avatar i {
+    font-size: 2rem;
+    color: var(--cinza-claro);
+}
+
+.conversa-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.conversa-nome {
+    font-weight: 600;
+    color: var(--branco);
+}
+
+.conversa-ultima {
+    font-size: 0.85rem;
+    color: var(--cinza-claro);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.conversa-data {
+    font-size: 0.7rem;
+    color: var(--cinza-medio);
+    flex-shrink: 0;
+}
+
+/* ========================================
+   PERFIL PÚBLICO - FOTO EM BOLINHA
+   ======================================== */
+
+.perfil-avatar {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.perfil-avatar img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid var(--azul-claro);
+}
+
+.perfil-avatar .avatar-placeholder {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: var(--cinza-escuro);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    border: 4px solid var(--azul-claro);
+}
+
+.perfil-avatar .avatar-placeholder i {
+    font-size: 4rem;
+    color: var(--cinza-claro);
+}
+
+.perfil-avatar h2 {
+    margin-top: 0.8rem;
+    color: var(--branco);
+}
