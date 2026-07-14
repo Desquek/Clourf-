@@ -68,7 +68,7 @@ def perfil():
             cur.execute("""
                 SELECT id, nome, email, telefone, localizacao, bio, foto, data_registo
                 FROM users
-                WHERE id = %s::uuid
+                WHERE id = %s
             """, (session['user_id'],))
         else:
             cur.execute("""
@@ -98,7 +98,7 @@ def perfil():
 # ROTA: VER PERFIL PÚBLICO DE OUTRO UTILIZADOR
 # ============================================
 
-@profile.route('/perfil/<user_id>')
+@profile.route('/perfil/<int:user_id>')
 def perfil_publico(user_id):
     conn = get_db()
     if conn is None:
@@ -113,7 +113,7 @@ def perfil_publico(user_id):
             cur.execute("""
                 SELECT id, nome, email, telefone, localizacao, bio, foto, data_registo
                 FROM users
-                WHERE id = %s::uuid
+                WHERE id = %s
             """, (user_id,))
         else:
             cur.execute("""
@@ -142,7 +142,7 @@ def perfil_publico(user_id):
             cur.execute("""
                 SELECT id, titulo, descricao, categoria, localizacao, data_criacao
                 FROM problemas
-                WHERE usuario_id = %s::uuid
+                WHERE usuario_id = %s
                 ORDER BY data_criacao DESC
             """, (user_id,))
         else:
@@ -204,7 +204,7 @@ def editar_perfil():
                 cur.execute("""
                     UPDATE users
                     SET nome = %s, telefone = %s, localizacao = %s, bio = %s
-                    WHERE id = %s::uuid
+                    WHERE id = %s
                 """, (nome, telefone, localizacao, bio, session['user_id']))
             else:
                 cur.execute("""
@@ -239,7 +239,7 @@ def editar_perfil():
             cur.execute("""
                 SELECT nome, telefone, localizacao, bio
                 FROM users
-                WHERE id = %s::uuid
+                WHERE id = %s
             """, (session['user_id'],))
         else:
             cur.execute("""
@@ -305,7 +305,7 @@ def upload_foto():
         is_postgres = hasattr(cur, 'mogrify')
         
         if is_postgres:
-            cur.execute("UPDATE users SET foto = %s WHERE id = %s::uuid", (foto_url, session['user_id']))
+            cur.execute("UPDATE users SET foto = %s WHERE id = %s", (foto_url, session['user_id']))
         else:
             cur.execute("UPDATE users SET foto = ? WHERE id = ?", (foto_url, session['user_id']))
         
@@ -313,7 +313,7 @@ def upload_foto():
         
         # Verificar se foi guardado
         if is_postgres:
-            cur.execute("SELECT foto FROM users WHERE id = %s::uuid", (session['user_id'],))
+            cur.execute("SELECT foto FROM users WHERE id = %s", (session['user_id'],))
         else:
             cur.execute("SELECT foto FROM users WHERE id = ?", (session['user_id'],))
         
