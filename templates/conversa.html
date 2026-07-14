@@ -10,8 +10,8 @@
         </a>
         <div class="conversa-user">
             <div class="conversa-avatar">
-                {% if outro.foto %}
-                    <img src="{{ url_for('static', filename='uploads/perfil/' + outro.foto) }}" alt="{{ outro.nome }}">
+                {% if outro.foto and outro.foto != 'default.png' %}
+                    <img src="{{ outro.foto }}" alt="{{ outro.nome }}">
                 {% else %}
                     <i class="fas fa-user-circle"></i>
                 {% endif %}
