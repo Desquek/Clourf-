@@ -21,15 +21,15 @@
         </button>
         <div class="logo"><i class="fas fa-handshake"></i> Clourf</div>
         <div class="user-avatar">
-            <a href="{{ url_for('profile.perfil') }}" style="position: relative; display: flex; align-items: center;">
-                {% if session.user_id and session.user_foto %}
-                    <img src="{{ session.user_foto }}" alt="Foto" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--azul-claro);">
+            <a href="{{ url_for('profile.perfil') }}" style="position: relative; display: flex; align-items: center; text-decoration: none;">
+                {% if user_id and user_foto %}
+                    <img src="{{ user_foto }}" alt="Foto" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--azul-claro);">
                 {% else %}
-                    <i class="fas fa-user-circle" style="font-size: 2rem;"></i>
+                    <i class="fas fa-user-circle" style="font-size: 2rem; color: var(--branco);"></i>
                 {% endif %}
             </a>
-            <a href="{{ url_for('messages.mensagens') }}" style="position: relative; margin-left: 0.5rem;">
-                <i class="fas fa-envelope"></i>
+            <a href="{{ url_for('messages.mensagens') }}" style="position: relative; margin-left: 0.5rem; text-decoration: none; color: var(--branco);">
+                <i class="fas fa-envelope" style="font-size: 1.5rem;"></i>
                 {% if notificacoes_nao_lidas is defined and notificacoes_nao_lidas > 0 %}
                     <span class="badge-notificacao" id="mensagem-badge">{{ notificacoes_nao_lidas }}</span>
                 {% endif %}
@@ -41,7 +41,7 @@
     <nav class="sidebar" id="sidebar">
         <button class="close-btn" onclick="toggleMenu()"><i class="fas fa-times"></i></button>
         <ul>
-            {% if session.user_id %}
+            {% if user_id %}
                 <li><a href="{{ url_for('home.inicio') }}"><i class="fas fa-home"></i> Início</a></li>
                 <li><a href="{{ url_for('posts.novo_problema') }}"><i class="fas fa-plus-circle"></i> Publicar</a></li>
                 <li><a href="{{ url_for('favorites.favoritos') }}"><i class="fas fa-heart"></i> Favoritos</a></li>
@@ -49,8 +49,8 @@
                 <li><a href="{{ url_for('notifications.notificacoes') }}"><i class="fas fa-bell"></i> Notificações</a></li>
                 <li>
                     <a href="{{ url_for('profile.perfil') }}" style="display: flex; align-items: center; gap: 10px;">
-                        {% if session.user_foto %}
-                            <img src="{{ session.user_foto }}" alt="Foto" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 2px solid var(--azul-claro);">
+                        {% if user_id and user_foto %}
+                            <img src="{{ user_foto }}" alt="Foto" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 2px solid var(--azul-claro);">
                         {% else %}
                             <i class="fas fa-user-circle"></i>
                         {% endif %}
