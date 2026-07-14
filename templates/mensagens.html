@@ -11,8 +11,8 @@
             {% for c in conversas %}
             <a href="{{ url_for('messages.conversa', outro_id=c.outro_id) }}" class="conversa-item">
                 <div class="conversa-avatar">
-                    {% if c.outro_foto %}
-                        <img src="{{ url_for('static', filename='uploads/perfil/' + c.outro_foto) }}" alt="{{ c.outro_nome }}">
+                    {% if c.outro_foto and c.outro_foto != 'default.png' %}
+                        <img src="{{ c.outro_foto }}" alt="{{ c.outro_nome }}">
                     {% else %}
                         <i class="fas fa-user-circle"></i>
                     {% endif %}
