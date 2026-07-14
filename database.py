@@ -29,13 +29,10 @@ def init_db():
     
     try:
         if is_postgres:
-            # UUID extension
-            cur.execute("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";")
-            
-            # Tabela users com UUID
+            # ===== TABELAS PARA POSTGRESQL (COM SERIAL) =====
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS users (
-                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    id SERIAL PRIMARY KEY,
                     nome TEXT NOT NULL,
                     email TEXT UNIQUE NOT NULL,
                     telefone TEXT,
@@ -48,7 +45,6 @@ def init_db():
                 )
             """)
             
-            # Tabela problemas
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS problemas (
                     id SERIAL PRIMARY KEY,
@@ -56,17 +52,16 @@ def init_db():
                     descricao TEXT NOT NULL,
                     categoria TEXT NOT NULL,
                     localizacao TEXT,
-                    usuario_id UUID REFERENCES users(id) ON DELETE CASCADE,
+                    usuario_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
                     data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
             
-            # Tabela mensagens
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS mensagens (
                     id SERIAL PRIMARY KEY,
-                    remetente_id UUID REFERENCES users(id) ON DELETE CASCADE,
-                    destinatario_id UUID REFERENCES users(id) ON DELETE CASCADE,
+                    remetente_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                    destinatario_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
                     problema_id INTEGER REFERENCES problemas(id) ON DELETE CASCADE,
                     conteudo TEXT NOT NULL,
                     lida BOOLEAN DEFAULT FALSE,
@@ -74,30 +69,28 @@ def init_db():
                 )
             """)
             
-            # Tabela favoritos
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS favoritos (
                     id SERIAL PRIMARY KEY,
-                    usuario_id UUID REFERENCES users(id) ON DELETE CASCADE,
+                    usuario_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
                     problema_id INTEGER REFERENCES problemas(id) ON DELETE CASCADE,
                     data_favorito TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     UNIQUE(usuario_id, problema_id)
                 )
             """)
             
-            # Tabela interessados
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS interessados (
                     id SERIAL PRIMARY KEY,
                     problema_id INTEGER REFERENCES problemas(id) ON DELETE CASCADE,
-                    usuario_id UUID REFERENCES users(id) ON DELETE CASCADE,
+                    usuario_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
                     mensagem TEXT,
                     status TEXT DEFAULT 'pendente',
                     data_interesse TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
         else:
-            # SQLite (sem UUID)
+            # ===== TABELAS PARA SQLITE =====
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS users (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
