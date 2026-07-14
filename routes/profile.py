@@ -2,19 +2,26 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from database import get_db
 import os
 import re
-from werkzeug.utils import secure_filename
+import cloudinary
+import cloudinary.uploader
 
 profile = Blueprint('profile', __name__)
 
 # ============================================
-# CONFIGURAÇÃO DE UPLOAD
+# CONFIGURAÇÃO DO CLOUDINARY
 # ============================================
 
-UPLOAD_FOLDER = 'static/uploads/perfil'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+cloudinary.config(
+    cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    api_key=os.environ.get('CLOUDINARY_API_KEY'),
+    api_secret=os.environ.get('CLOUDINARY_API_SECRET')
+)
 
-# Criar pasta se não existir
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# ============================================
+# VALIDAÇÃO DE FICHEIROS
+# ============================================
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -39,7 +46,7 @@ def formatar_telefone(telefone):
 
 
 # ============================================
-# VER PERFIL DO UTILIZADOR LOGADO
+# ROTA: VER PERFIL DO UTILIZADOR LOGADO
 # ============================================
 
 @profile.route('/perfil')
@@ -49,105 +56,116 @@ def perfil():
         return redirect(url_for('auth.login'))
 
     conn = get_db()
+    if conn is None:
+        flash("Erro ao conectar à base de dados!", "danger")
+        return render_template('perfil.html', user=None)
+
     cur = conn.cursor()
-    
-    # Verificar se é PostgreSQL ou SQLite
     is_postgres = hasattr(cur, 'mogrify')
     
-    if is_postgres:
-        cur.execute("""
-            SELECT id, nome, email, telefone, localizacao, bio, foto, data_registo
-            FROM users
-            WHERE id = %s
-        """, (session['user_id'],))
-    else:
-        cur.execute("""
-            SELECT id, nome, email, telefone, localizacao, bio, foto, data_registo
-            FROM users
-            WHERE id = ?
-        """, (session['user_id'],))
-    
-    user = cur.fetchone()
-    cur.close()
-    conn.close()
-
-    if user:
-        # Formatar telefone
-        telefone = user['telefone'] if is_postgres else user[3]
-        if telefone:
-            user['telefone_formatado'] = formatar_telefone(telefone)
+    try:
+        if is_postgres:
+            cur.execute("""
+                SELECT id, nome, email, telefone, localizacao, bio, foto, data_registo
+                FROM users
+                WHERE id = %s::uuid
+            """, (session['user_id'],))
         else:
-            user['telefone_formatado'] = ''
+            cur.execute("""
+                SELECT id, nome, email, telefone, localizacao, bio, foto, data_registo
+                FROM users
+                WHERE id = ?
+            """, (session['user_id'],))
+        
+        user = cur.fetchone()
+        cur.close()
+        conn.close()
 
-    return render_template('perfil.html', user=user)
+        if user:
+            if is_postgres:
+                user['telefone_formatado'] = formatar_telefone(user['telefone']) if user['telefone'] else ''
+            else:
+                user['telefone_formatado'] = formatar_telefone(user[3]) if user[3] else ''
+
+        return render_template('perfil.html', user=user)
+    except Exception as e:
+        print(f"❌ Erro no perfil: {e}")
+        flash(f"Erro ao carregar perfil: {e}", "danger")
+        return render_template('perfil.html', user=None)
 
 
 # ============================================
-# VER PERFIL PÚBLICO
+# ROTA: VER PERFIL PÚBLICO DE OUTRO UTILIZADOR
 # ============================================
 
-@profile.route('/perfil/<int:user_id>')
+@profile.route('/perfil/<user_id>')
 def perfil_publico(user_id):
     conn = get_db()
-    cur = conn.cursor()
-    
-    is_postgres = hasattr(cur, 'mogrify')
-    
-    if is_postgres:
-        cur.execute("""
-            SELECT id, nome, email, telefone, localizacao, bio, foto, data_registo
-            FROM users
-            WHERE id = %s
-        """, (user_id,))
-    else:
-        cur.execute("""
-            SELECT id, nome, email, telefone, localizacao, bio, foto, data_registo
-            FROM users
-            WHERE id = ?
-        """, (user_id,))
-    
-    user = cur.fetchone()
-    cur.close()
-    conn.close()
-
-    if not user:
-        flash("Utilizador não encontrado.", "danger")
+    if conn is None:
+        flash("Erro ao conectar à base de dados!", "danger")
         return redirect(url_for('home.inicio'))
 
-    telefone = user['telefone'] if is_postgres else user[3]
-    if telefone:
-        user['telefone_formatado'] = formatar_telefone(telefone)
-    else:
-        user['telefone_formatado'] = ''
-
-    # Buscar problemas do utilizador
-    conn = get_db()
     cur = conn.cursor()
+    is_postgres = hasattr(cur, 'mogrify')
     
-    if is_postgres:
-        cur.execute("""
-            SELECT id, titulo, descricao, categoria, localizacao, data_criacao
-            FROM problemas
-            WHERE usuario_id = %s
-            ORDER BY data_criacao DESC
-        """, (user_id,))
-    else:
-        cur.execute("""
-            SELECT id, titulo, descricao, categoria, localizacao, data_criacao
-            FROM problemas
-            WHERE usuario_id = ?
-            ORDER BY data_criacao DESC
-        """, (user_id,))
-    
-    problemas = cur.fetchall()
-    cur.close()
-    conn.close()
+    try:
+        if is_postgres:
+            cur.execute("""
+                SELECT id, nome, email, telefone, localizacao, bio, foto, data_registo
+                FROM users
+                WHERE id = %s::uuid
+            """, (user_id,))
+        else:
+            cur.execute("""
+                SELECT id, nome, email, telefone, localizacao, bio, foto, data_registo
+                FROM users
+                WHERE id = ?
+            """, (user_id,))
+        
+        user = cur.fetchone()
+        cur.close()
+        conn.close()
 
-    return render_template('perfil_publico.html', user=user, problemas=problemas)
+        if not user:
+            flash("Utilizador não encontrado.", "danger")
+            return redirect(url_for('home.inicio'))
+
+        if is_postgres:
+            user['telefone_formatado'] = formatar_telefone(user['telefone']) if user['telefone'] else ''
+        else:
+            user['telefone_formatado'] = formatar_telefone(user[3]) if user[3] else ''
+
+        conn = get_db()
+        cur = conn.cursor()
+        
+        if is_postgres:
+            cur.execute("""
+                SELECT id, titulo, descricao, categoria, localizacao, data_criacao
+                FROM problemas
+                WHERE usuario_id = %s::uuid
+                ORDER BY data_criacao DESC
+            """, (user_id,))
+        else:
+            cur.execute("""
+                SELECT id, titulo, descricao, categoria, localizacao, data_criacao
+                FROM problemas
+                WHERE usuario_id = ?
+                ORDER BY data_criacao DESC
+            """, (user_id,))
+        
+        problemas = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        return render_template('perfil_publico.html', user=user, problemas=problemas)
+    except Exception as e:
+        print(f"❌ Erro no perfil público: {e}")
+        flash(f"Erro ao carregar perfil: {e}", "danger")
+        return redirect(url_for('home.inicio'))
 
 
 # ============================================
-# EDITAR PERFIL
+# ROTA: EDITAR PERFIL
 # ============================================
 
 @profile.route('/editar-perfil', methods=['GET', 'POST'])
@@ -174,61 +192,81 @@ def editar_perfil():
             telefone = re.sub(r'[\s\+\(\)\-]', '', telefone)
 
         conn = get_db()
+        if conn is None:
+            flash("Erro ao conectar à base de dados!", "danger")
+            return render_template('editar_perfil.html', user=None)
+
         cur = conn.cursor()
         is_postgres = hasattr(cur, 'mogrify')
         
-        if is_postgres:
-            cur.execute("""
-                UPDATE users
-                SET nome = %s, telefone = %s, localizacao = %s, bio = %s
-                WHERE id = %s
-            """, (nome, telefone, localizacao, bio, session['user_id']))
-        else:
-            cur.execute("""
-                UPDATE users
-                SET nome = ?, telefone = ?, localizacao = ?, bio = ?
-                WHERE id = ?
-            """, (nome, telefone, localizacao, bio, session['user_id']))
-        
-        conn.commit()
-        cur.close()
-        conn.close()
+        try:
+            if is_postgres:
+                cur.execute("""
+                    UPDATE users
+                    SET nome = %s, telefone = %s, localizacao = %s, bio = %s
+                    WHERE id = %s::uuid
+                """, (nome, telefone, localizacao, bio, session['user_id']))
+            else:
+                cur.execute("""
+                    UPDATE users
+                    SET nome = ?, telefone = ?, localizacao = ?, bio = ?
+                    WHERE id = ?
+                """, (nome, telefone, localizacao, bio, session['user_id']))
+            
+            conn.commit()
+            cur.close()
+            conn.close()
 
-        session['nome'] = nome
-        flash("Perfil atualizado com sucesso!", "success")
-        return redirect(url_for('profile.perfil'))
+            session['nome'] = nome
+            flash("Perfil atualizado com sucesso!", "success")
+            return redirect(url_for('profile.perfil'))
+        except Exception as e:
+            conn.rollback()
+            flash(f"Erro ao atualizar perfil: {e}", "danger")
+            return render_template('editar_perfil.html', user=None)
 
     # GET - Mostra formulário com dados atuais
     conn = get_db()
+    if conn is None:
+        flash("Erro ao conectar à base de dados!", "danger")
+        return render_template('editar_perfil.html', user=None)
+
     cur = conn.cursor()
     is_postgres = hasattr(cur, 'mogrify')
     
-    if is_postgres:
-        cur.execute("""
-            SELECT nome, telefone, localizacao, bio
-            FROM users
-            WHERE id = %s
-        """, (session['user_id'],))
-    else:
-        cur.execute("""
-            SELECT nome, telefone, localizacao, bio
-            FROM users
-            WHERE id = ?
-        """, (session['user_id'],))
-    
-    user = cur.fetchone()
-    cur.close()
-    conn.close()
+    try:
+        if is_postgres:
+            cur.execute("""
+                SELECT nome, telefone, localizacao, bio
+                FROM users
+                WHERE id = %s::uuid
+            """, (session['user_id'],))
+        else:
+            cur.execute("""
+                SELECT nome, telefone, localizacao, bio
+                FROM users
+                WHERE id = ?
+            """, (session['user_id'],))
+        
+        user = cur.fetchone()
+        cur.close()
+        conn.close()
 
-    return render_template('editar_perfil.html', user=user)
+        return render_template('editar_perfil.html', user=user)
+    except Exception as e:
+        print(f"❌ Erro ao carregar editar perfil: {e}")
+        flash(f"Erro ao carregar dados: {e}", "danger")
+        return render_template('editar_perfil.html', user=None)
 
 
 # ============================================
-# UPLOAD DE FOTO DE PERFIL (VERSÃO SIMPLES - LOCAL)
+# ROTA: UPLOAD DE FOTO DE PERFIL (CLOUDINARY)
 # ============================================
 
 @profile.route('/upload-foto', methods=['POST'])
 def upload_foto():
+    print("🚀 FUNÇÃO UPLOAD_FOTO FOI CHAMADA!")
+
     if 'user_id' not in session:
         flash("Faça login para atualizar a foto.", "warning")
         return redirect(url_for('auth.login'))
@@ -246,25 +284,49 @@ def upload_foto():
         flash("Formato inválido. Use JPG, PNG ou GIF.", "danger")
         return redirect(url_for('profile.perfil'))
 
-    # Salvar a foto localmente
-    ext = foto.filename.rsplit('.', 1)[1].lower()
-    filename = f"user_{session['user_id']}.{ext}"
-    filepath = os.path.join(UPLOAD_FOLDER, filename)
-    foto.save(filepath)
+    try:
+        # Upload para o Cloudinary
+        upload_result = cloudinary.uploader.upload(
+            foto,
+            folder=f"clourf/perfil/{session['user_id']}",
+            transformation=[{'width': 300, 'height': 300, 'crop': 'limit'}]
+        )
+        
+        foto_url = upload_result['secure_url']
+        print(f"✅ URL do Cloudinary: {foto_url}")
 
-    # Guardar o nome do ficheiro no banco
-    conn = get_db()
-    cur = conn.cursor()
-    is_postgres = hasattr(cur, 'mogrify')
-    
-    if is_postgres:
-        cur.execute("UPDATE users SET foto = %s WHERE id = %s", (filename, session['user_id']))
-    else:
-        cur.execute("UPDATE users SET foto = ? WHERE id = ?", (filename, session['user_id']))
-    
-    conn.commit()
-    cur.close()
-    conn.close()
+        # Guardar o URL no banco
+        conn = get_db()
+        if conn is None:
+            flash("Erro ao conectar à base de dados!", "danger")
+            return redirect(url_for('profile.perfil'))
 
-    flash("Foto de perfil atualizada com sucesso!", "success")
+        cur = conn.cursor()
+        is_postgres = hasattr(cur, 'mogrify')
+        
+        if is_postgres:
+            cur.execute("UPDATE users SET foto = %s WHERE id = %s::uuid", (foto_url, session['user_id']))
+        else:
+            cur.execute("UPDATE users SET foto = ? WHERE id = ?", (foto_url, session['user_id']))
+        
+        conn.commit()
+        
+        # Verificar se foi guardado
+        if is_postgres:
+            cur.execute("SELECT foto FROM users WHERE id = %s::uuid", (session['user_id'],))
+        else:
+            cur.execute("SELECT foto FROM users WHERE id = ?", (session['user_id'],))
+        
+        resultado = cur.fetchone()
+        print(f"✅ Foto guardada no banco: {resultado['foto'] if resultado else 'NULO'}")
+        
+        cur.close()
+        conn.close()
+
+        flash("Foto de perfil atualizada com sucesso!", "success")
+
+    except Exception as e:
+        print(f"❌ Erro no upload: {e}")
+        flash(f"Erro ao fazer upload: {e}", "danger")
+
     return redirect(url_for('profile.perfil'))
