@@ -47,6 +47,17 @@ app.register_blueprint(admin_usuarios)
 app.register_blueprint(admin_problemas)
 
 # ============================================
+# ROTA PRINCIPAL
+# ============================================
+
+@app.route('/')
+def index():
+    from flask import session
+    if 'user_id' in session:
+        return redirect(url_for('home.inicio'))
+    return render_template('landing.html')
+
+# ============================================
 # CONTEXT PROCESSOR (DISPONÍVEL EM TODAS AS PÁGINAS)
 # ============================================
 
@@ -61,10 +72,8 @@ def inject_user():
     user_foto = None
     
     if user_id:
-        # Contar mensagens não lidas
         notificacoes = contar_nao_lidas(user_id)
         
-        # Buscar a foto do utilizador
         try:
             conn = get_db()
             if conn:
@@ -83,7 +92,7 @@ def inject_user():
                 if result:
                     user_foto = result['foto'] if is_postgres else result[0]
         except Exception as e:
-            print(f"⚠️ Erro ao buscar foto do utilizador: {e}")
+            print(f"⚠️ Erro ao buscar foto: {e}")
     
     return dict(
         user_id=user_id,
