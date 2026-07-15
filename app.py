@@ -52,14 +52,12 @@ app.register_blueprint(admin_problemas)
 
 @app.route('/')
 def index():
-    # Se o utilizador já estiver logado, vai para o dashboard
     if 'user_id' in session:
         return redirect(url_for('home.inicio'))
-    # Caso contrário, mostra a landing page
     return render_template('landing.html')
 
 # ============================================
-# CONTEXT PROCESSOR (DISPONÍVEL EM TODAS AS PÁGINAS)
+# CONTEXT PROCESSOR
 # ============================================
 
 @app.context_processor
