@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
         /* ========================================
-           LANDING PAGE - APENAS INFORMAÇÕES
+           LANDING PAGE - SEM PROBLEMAS
         ======================================== */
         body {
             background: var(--fundo);
@@ -67,6 +67,7 @@
             justify-content: space-between;
             padding: 3rem 0;
             gap: 3rem;
+            min-height: 50vh;
         }
 
         .hero-content {
@@ -343,8 +344,8 @@
         <!-- ===== HERO ===== -->
         <section class="hero">
             <div class="hero-content">
-                <h1>Tudo que você precisa para <span class="destaque">crescer online</span></h1>
-                <p>A plataforma completa para você publicar, divulgar, alcançar milhares de pessoas e construir resultados reais de forma simples e inteligente.</p>
+                <h1>Conecte, compartilhe e <span class="destaque">cresça com a Clourf</span></h1>
+                <p>Publique o que você precisa e encontre pessoas confiáveis para resolver os seus problemas.</p>
                 <div class="hero-buttons">
                     <a href="{{ url_for('auth.register') }}" class="btn-primary">
                         <i class="fas fa-rocket"></i> Começar agora
