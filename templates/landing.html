@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
+        /* ========================================
+           LANDING PAGE - ESTILO CLOURF
+        ======================================== */
         body {
             background: var(--fundo);
             color: var(--branco);
@@ -14,18 +17,12 @@
             margin: 0;
             padding: 0;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
         }
 
         .landing-container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 2rem;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
         }
 
         /* Top Bar */
@@ -35,7 +32,7 @@
             align-items: center;
             padding: 1rem 0;
             border-bottom: 1px solid var(--cinza-escuro);
-            margin-bottom: 3rem;
+            margin-bottom: 2rem;
         }
 
         .landing-logo {
@@ -63,22 +60,21 @@
             margin-left: 1.5rem;
         }
 
-        /* Hero */
+        /* Hero Section */
         .hero {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 2rem 0;
+            padding: 1rem 0 3rem 0;
             gap: 3rem;
-            flex: 1;
         }
 
         .hero-content {
-            flex: 1;
+            flex: 1.2;
         }
 
         .hero-content h1 {
-            font-size: 3.2rem;
+            font-size: 2.8rem;
             margin-bottom: 1.5rem;
             line-height: 1.2;
         }
@@ -88,7 +84,7 @@
         }
 
         .hero-content p {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: var(--cinza-claro);
             margin-bottom: 2rem;
             max-width: 500px;
@@ -99,12 +95,12 @@
             display: flex;
             gap: 1rem;
             flex-wrap: wrap;
+            margin-bottom: 2rem;
         }
 
         .hero-stats {
             display: flex;
             gap: 2.5rem;
-            margin-top: 2.5rem;
         }
 
         .hero-stats div {
@@ -113,13 +109,13 @@
 
         .hero-stats span {
             display: block;
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             font-weight: 700;
             color: var(--azul-muito-claro);
         }
 
         .hero-stats small {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--cinza-medio);
         }
 
@@ -129,49 +125,71 @@
         }
 
         .hero-image i {
-            font-size: 12rem;
+            font-size: 10rem;
             color: var(--azul-muito-claro);
-            opacity: 0.2;
+            opacity: 0.15;
         }
 
-        /* Features */
-        .features {
+        /* Features Grid */
+        .features-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(4, 1fr);
             gap: 1.5rem;
-            padding: 3rem 0;
+            padding: 2.5rem 0;
             border-top: 1px solid var(--cinza-escuro);
-            margin-top: 2rem;
+            margin-top: 1rem;
         }
 
-        .feature-item {
-            text-align: center;
-            padding: 1.5rem;
+        .feature-card {
             background: var(--azul-medio);
+            padding: 1.8rem 1.5rem;
             border-radius: var(--radius);
+            text-align: center;
             transition: var(--transition);
         }
 
-        .feature-item:hover {
+        .feature-card:hover {
             transform: translateY(-5px);
             background: var(--azul-claro);
         }
 
-        .feature-item i {
+        .feature-card i {
             font-size: 2.5rem;
             color: var(--azul-muito-claro);
             margin-bottom: 1rem;
         }
 
-        .feature-item h3 {
-            font-size: 1.1rem;
+        .feature-card h3 {
+            font-size: 1rem;
             margin-bottom: 0.5rem;
             color: var(--branco);
         }
 
-        .feature-item p {
-            font-size: 0.9rem;
+        .feature-card p {
+            font-size: 0.85rem;
             color: var(--cinza-claro);
+            line-height: 1.4;
+        }
+
+        /* CTA */
+        .cta-section {
+            background: var(--azul-medio);
+            border-radius: var(--radius);
+            padding: 3rem 2rem;
+            text-align: center;
+            margin: 2rem 0;
+            border: 1px solid var(--cinza-escuro);
+        }
+
+        .cta-section h2 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .cta-section p {
+            color: var(--cinza-claro);
+            margin-bottom: 1.5rem;
+            font-size: 1rem;
         }
 
         /* Footer */
@@ -180,14 +198,24 @@
             padding: 2rem 0;
             border-top: 1px solid var(--cinza-escuro);
             color: var(--cinza-medio);
-            margin-top: 2rem;
+            margin-top: 1rem;
+            font-size: 0.9rem;
         }
 
-        /* Responsivo */
+        /* ========================================
+           RESPONSIVO
+        ======================================== */
+        @media (max-width: 992px) {
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
         @media (max-width: 768px) {
             .hero {
                 flex-direction: column;
                 text-align: center;
+                padding: 1rem 0;
             }
 
             .hero-content p {
@@ -223,13 +251,17 @@
             }
 
             .hero-content h1 {
-                font-size: 2.2rem;
+                font-size: 2rem;
+            }
+
+            .cta-section h2 {
+                font-size: 1.5rem;
             }
         }
 
         @media (max-width: 480px) {
-            .features {
-                grid-template-columns: 1fr 1fr;
+            .features-grid {
+                grid-template-columns: 1fr;
             }
 
             .landing-container {
@@ -237,7 +269,15 @@
             }
 
             .hero-content h1 {
-                font-size: 1.8rem;
+                font-size: 1.6rem;
+            }
+
+            .hero-stats {
+                gap: 1rem;
+            }
+
+            .hero-stats span {
+                font-size: 1.2rem;
             }
         }
     </style>
@@ -246,7 +286,7 @@
 
     <div class="landing-container">
 
-        <!-- Top Bar -->
+        <!-- ===== TOP BAR ===== -->
         <header class="landing-top-bar">
             <div class="landing-logo"><i class="fas fa-handshake"></i> Clourf</div>
             <nav class="landing-nav">
@@ -257,11 +297,11 @@
             </nav>
         </header>
 
-        <!-- Hero -->
+        <!-- ===== HERO ===== -->
         <section class="hero">
             <div class="hero-content">
-                <h1>Conecte, compartilhe e <span class="destaque">cresça com a Clourf</span></h1>
-                <p>Publique o que você precisa e encontre pessoas confiáveis para resolver os seus problemas.</p>
+                <h1>Tudo que você precisa para <span class="destaque">crescer online</span></h1>
+                <p>A plataforma completa para você publicar, divulgar, alcançar milhares de pessoas e construir resultados reais de forma simples e inteligente.</p>
                 <div class="hero-buttons">
                     <a href="{{ url_for('auth.register') }}" class="btn-primary">
                         <i class="fas fa-rocket"></i> Começar agora
@@ -288,31 +328,40 @@
             </div>
         </section>
 
-        <!-- Features -->
-        <section id="recursos" class="features">
-            <div class="feature-item">
+        <!-- ===== FEATURES ===== -->
+        <section id="recursos" class="features-grid">
+            <div class="feature-card">
                 <i class="fas fa-users"></i>
                 <h3>Conecte-se</h3>
                 <p>Encontre pessoas que podem ajudar a resolver os seus problemas.</p>
             </div>
-            <div class="feature-item">
+            <div class="feature-card">
                 <i class="fas fa-share-alt"></i>
                 <h3>Compartilhe</h3>
                 <p>Publique os seus problemas e receba propostas.</p>
             </div>
-            <div class="feature-item">
+            <div class="feature-card">
                 <i class="fas fa-chart-line"></i>
                 <h3>Cresça</h3>
                 <p>Construa uma rede de contactos e resolva os seus desafios.</p>
             </div>
-            <div class="feature-item">
+            <div class="feature-card">
                 <i class="fas fa-shield-alt"></i>
                 <h3>Seguro</h3>
                 <p>Dados protegidos e comunicação segura.</p>
             </div>
         </section>
 
-        <!-- Footer -->
+        <!-- ===== CTA ===== -->
+        <section class="cta-section">
+            <h2>Pronto para começar?</h2>
+            <p>Junte-se a milhares de pessoas que já usam o Clourf para resolver problemas todos os dias.</p>
+            <a href="{{ url_for('auth.register') }}" class="btn-primary">
+                <i class="fas fa-user-plus"></i> Criar conta gratuita
+            </a>
+        </section>
+
+        <!-- ===== FOOTER ===== -->
         <footer class="landing-footer">
             <p>© 2026 Clourf. Conectamos problemas a soluções.</p>
         </footer>
