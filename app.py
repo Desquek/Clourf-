@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, redirect, url_for, session
 from config import Config
 import os
 import database
@@ -47,23 +47,21 @@ app.register_blueprint(admin_usuarios)
 app.register_blueprint(admin_problemas)
 
 # ============================================
-# ROTA PRINCIPAL
+# ROTA PRINCIPAL (LANDING)
 # ============================================
 
 @app.route('/')
 def index():
-    from flask import session
     if 'user_id' in session:
         return redirect(url_for('home.inicio'))
     return render_template('landing.html')
 
 # ============================================
-# CONTEXT PROCESSOR (DISPONÍVEL EM TODAS AS PÁGINAS)
+# CONTEXT PROCESSOR
 # ============================================
 
 @app.context_processor
 def inject_user():
-    from flask import session
     from routes.messages import contar_nao_lidas
     from database import get_db
     
