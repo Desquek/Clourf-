@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Publicar produto - Clourf{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1><i class="fas fa-plus-circle"></i> Publicar produto</h1>
+    <p>Adicione o seu produto à vitrina Clourf.</p>
+
+    <form method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            <label>Título <span class="required">*</span></label>
+            <input type="text" name="titulo" placeholder="Ex: iPhone 12 Pro" required>
+        </div>
+
+        <div class="form-group">
+            <label>Descrição <span class="required">*</span></label>
+            <textarea name="descricao" rows="4" placeholder="Descreva o produto..." required></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Preço (MZN) <span class="required">*</span></label>
+            <input type="number" name="preco" placeholder="Ex: 25000" step="0.01" required>
+        </div>
+
+        <div class="form-group">
+            <label>Categoria <span class="required">*</span></label>
+            <select name="categoria" required>
+                <option value="">Selecione uma categoria</option>
+                <option value="Eletrónica">Eletrónica</option>
+                <option value="Moda">Moda</option>
+                <option value="Automóveis">Automóveis</option>
+                <option value="Imóveis">Imóveis</option>
+                <option value="Serviços">Serviços</option>
+                <option value="Outros">Outros</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Localização</label>
+            <input type="text" name="localizacao" placeholder="Maputo, Matola...">
+        </div>
+
+        <div class="form-group">
+            <label>Fotos (até 4)</label>
+            <input type="file" name="foto1" accept="image/*">
+            <input type="file" name="foto2" accept="image/*" style="margin-top: 5px;">
+            <input type="file" name="foto3" accept="image/*" style="margin-top: 5px;">
+            <input type="file" name="foto4" accept="image/*" style="margin-top: 5px;">
+            <small style="color: var(--cinza-medio);">Formatos: JPG, PNG, GIF</small>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-primary"><i class="fas fa-share"></i> Publicar</button>
+            <a href="{{ url_for('vitrina.vitrina_lista') }}" class="btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
