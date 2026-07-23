@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Vitrina - Clourf{% endblock %}
+
+{% block content %}
+<div class="vitrina-container">
+    <div class="vitrina-header">
+        <h1><i class="fas fa-store"></i> Vitrina Clourf</h1>
+        <a href="{{ url_for('vitrina.vitrina_novo') }}" class="btn-primary">
+            <i class="fas fa-plus"></i> Publicar produto
+        </a>
+    </div>
+
+    {% if produtos %}
+        <div class="produtos-grid">
+            {% for p in produtos %}
+            <div class="produto-card">
+                <a href="{{ url_for('vitrina.vitrina_detalhe', produto_id=p.id) }}">
+                    {% if p.fotos and p.fotos|length > 0 %}
+                        <img src="{{ p.fotos[0] }}" alt="{{ p.titulo }}" class="produto-imagem">
+                    {% else %}
+                        <div class="produto-sem-imagem">
+                            <i class="fas fa-image"></i>
+                        </div>
+                    {% endif %}
+                    <div class="produto-info">
+                        <h3>{{ p.titulo }}</h3>
+                        <p class="produto-preco">{{ p.preco }} MZN</p>
+                        <p class="produto-localizacao"><i class="fas fa-map-marker-alt"></i> {{ p.localizacao or 'Local não definido' }}</p>
+                        <p class="produto-vendedor">Por: {{ p.vendedor_nome }}</p>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-store"></i>
+            <p>Nenhum produto publicado ainda.</p>
+            <a href="{{ url_for('vitrina.vitrina_novo') }}" class="btn-primary">Seja o primeiro a publicar!</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
