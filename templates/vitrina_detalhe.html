@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}{{ produto.titulo }} - Clourf{% endblock %}
+
+{% block content %}
+<div class="produto-detalhe-container">
+    <div class="produto-detalhe-card">
+        <a href="{{ url_for('vitrina.vitrina_lista') }}" class="voltar">
+            <i class="fas fa-arrow-left"></i> Voltar à vitrina
+        </a>
+
+        <div class="produto-detalhe-grid">
+            <div class="produto-detalhe-fotos">
+                {% if fotos %}
+                    <img src="{{ fotos[0] }}" alt="{{ produto.titulo }}" class="produto-detalhe-imagem-principal">
+                    <div class="produto-detalhe-miniaturas">
+                        {% for foto in fotos[1:4] %}
+                            <img src="{{ foto }}" alt="{{ produto.titulo }}" class="produto-detalhe-miniatura">
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="produto-sem-imagem-grande">
+                        <i class="fas fa-image"></i>
+                        <p>Sem foto</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="produto-detalhe-info">
+                <h1>{{ produto.titulo }}</h1>
+                <p class="produto-detalhe-preco">{{ produto.preco }} MZN</p>
+                <p class="produto-detalhe-categoria"><i class="fas fa-tag"></i> {{ produto.categoria }}</p>
+                <p class="produto-detalhe-localizacao"><i class="fas fa-map-marker-alt"></i> {{ produto.localizacao or 'Local não definido' }}</p>
+                <p class="produto-detalhe-descricao">{{ produto.descricao }}</p>
+
+                <div class="produto-detalhe-vendedor">
+                    <h3>Vendedor</h3>
+                    <div class="vendedor-info">
+                        <img src="{{ url_for('static', filename='uploads/perfil/' + produto.vendedor_foto) if produto.vendedor_foto else url_for('static', filename='img/default.png') }}" alt="{{ produto.vendedor_nome }}" class="vendedor-avatar">
+                        <div>
+                            <p><strong>{{ produto.vendedor_nome }}</strong></p>
+                            <p><i class="fas fa-envelope"></i> {{ produto.email }}</p>
+                            <p><i class="fas fa-phone"></i> {{ produto.telefone or 'Não informado' }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="produto-detalhe-actions">
+                    <a href="{{ url_for('messages.conversa', outro_id=produto.usuario_id) }}" class="btn-primary">
+                        <i class="fas fa-envelope"></i> Falar com vendedor
+                    </a>
+                    {% if session.user_id == produto.usuario_id %}
+                        <form method="POST" action="{{ url_for('vitrina.vitrina_apagar', produto_id=produto.id) }}" style="display: inline;">
+                            <button type="submit" class="btn-danger" onclick="return confirm('Tem certeza?')">
+                                <i class="fas fa-trash"></i> Apagar
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
