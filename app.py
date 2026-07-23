@@ -32,6 +32,7 @@ from routes.categorias import categorias_bp
 from routes.admin.dashboard import admin_dashboard
 from routes.admin.usuarios import admin_usuarios
 from routes.admin.problemas import admin_problemas
+from routes.vitrina import vitrina  # <-- NOVA ROTA
 
 app.register_blueprint(auth)
 app.register_blueprint(home)
@@ -45,6 +46,7 @@ app.register_blueprint(categorias_bp)
 app.register_blueprint(admin_dashboard)
 app.register_blueprint(admin_usuarios)
 app.register_blueprint(admin_problemas)
+app.register_blueprint(vitrina)  # <-- REGISTAR
 
 # ============================================
 # ROTA PRINCIPAL (LANDING)
