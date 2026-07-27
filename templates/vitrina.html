@@ -6,9 +6,14 @@
 <div class="vitrina-container">
     <div class="vitrina-header">
         <h1><i class="fas fa-store"></i> Vitrina Clourf</h1>
-        <a href="{{ url_for('vitrina.vitrina_novo') }}" class="btn-primary">
-            <i class="fas fa-plus"></i> Publicar produto
-        </a>
+        <div class="vitrina-actions">
+            <a href="{{ url_for('vitrina.vitrina_novo') }}" class="btn-primary">
+                <i class="fas fa-plus"></i> Publicar produto
+            </a>
+            <a href="{{ url_for('vitrina.vitrina_meus_produtos') }}" class="btn-secondary">
+                <i class="fas fa-list"></i> Meus produtos
+            </a>
+        </div>
     </div>
 
     {% if produtos %}
