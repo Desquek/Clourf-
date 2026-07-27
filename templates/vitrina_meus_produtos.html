@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Meus produtos - Clourf{% endblock %}
+
+{% block content %}
+<div class="meus-produtos-container">
+    <div class="meus-produtos-header">
+        <h1><i class="fas fa-box"></i> Meus produtos</h1>
+        <a href="{{ url_for('vitrina.vitrina_novo') }}" class="btn-primary">
+            <i class="fas fa-plus"></i> Publicar produto
+        </a>
+    </div>
+
+    {% if produtos %}
+        <div class="produtos-grid">
+            {% for p in produtos %}
+            <div class="produto-card">
+                <a href="{{ url_for('vitrina.vitrina_detalhe', produto_id=p.id) }}">
+                    {% if p.fotos and p.fotos|length > 0 %}
+                        <img src="{{ p.fotos[0] }}" alt="{{ p.titulo }}" class="produto-imagem">
+                    {% else %}
+                        <div class="produto-sem-imagem">
+                            <i class="fas fa-image"></i>
+                        </div>
+                    {% endif %}
+                    <div class="produto-info">
+                        <h3>{{ p.titulo }}</h3>
+                        <p class="produto-preco">{{ p.preco }} MZN</p>
+                        <p class="produto-localizacao"><i class="fas fa-map-marker-alt"></i> {{ p.localizacao or 'Local não definido' }}</p>
+                        <p class="produto-status">
+                            {% if p.status == 'ativo' %}
+                                <span style="color: #22C55E;">● Ativo</span>
+                            {% else %}
+                                <span style="color: #EF4444;">● Inativo</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </a>
+                <div class="produto-actions" style="padding: 0 1rem 1rem; display: flex; gap: 0.5rem;">
+                    <form method="POST" action="{{ url_for('vitrina.vitrina_apagar', produto_id=p.id) }}" style="display: inline;">
+                        <button type="submit" class="btn-danger btn-sm" onclick="return confirm('Apagar este produto?')">
+                            <i class="fas fa-trash"></i> Apagar
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-box-open"></i>
+            <p>Não tens produtos publicados.</p>
+            <a href="{{ url_for('vitrina.vitrina_novo') }}" class="btn-primary">Publicar agora</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
