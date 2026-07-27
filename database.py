@@ -29,7 +29,9 @@ def init_db():
     
     try:
         if is_postgres:
-            # ===== TABELAS PARA POSTGRESQL (COM SERIAL) =====
+            # ===== TABELAS PARA POSTGRESQL =====
+            
+            # Tabela users
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS users (
                     id SERIAL PRIMARY KEY,
@@ -41,10 +43,12 @@ def init_db():
                     bio TEXT,
                     foto TEXT DEFAULT 'default.png',
                     is_admin BOOLEAN DEFAULT FALSE,
+                    flutterwave_subaccount_id TEXT,
                     data_registo TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
             
+            # Tabela problemas
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS problemas (
                     id SERIAL PRIMARY KEY,
@@ -57,6 +61,7 @@ def init_db():
                 )
             """)
             
+            # Tabela mensagens
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS mensagens (
                     id SERIAL PRIMARY KEY,
@@ -69,6 +74,7 @@ def init_db():
                 )
             """)
             
+            # Tabela favoritos
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS favoritos (
                     id SERIAL PRIMARY KEY,
@@ -79,6 +85,7 @@ def init_db():
                 )
             """)
             
+            # Tabela interessados
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS interessados (
                     id SERIAL PRIMARY KEY,
@@ -89,8 +96,27 @@ def init_db():
                     data_interesse TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
+            
+            # ===== TABELA PRODUTOS (VITRINA) =====
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS produtos (
+                    id SERIAL PRIMARY KEY,
+                    titulo TEXT NOT NULL,
+                    descricao TEXT NOT NULL,
+                    preco REAL NOT NULL,
+                    categoria TEXT NOT NULL,
+                    localizacao TEXT,
+                    fotos TEXT[],
+                    usuario_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                    status TEXT DEFAULT 'ativo',
+                    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
         else:
             # ===== TABELAS PARA SQLITE =====
+            
+            # Tabela users
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS users (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -102,10 +128,12 @@ def init_db():
                     bio TEXT,
                     foto TEXT DEFAULT 'default.png',
                     is_admin INTEGER DEFAULT 0,
+                    flutterwave_subaccount_id TEXT,
                     data_registo TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
             
+            # Tabela problemas
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS problemas (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -118,6 +146,7 @@ def init_db():
                 )
             """)
             
+            # Tabela mensagens
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS mensagens (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -130,6 +159,7 @@ def init_db():
                 )
             """)
             
+            # Tabela favoritos
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS favoritos (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -140,6 +170,7 @@ def init_db():
                 )
             """)
             
+            # Tabela interessados
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS interessados (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -150,9 +181,26 @@ def init_db():
                     data_interesse TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
+            
+            # ===== TABELA PRODUTOS (VITRINA) =====
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS produtos (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    titulo TEXT NOT NULL,
+                    descricao TEXT NOT NULL,
+                    preco REAL NOT NULL,
+                    categoria TEXT NOT NULL,
+                    localizacao TEXT,
+                    fotos TEXT,
+                    usuario_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                    status TEXT DEFAULT 'ativo',
+                    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
         
         conn.commit()
         print("✅ Tabelas criadas/verificadas com sucesso!")
+        
     except Exception as e:
         print(f"❌ Erro ao criar tabelas: {e}")
         conn.rollback()
