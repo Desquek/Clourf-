@@ -1,212 +1,99 @@
-import os
-import psycopg2
-from psycopg2.extras import RealDictCursor
-import sqlite3
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Clourf{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet">
+    {% block head %}{% endblock %}
+</head>
+<body>
 
-def get_db():
-    try:
-        database_url = os.environ.get('DATABASE_URL')
-        if not database_url:
-            raise Exception("DATABASE_URL não configurada!")
-        return psycopg2.connect(database_url, cursor_factory=RealDictCursor)
-    except Exception as e:
-        print(f"❌ Erro ao conectar ao PostgreSQL: {e}")
-        try:
-            print("🔄 Usando SQLite como fallback...")
-            return sqlite3.connect('database.db')
-        except Exception as e2:
-            print(f"❌ Erro ao conectar ao SQLite: {e2}")
-            return None
+    <!-- Top Bar -->
+    <header class="top-bar">
+        <button class="menu-btn" onclick="toggleMenu()">
+            <i class="fas fa-bars"></i>
+            {% if notificacoes_nao_lidas is defined and notificacoes_nao_lidas > 0 %}
+                <span class="badge-notificacao" id="menu-badge">{{ notificacoes_nao_lidas }}</span>
+            {% endif %}
+        </button>
+        <div class="logo"><i class="fas fa-handshake"></i> Clourf</div>
+        <div class="user-avatar">
+            <a href="{{ url_for('profile.perfil') }}" style="position: relative; display: flex; align-items: center;">
+                {% if user_id and user_foto %}
+                    <img src="{{ user_foto }}" alt="Foto" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--azul-claro);">
+                {% else %}
+                    <i class="fas fa-user-circle" style="font-size: 2rem;"></i>
+                {% endif %}
+            </a>
+            <a href="{{ url_for('messages.mensagens') }}" style="position: relative; margin-left: 0.5rem;">
+                <i class="fas fa-envelope"></i>
+                {% if notificacoes_nao_lidas is defined and notificacoes_nao_lidas > 0 %}
+                    <span class="badge-notificacao" id="mensagem-badge">{{ notificacoes_nao_lidas }}</span>
+                {% endif %}
+            </a>
+        </div>
+    </header>
 
-def init_db():
-    conn = get_db()
-    if conn is None:
-        print("❌ Não foi possível conectar.")
-        return
+    <!-- Menu Lateral -->
+    <nav class="sidebar" id="sidebar">
+        <button class="close-btn" onclick="toggleMenu()"><i class="fas fa-times"></i></button>
+        <ul>
+            {% if user_id %}
+                <li><a href="{{ url_for('home.inicio') }}"><i class="fas fa-home"></i> Início</a></li>
+                <li><a href="{{ url_for('posts.novo_problema') }}"><i class="fas fa-plus-circle"></i> Publicar</a></li>
+                <li><a href="{{ url_for('vitrina.vitrina_lista') }}"><i class="fas fa-store"></i> Vitrina</a></li> <!-- NOVO -->
+                <li><a href="{{ url_for('favorites.favoritos') }}"><i class="fas fa-heart"></i> Favoritos</a></li>
+                <li><a href="{{ url_for('messages.mensagens') }}"><i class="fas fa-envelope"></i> Mensagens</a></li>
+                <li><a href="{{ url_for('notifications.notificacoes') }}"><i class="fas fa-bell"></i> Notificações</a></li>
+                <li>
+                    <a href="{{ url_for('profile.perfil') }}" style="display: flex; align-items: center; gap: 10px;">
+                        {% if user_foto %}
+                            <img src="{{ user_foto }}" alt="Foto" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 2px solid var(--azul-claro);">
+                        {% else %}
+                            <i class="fas fa-user-circle"></i>
+                        {% endif %}
+                        Perfil
+                    </a>
+                </li>
+                <li><a href="{{ url_for('search.pesquisar') }}"><i class="fas fa-search"></i> Pesquisar</a></li>
+                <li><a href="{{ url_for('categorias.categorias') }}"><i class="fas fa-th-large"></i> Categorias</a></li>
+                <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Sair</a></li>
+            {% else %}
+                <li><a href="{{ url_for('auth.login') }}"><i class="fas fa-sign-in-alt"></i> Entrar</a></li>
+                <li><a href="{{ url_for('auth.register') }}"><i class="fas fa-user-plus"></i> Criar conta</a></li>
+            {% endif %}
+        </ul>
+    </nav>
 
-    cur = conn.cursor()
-    is_postgres = hasattr(cur, 'mogrify')
-    
-    try:
-        if is_postgres:
-            # ===== TABELAS PARA POSTGRESQL =====
-            
-            # Tabela users
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS users (
-                    id SERIAL PRIMARY KEY,
-                    nome TEXT NOT NULL,
-                    email TEXT UNIQUE NOT NULL,
-                    telefone TEXT,
-                    senha_hash TEXT NOT NULL,
-                    localizacao TEXT,
-                    bio TEXT,
-                    foto TEXT DEFAULT 'default.png',
-                    is_admin BOOLEAN DEFAULT FALSE,
-                    flutterwave_subaccount_id TEXT,
-                    data_registo TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            
-            # Tabela problemas
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS problemas (
-                    id SERIAL PRIMARY KEY,
-                    titulo TEXT NOT NULL,
-                    descricao TEXT NOT NULL,
-                    categoria TEXT NOT NULL,
-                    localizacao TEXT,
-                    usuario_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-                    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            
-            # Tabela mensagens
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS mensagens (
-                    id SERIAL PRIMARY KEY,
-                    remetente_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-                    destinatario_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-                    problema_id INTEGER REFERENCES problemas(id) ON DELETE CASCADE,
-                    conteudo TEXT NOT NULL,
-                    lida BOOLEAN DEFAULT FALSE,
-                    data_envio TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            
-            # Tabela favoritos
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS favoritos (
-                    id SERIAL PRIMARY KEY,
-                    usuario_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-                    problema_id INTEGER REFERENCES problemas(id) ON DELETE CASCADE,
-                    data_favorito TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    UNIQUE(usuario_id, problema_id)
-                )
-            """)
-            
-            # Tabela interessados
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS interessados (
-                    id SERIAL PRIMARY KEY,
-                    problema_id INTEGER REFERENCES problemas(id) ON DELETE CASCADE,
-                    usuario_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-                    mensagem TEXT,
-                    status TEXT DEFAULT 'pendente',
-                    data_interesse TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            
-            # ===== TABELA PRODUTOS (VITRINA) =====
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS produtos (
-                    id SERIAL PRIMARY KEY,
-                    titulo TEXT NOT NULL,
-                    descricao TEXT NOT NULL,
-                    preco REAL NOT NULL,
-                    categoria TEXT NOT NULL,
-                    localizacao TEXT,
-                    fotos TEXT[],
-                    usuario_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-                    status TEXT DEFAULT 'ativo',
-                    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            
-        else:
-            # ===== TABELAS PARA SQLITE =====
-            
-            # Tabela users
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS users (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    nome TEXT NOT NULL,
-                    email TEXT UNIQUE NOT NULL,
-                    telefone TEXT,
-                    senha_hash TEXT NOT NULL,
-                    localizacao TEXT,
-                    bio TEXT,
-                    foto TEXT DEFAULT 'default.png',
-                    is_admin INTEGER DEFAULT 0,
-                    flutterwave_subaccount_id TEXT,
-                    data_registo TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            
-            # Tabela problemas
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS problemas (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    titulo TEXT NOT NULL,
-                    descricao TEXT NOT NULL,
-                    categoria TEXT NOT NULL,
-                    localizacao TEXT,
-                    usuario_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-                    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            
-            # Tabela mensagens
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS mensagens (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    remetente_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-                    destinatario_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-                    problema_id INTEGER REFERENCES problemas(id) ON DELETE CASCADE,
-                    conteudo TEXT NOT NULL,
-                    lida INTEGER DEFAULT 0,
-                    data_envio TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            
-            # Tabela favoritos
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS favoritos (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    usuario_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-                    problema_id INTEGER REFERENCES problemas(id) ON DELETE CASCADE,
-                    data_favorito TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    UNIQUE(usuario_id, problema_id)
-                )
-            """)
-            
-            # Tabela interessados
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS interessados (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    problema_id INTEGER REFERENCES problemas(id) ON DELETE CASCADE,
-                    usuario_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-                    mensagem TEXT,
-                    status TEXT DEFAULT 'pendente',
-                    data_interesse TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            
-            # ===== TABELA PRODUTOS (VITRINA) =====
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS produtos (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    titulo TEXT NOT NULL,
-                    descricao TEXT NOT NULL,
-                    preco REAL NOT NULL,
-                    categoria TEXT NOT NULL,
-                    localizacao TEXT,
-                    fotos TEXT,
-                    usuario_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-                    status TEXT DEFAULT 'ativo',
-                    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
+    <!-- Overlay -->
+    <div class="overlay" onclick="toggleMenu()"></div>
+
+    <!-- Conteúdo Principal -->
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
         
-        conn.commit()
-        print("✅ Tabelas criadas/verificadas com sucesso!")
-        
-    except Exception as e:
-        print(f"❌ Erro ao criar tabelas: {e}")
-        conn.rollback()
-    finally:
-        cur.close()
-        conn.close()
+        {% block content %}{% endblock %}
+    </main>
 
-print("🚀 A verificar/criar tabelas...")
-init_db()
+    <!-- Rodapé -->
+    <footer>
+        <p>© 2026 Clourf. Conectamos problemas a soluções.</p>
+    </footer>
+
+    <script>
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.querySelector('.overlay').classList.toggle('show');
+        }
+    </script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
