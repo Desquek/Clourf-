@@ -11,13 +11,15 @@
 
         <div class="produto-detalhe-grid">
             <div class="produto-detalhe-fotos">
-                {% if fotos %}
+                {% if fotos and fotos|length > 0 %}
                     <img src="{{ fotos[0] }}" alt="{{ produto.titulo }}" class="produto-detalhe-imagem-principal">
-                    <div class="produto-detalhe-miniaturas">
-                        {% for foto in fotos[1:4] %}
-                            <img src="{{ foto }}" alt="{{ produto.titulo }}" class="produto-detalhe-miniatura">
-                        {% endfor %}
-                    </div>
+                    {% if fotos|length > 1 %}
+                        <div class="produto-detalhe-miniaturas">
+                            {% for foto in fotos[1:4] %}
+                                <img src="{{ foto }}" alt="{{ produto.titulo }}" class="produto-detalhe-miniatura" onclick="this.parentElement.parentElement.querySelector('.produto-detalhe-imagem-principal').src = this.src">
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                 {% else %}
                     <div class="produto-sem-imagem-grande">
                         <i class="fas fa-image"></i>
@@ -36,7 +38,13 @@
                 <div class="produto-detalhe-vendedor">
                     <h3>Vendedor</h3>
                     <div class="vendedor-info">
-                        <img src="{{ url_for('static', filename='uploads/perfil/' + produto.vendedor_foto) if produto.vendedor_foto else url_for('static', filename='img/default.png') }}" alt="{{ produto.vendedor_nome }}" class="vendedor-avatar">
+                        {% if produto.vendedor_foto %}
+                            <img src="{{ produto.vendedor_foto }}" alt="{{ produto.vendedor_nome }}" class="vendedor-avatar">
+                        {% else %}
+                            <div class="vendedor-avatar" style="background: var(--cinza-escuro); display: flex; align-items: center; justify-content: center; color: var(--cinza-claro);">
+                                <i class="fas fa-user"></i>
+                            </div>
+                        {% endif %}
                         <div>
                             <p><strong>{{ produto.vendedor_nome }}</strong></p>
                             <p><i class="fas fa-envelope"></i> {{ produto.email }}</p>
@@ -51,7 +59,7 @@
                     </a>
                     {% if session.user_id == produto.usuario_id %}
                         <form method="POST" action="{{ url_for('vitrina.vitrina_apagar', produto_id=produto.id) }}" style="display: inline;">
-                            <button type="submit" class="btn-danger" onclick="return confirm('Tem certeza?')">
+                            <button type="submit" class="btn-danger" onclick="return confirm('Tem certeza que deseja apagar este produto?')">
                                 <i class="fas fa-trash"></i> Apagar
                             </button>
                         </form>
